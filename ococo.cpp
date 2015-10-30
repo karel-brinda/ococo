@@ -3,78 +3,79 @@
 int main(int argc, const char* argv[])
 {
 	string alg="";
-	string oldRefFn="";
+	string refFn="";
 	//string pileupFn="";
+	int counterSize=0;
 	int minBaseQ=0;
+	int minMapQ=0;
 	int minCoverage=3;
 	float acceptanceLevel=0.6;
 	//string vcfFn="";
 
-    bool debug=false;
+	bool debug=false;
 
-    calling_method method=CM_UNKNOWN;
+	calling_method method=CM_UNKNOWN;
 
 	try
 	{
 		namespace po = boost::program_options;
 
-		po::options_description mandatory("Mandatory options");
-		mandatory.add_options()
-                ("calling-alg,a", po::value<string>(&alg)->required(), "parikh")
-                ("reference,r", po::value<string>(&oldRefFn)->required(), "FASTA reference file")
-		;
-		//("pileup,p", po::value<string>(&pileupFn)->required(), "Pileup file")
-		
 
-		po::options_description voluntary("Voluntary options");
-		voluntary.add_options()
-                ("min-coverage,c", po::value<int>(&minCoverage), "Minimal coverage [3]")
-                ("min-base-qual,b", po::value<int>(&minBaseQ), "Minimal base quality [0]")
-                ("accept-level,l", po::value<float>(&acceptanceLevel), "Acceptance level [0.60]")
-                //("vcf,v", po::value<string>(&vcfFn), "VCF file for called variants")
-                ("debug,d", "Debug (print information about every position)")
+		po::positional_options_description pos;
+		pos.add("input-file", -1);
+
+		po::options_description vol("OPTIONS description");
+
+		vol.add_options()
+				("reference,r", po::value<string>(&refFn), "FASTA reference file (with existing FAI index)")
+				("algorithm,a", po::value<string>(&alg), "Algorithm for updates: majority / randomized [majority]")
+				("counter-size,s", po::value<int>(&counterSize), "Size of counter per nucleotide in bits [3]")
+				("min-coverage,c", po::value<int>(&minCoverage), "Minimal coverage [3]")
+				("min-map-qual,m", po::value<int>(&minMapQ), "Minimal mapping quality [0]")
+				("min-base-qual,b", po::value<int>(&minBaseQ), "Minimal base quality [0]")
+				("accept-level,l", po::value<float>(&acceptanceLevel), "Acceptance level [0.60]")
+				("debug,d", "Debugging")
 		;
 
-		po::options_description all("OPTIONS");
-		all.add(mandatory).add(voluntary);
+
 
 		po::variables_map vm;
 		try
 		{
-			po::store(po::parse_command_line(argc, argv, all),vm); // can throw
+			po::store(po::command_line_parser(argc, argv).options(vol).positional(pos).run(),vm); // can throw
 
-            if(vm.count("debug")){
-                debug=true;
-                cerr << "DEBUG MODE" << endl;
-            }
+			if(vm.count("debug")){
+				debug=true;
+				cerr << "DEBUG MODE" << endl;
+			}
 
-            po::notify(vm); // throws on error, so do after help in case there are any problems
+			po::notify(vm); // throws on error, so do after help in case there are any problems
 
 		}
 		catch(po::error& e)
 		{
 			std::cerr << "ERROR: " << e.what() << std::endl << std::endl;
-			std::cerr << all << std::endl;
+			std::cerr << vol << std::endl;
 			return EXIT_FAILURE;
 		}
 
 	}
 	catch(std::exception& e)
-    {
-        error_message_exit(str(boost::format("Unhandled Exception reached the top of main: %1%,\napplication will now exit") % e.what()) );
+	{
+		error_message_exit(str(boost::format("Unhandled Exception reached the top of main: %1%,\napplication will now exit") % e.what()) );
 	}
 
 
-	ifstream &iFa=openIfStream(oldRefFn);
-    //ofstream *oVcf;
-    /*if(vcfFn != ""){
-        oVcf = new ofstream(vcfFn.c_str());
-        if (oVcf->fail()) {
-            error_message_exit("Unable to open file '" + vcfFn + "'");
-        }
-        *oVcf << vcf_header();
-    }*/
-    cout << vcf_header();
+	ifstream &iFa=openIfStream(refFn);
+	//ofstream *oVcf;
+	/*if(vcfFn != ""){
+		oVcf = new ofstream(vcfFn.c_str());
+		if (oVcf->fail()) {
+			error_message_exit("Unable to open file '" + vcfFn + "'");
+		}
+		*oVcf << vcf_header();
+	}*/
+	cout << vcf_header();
 
 	istream &iPileup=cin;
 
@@ -91,9 +92,9 @@ int main(int argc, const char* argv[])
 	PileupLineType pileupLine;
 	string seqName = "";
 	int okIPileup = load_next_pileup_line(pileupLine, minBaseQ, iPileup);
-    if(debug){
-        cerr << "DEBUG: " << get_debug_info_pileup_line(pileupLine) << endl;
-    }
+	if(debug){
+		cerr << "DEBUG: " << get_debug_info_pileup_line(pileupLine) << endl;
+	}
 
 	/* output buffer */
 	int oFaPosition = 0;
@@ -108,13 +109,13 @@ int main(int argc, const char* argv[])
 			if (iFaLine[0] == '>')
 			{
 				/*
-				    fasta header
+					fasta header
 				*/
 
-                auto spacePos=iFaLine.find_first_of(" \t");
-                if (spacePos==string::npos){
-                    spacePos=iFaLine.length();
-                }
+				auto spacePos=iFaLine.find_first_of(" \t");
+				if (spacePos==string::npos){
+					spacePos=iFaLine.length();
+				}
 
 				seqName = iFaLine.substr(1, spacePos - 1);
 				oFaPosition = 0;
@@ -123,19 +124,19 @@ int main(int argc, const char* argv[])
 			else
 			{
 				/*
-				    fasta body
+					fasta body
 				*/
 				for (int i = 0; i < (int)iFaLine.length(); i++)
 				{
 					/* is a nucleotide?  */
 					if (iFaLine[i] != '\r' && iFaLine[i] != '\n' && iFaLine[i] != ' ')
 					{
-                        if(!is_genomic_char(iFaLine[i])){
-                            error_message_exit(string() + "Unknown character in Fasta.\n"
-                            + "Error in Function '" + __FUNCTION__
-                                    + "' (" __FILE__ ", " + BOOST_PP_STRINGIZE(__LINE__)
-                                        + ")");
-                        }
+						if(!is_genomic_char(iFaLine[i])){
+							error_message_exit(string() + "Unknown character in Fasta.\n"
+							+ "Error in Function '" + __FUNCTION__
+									+ "' (" __FILE__ ", " + BOOST_PP_STRINGIZE(__LINE__)
+										+ ")");
+						}
 
 						/*
 							is there a corresponding position in pileup?
@@ -154,32 +155,32 @@ int main(int argc, const char* argv[])
 								newChar=call_variant_parikh(iFaLine[i], pileupLine, minCoverage, acceptanceLevel);
 								break;
 							default:
-                                error_message_exit(string() + "An unsupported method.\n"
-                                        + "Error in Function '" + __FUNCTION__
-                                        + "' (" __FILE__ ", " + BOOST_PP_STRINGIZE(__LINE__)
-                                        + ")");
+								error_message_exit(string() + "An unsupported method.\n"
+										+ "Error in Function '" + __FUNCTION__
+										+ "' (" __FILE__ ", " + BOOST_PP_STRINGIZE(__LINE__)
+										+ ")");
 								break;
 
 							}
 
 							if(tolower(newChar) != tolower(oldChar))
 							{
-                                /*
-                                    There was an update.
-                                 */
-                                //cerr << "update at pos " << oFaPosition << endl;
-                                /*if(oVcf!= 0){
-							        *oVcf << vcf_line(seqName, oFaPosition, oldChar, newChar) << endl;
-                                }*/
-						        cout << vcf_line(seqName, oFaPosition, oldChar, newChar) << endl;
+								/*
+									There was an update.
+								 */
+								//cerr << "update at pos " << oFaPosition << endl;
+								/*if(oVcf!= 0){
+									*oVcf << vcf_line(seqName, oFaPosition, oldChar, newChar) << endl;
+								}*/
+								cout << vcf_line(seqName, oFaPosition, oldChar, newChar) << endl;
 							}
 
 							/* modify corresponding part of buffer, load next line from pileup */
 							oFaLine[(oFaPosition++) % FASTA_WIDTH] = newChar;
 							okIPileup = load_next_pileup_line(pileupLine, minBaseQ, iPileup);
-                            if(debug){
-                                cerr << "DEBUG: " << get_debug_info_pileup_line(pileupLine) << endl;
-                            }
+							if(debug){
+								cerr << "DEBUG: " << get_debug_info_pileup_line(pileupLine) << endl;
+							}
 						}
 						else
 						{
@@ -200,21 +201,21 @@ int main(int argc, const char* argv[])
 	/* the rest of the last line (flushing the buffer) */
 	//cout << oFaLine.substr(0, oFaPosition % FASTA_WIDTH) << endl;
 
-    if (!iPileup.eof()){
-        cerr<<"Some lines of the pileup were not read, e.g.,:" << endl;
-        for(int i=1;i<4;i++){
-            string line;
-            getline(iPileup, line);
-            cerr << line << endl;
-            if (iPileup.eof())
-            {
-                break;
-            }
-        }
-        error_message_exit("Error appered.");
-    }
+	if (!iPileup.eof()){
+		cerr<<"Some lines of the pileup were not read, e.g.,:" << endl;
+		for(int i=1;i<4;i++){
+			string line;
+			getline(iPileup, line);
+			cerr << line << endl;
+			if (iPileup.eof())
+			{
+				break;
+			}
+		}
+		error_message_exit("Error appered.");
+	}
 	iFa.close();
-    //oVcf->close();
+	//oVcf->close();
 
 	return 0;
 }
@@ -348,7 +349,7 @@ string get_debug_info_pileup_line(const PileupLineType &pileupLine)
 	}
 
 	string output = (boost::format(
-				     "\n---------------------------------------\n\
+					 "\n---------------------------------------\n\
 chr:             %1%\n\
 bases:           %2%\n\
 qualities:       %3%\n\
@@ -365,20 +366,20 @@ g (%17%):         %18%\n\
 T (%19%):         %20%\n\
 t (%21%):         %22%\n\
 ---------------------------------------\n")
-			     % pileupLine.chr
-			     % pileupLine.bases
-			     % pileupLine.qualities
-			     % pileupLine.position
-			     % pileupLine.coverage
-			     % pileupLine.strictCoverage
-			     % pileupLine.ASize % AValues
-			     % pileupLine.aSize % aValues
-			     % pileupLine.CSize % CValues
-			     % pileupLine.cSize % cValues
-			     % pileupLine.GSize % GValues
-			     % pileupLine.gSize % gValues
-			     % pileupLine.TSize % TValues
-			     % pileupLine.tSize % tValues).str();
+				 % pileupLine.chr
+				 % pileupLine.bases
+				 % pileupLine.qualities
+				 % pileupLine.position
+				 % pileupLine.coverage
+				 % pileupLine.strictCoverage
+				 % pileupLine.ASize % AValues
+				 % pileupLine.aSize % aValues
+				 % pileupLine.CSize % CValues
+				 % pileupLine.cSize % cValues
+				 % pileupLine.GSize % GValues
+				 % pileupLine.gSize % gValues
+				 % pileupLine.TSize % TValues
+				 % pileupLine.tSize % tValues).str();
 
 	return output;
 }

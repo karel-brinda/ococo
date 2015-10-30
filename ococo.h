@@ -28,39 +28,39 @@ using namespace std;
 
 
 enum calling_method {
-    CM_UNKNOWN = 0, CM_PARIKH
+	CM_UNKNOWN = 0, CM_PARIKH
 };
 
 inline void error_message_exit(const string error) {
-    cerr << "Error: " << error << endl;
-    exit(EXIT_FAILURE);
+	cerr << "Error: " << error << endl;
+	exit(EXIT_FAILURE);
 }
 
 
 inline bool is_genomic_char(const char &character){
-    switch (character){
-        case 'a':
-        case 'A':
-        case 'c':
-        case 'C':
-        case 'g':
-        case 'G':
-        case 't':
-        case 'T':
-        case 'n':
-        case 'N':
-            return true;
-        default:
-            return false;
-    }
+	switch (character){
+		case 'a':
+		case 'A':
+		case 'c':
+		case 'C':
+		case 'g':
+		case 'G':
+		case 't':
+		case 'T':
+		case 'n':
+		case 'N':
+			return true;
+		default:
+			return false;
+	}
 }
 
 ifstream& openIfStream(string filename) {
-    ifstream* is = new ifstream(filename.c_str());
-    if (is->fail()) {
-        error_message_exit("Unable to open file '" + filename + "'");
-    }
-    return *is;
+	ifstream* is = new ifstream(filename.c_str());
+	if (is->fail()) {
+		error_message_exit("Unable to open file '" + filename + "'");
+	}
+	return *is;
 }
 
 typedef struct PileupLineType
@@ -103,22 +103,22 @@ typedef struct PileupLineType
 inline char call_variant_parikh(const char &originalBase, const PileupLineType& pileupLine, const int &minCoverage, const float &majority);
 
 /*
-    Read a new line from a input and save info about the pileup into pileupLine
+	Read a new line from a input and save info about the pileup into pileupLine
 */
 inline int load_next_pileup_line(PileupLineType &pileupLine, const int &minBaseQuality, istream &input);
 
 /*
-    Get debug information about a pileup line
+	Get debug information about a pileup line
 */
 string get_debug_info_pileup_line(const PileupLineType &pileupLine);
 
 /*
-    Get a VCF header
+	Get a VCF header
 */
 string vcf_header ();
 
 /*
-    Get a VCF line
+	Get a VCF line
 */
 string vcf_line (const string &chr, int pos, char oldNucl, char newNucl);
 
