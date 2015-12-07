@@ -19,11 +19,26 @@
 int main(int argc, const char* argv[])
 {
 
+	printf("ahoooj\n");
+	fputs("DO STUFF\n",stdout); 
+
 	hts_itr_t *iter=NULL;
 	hts_idx_t *idx=NULL;
 	samFile *in = NULL;
 	bam1_t *b= NULL;
 	bam_hdr_t *header = NULL;
+
+	in = sam_open("-", "r");
+	if(in==NULL) return -1;
+	if ((header = sam_hdr_read(in)) == 0) return -1;
+	/*idx = sam_index_load(in,  argv[1]);
+	if(idx==NULL) return -1;
+	iter  = sam_itr_querys(idx, header, argv[2]); 
+	if(iter==NULL) return -1;*/
+	printf("init\n");
+	b = bam_init1();
+
+	/*
 	if(argc!=3) return -1;
 	in = sam_open(argv[1], "r");
 	if(in==NULL) return -1;
@@ -33,11 +48,73 @@ int main(int argc, const char* argv[])
 	iter  = sam_itr_querys(idx, header, argv[2]); 
 	if(iter==NULL) return -1;
 	b = bam_init1();
+	*/
+
+	printf("reading start");
+	int r;
+    while ((r = sam_read1(in, header, b)) >= 0) { // read one alignment from `in'
+
+		printf("pos %d, chrom %d, map q %d, flag %d, name %s \n",
+			b->core.pos+1,b->core.tid, b->core.qual, b->core.flag, b->data+b->core.l_qname-2);
+            /*
+            if (!process_aln(header, b, &settings)) {
+                if (!is_count) { if (check_sam_write1(out, header, b, fn_out, &ret) < 0) break; }
+                count++;
+            } else {
+                if (un_out) { if (check_sam_write1(un_out, header, b, fn_un_out, &ret) < 0) break; }
+            }*/
 
 
+		const auto cigar = bam_get_cigar(b);
 
+        for (int k = 0; k < b->core.n_cigar; k++)
+		{
+			const int op = bam_cigar_op(cigar[k]);
+			const int ol = bam_cigar_oplen(cigar[k]);
 
+			//printf("%d",ol);
+ 
+			printf("%d%c",ol,BAM_CIGAR_STR[op]);
 
+			/*switch(op){
+				case BAM_CMATCH:
+					printf("%dM",ol);
+					break;
+				case BAM_CINS:
+					printf("%dI",ol);
+					break;
+				case BAM_CDEL:
+					printf("%dD",ol);
+					break;
+				case BAM_CREFSKIP:
+					printf("%dN",ol);
+					break;
+				default:
+					break;
+
+			}*/
+
+			/*if (op == BAM_CMATCH || op == BAM_CINS || op == BAM_CDEL)
+			{
+			// your code, you have the length in ol (eg: 101M -> ol == 101)
+			}
+			*/
+		}
+        printf("\n");
+    }
+	printf("reading end");
+
+	while ( sam_itr_next(in, iter, b) >= 0) 
+	{
+		fputs("DO STUFF\n",stdout); 
+	}
+
+	hts_itr_destroy(iter);
+	bam_destroy1(b);
+	bam_hdr_destroy(header);
+	sam_close(in);
+
+	return 0;
 
 
 	string alg="";
