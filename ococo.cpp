@@ -1,9 +1,11 @@
 #include "ococo.h"
+#include <zlib.h>  
+#include <boost/utility/binary.hpp>
 
-
+#include <stdint.h>
 #include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
+#include <cstring>
+#include <cstdio>
 #include <unistd.h>
 #include <math.h>
 #include <inttypes.h>
@@ -13,128 +15,96 @@
 #include "htslib/faidx.h"
 #include "htslib/kstring.h"
 #include "htslib/khash.h"
-//#include "samtools.h"
+#include "htslib/kseq.h"
 
+const char CMD_FLUSH[]="flush";
+
+//enum ConsAlg { CA_MAJORITY , CA_STOCHASTIC };
+
+/*! @typedef
+ @abstract Structure for parameters for consensus calling..
+ @field min_mapq    Minimum mapping quality to increase counter.
+ @field min_baseq   Minimum base quality to increase counter.
+ */
+typedef struct {
+	int min_mapq;
+	int min_baseq;
+}  cons_params_t;
+
+typedef struct {
+	char *name;
+	int length;
+	uint16_t *counters;
+} seqstat_t;
+
+typedef struct {
+	int nseqs;
+	seqstat_t *seqstats;
+} stats_t;
+
+#define FULL_L 0xf0
+#define FULL_R 0x0f
+
+/*
+	nt16: A=1, C=2, G=4, T=8
+*/
+#define COUNTER_NUCL_SHIFT(nt16)	(bam_nt16_nt4_table[nt16]*4)
+
+#define COUNTER_VAL(counter,nt16) ((counter>>COUNTER_NUCL_POS[nt16]) & BOOST_BINARY( 1111 ))
+
+#define COUNTER_INC_NO_SHIFT(counter,nt16) { \
+		( \
+			( \
+				(COUNTER_VAL(counter,nt16)+1)<< COUNTER_NUCL_SHIFT[nt16] \
+			) \
+			| \
+			( \
+				counter \
+				^ \
+				(counter & (BOOST_BINARY(1111) << COUNTER_NUCL_SHIFT[nt16])) \
+			) \
+	}
+
+#define COUNTER_SHIFT(counter,shift_bool) {\
+		(counter >> shift_bool) & BOOST_BINARY( 0111011101110111 ) \
+	}
+
+#define COUNTER_INC(counter,nt16) { \
+		COUNTER_INC_NO_SHIFT( \
+			COUNTER_SHIFT(counter,COUNTER_VAL(counter,nt16)==BOOST_BINARY(1111)) \
+		) \
+	}
+
+
+int flush_fasta(char *fasta_fn, stats_t *stats, cons_params_t cps){
+	return 0;
+}
+
+KSEQ_INIT(gzFile, gzread)
 
 int main(int argc, const char* argv[])
 {
 
-	printf("ahoooj\n");
-	fputs("DO STUFF\n",stdout); 
-
-	hts_itr_t *iter=NULL;
-	hts_idx_t *idx=NULL;
-	samFile *in = NULL;
-	bam1_t *b= NULL;
-	bam_hdr_t *header = NULL;
-
-	in = sam_open("-", "r");
-	if(in==NULL) return -1;
-	if ((header = sam_hdr_read(in)) == 0) return -1;
-	/*idx = sam_index_load(in,  argv[1]);
-	if(idx==NULL) return -1;
-	iter  = sam_itr_querys(idx, header, argv[2]); 
-	if(iter==NULL) return -1;*/
-	printf("init\n");
-	b = bam_init1();
-
 	/*
-	if(argc!=3) return -1;
-	in = sam_open(argv[1], "r");
-	if(in==NULL) return -1;
-	if ((header = sam_hdr_read(in)) == 0) return -1;
-	idx = sam_index_load(in,  argv[1]);
-	if(idx==NULL) return -1;
-	iter  = sam_itr_querys(idx, header, argv[2]); 
-	if(iter==NULL) return -1;
-	b = bam_init1();
+		Default configuration.
 	*/
 
-	printf("reading start");
-	int r;
-    while ((r = sam_read1(in, header, b)) >= 0) { // read one alignment from `in'
-
-		printf("pos %d, chrom %d, map q %d, flag %d, name %s \n",
-			b->core.pos+1,b->core.tid, b->core.qual, b->core.flag, b->data+b->core.l_qname-2);
-            /*
-            if (!process_aln(header, b, &settings)) {
-                if (!is_count) { if (check_sam_write1(out, header, b, fn_out, &ret) < 0) break; }
-                count++;
-            } else {
-                if (un_out) { if (check_sam_write1(un_out, header, b, fn_un_out, &ret) < 0) break; }
-            }*/
-
-
-		const auto cigar = bam_get_cigar(b);
-
-        for (int k = 0; k < b->core.n_cigar; k++)
-		{
-			const int op = bam_cigar_op(cigar[k]);
-			const int ol = bam_cigar_oplen(cigar[k]);
-
-			//printf("%d",ol);
- 
-			printf("%d%c",ol,BAM_CIGAR_STR[op]);
-
-			/*switch(op){
-				case BAM_CMATCH:
-					printf("%dM",ol);
-					break;
-				case BAM_CINS:
-					printf("%dI",ol);
-					break;
-				case BAM_CDEL:
-					printf("%dD",ol);
-					break;
-				case BAM_CREFSKIP:
-					printf("%dN",ol);
-					break;
-				default:
-					break;
-
-			}*/
-
-			/*if (op == BAM_CMATCH || op == BAM_CINS || op == BAM_CDEL)
-			{
-			// your code, you have the length in ol (eg: 101M -> ol == 101)
-			}
-			*/
-		}
-        printf("\n");
-    }
-	printf("reading end");
-
-	while ( sam_itr_next(in, iter, b) >= 0) 
-	{
-		fputs("DO STUFF\n",stdout); 
-	}
-
-	hts_itr_destroy(iter);
-	bam_destroy1(b);
-	bam_hdr_destroy(header);
-	sam_close(in);
-
-	return 0;
-
-
-	string alg="";
-	string refFn="";
-	//string pileupFn="";
-	int counterSize=0;
-	int minBaseQ=0;
-	int minMapQ=0;
-	int minCoverage=3;
-	float acceptanceLevel=0.6;
-	//string vcfFn="";
+	cons_params_t cps = {
+		1, // min_mapq
+		0, // min_baseq
+	};
 
 	bool debug=false;
+	string fasta_fn;
+	string sam_fn("-");
 
-	calling_method method=CM_UNKNOWN;
+	/*
+		Parse command-line parameters
+	*/
 
 	try
 	{
 		namespace po = boost::program_options;
-
 
 		po::positional_options_description pos;
 		pos.add("input-file", -1);
@@ -142,17 +112,15 @@ int main(int argc, const char* argv[])
 		po::options_description vol("OPTIONS description");
 
 		vol.add_options()
-				("reference,r", po::value<string>(&refFn), "FASTA reference file (with existing FAI index)")
-				("algorithm,a", po::value<string>(&alg), "Algorithm for updates: majority / randomized [majority]")
-				("counter-size,s", po::value<int>(&counterSize), "Size of counter per nucleotide in bits [3]")
-				("min-coverage,c", po::value<int>(&minCoverage), "Minimal coverage [3]")
-				("min-map-qual,m", po::value<int>(&minMapQ), "Minimal mapping quality [0]")
-				("min-base-qual,b", po::value<int>(&minBaseQ), "Minimal base quality [0]")
-				("accept-level,l", po::value<float>(&acceptanceLevel), "Acceptance level [0.60]")
+				("reference,r", po::value<string>(&fasta_fn), "FASTA reference file (with existing FAI index)")
+				//("algorithm,a", po::value<string>(&alg), "Algorithm for updates: majority / randomized [majority]")
+				//("counter-size,s", po::value<int>(&counterSize), "Size of counter per nucleotide in bits [3]")
+				//("min-coverage,c", po::value<int>(&minCoverage), "Minimal coverage [3]")
+				("min-map-qual,m", po::value<int>(&cps.min_mapq), "Minimal mapping quality [1]")
+				("min-base-qual,b", po::value<int>(&cps.min_baseq), "Minimal base quality [0]")
+				//("accept-level,l", po::value<float>(&acceptanceLevel), "Acceptance level [0.60]")
 				("debug,d", "Debugging")
 		;
-
-
 
 		po::variables_map vm;
 		try
@@ -161,7 +129,6 @@ int main(int argc, const char* argv[])
 
 			if(vm.count("debug")){
 				debug=true;
-				cerr << "DEBUG MODE" << endl;
 			}
 
 			po::notify(vm); // throws on error, so do after help in case there are any problems
@@ -169,511 +136,110 @@ int main(int argc, const char* argv[])
 		}
 		catch(po::error& e)
 		{
-			std::cerr << "ERROR: " << e.what() << std::endl << std::endl;
-			std::cerr << vol << std::endl;
+			fprintf(stderr,"Error: %s.\n",e.what());
 			return EXIT_FAILURE;
 		}
 
 	}
 	catch(std::exception& e)
 	{
-		error_message_exit(str(boost::format("Unhandled Exception reached the top of main: %1%,\napplication will now exit") % e.what()) );
+		fprintf(stderr,"Unhandled Exception: %s.\n",e.what());
+		return EXIT_FAILURE;
 	}
 
 
-	ifstream &iFa=openIfStream(refFn);
-	//ofstream *oVcf;
-	/*if(vcfFn != ""){
-		oVcf = new ofstream(vcfFn.c_str());
-		if (oVcf->fail()) {
-			error_message_exit("Unable to open file '" + vcfFn + "'");
-		}
-		*oVcf << vcf_header();
-	}*/
-	cout << vcf_header();
-
-	istream &iPileup=cin;
-
-	if (alg.compare("parikh")==0)
-	{
-		method=CM_PARIKH;
-	}
-	else
-	{
-		error_message_exit("Unknown method '" + alg +"'");
-	}
-
-	/* loading the first pileup line */
-	PileupLineType pileupLine;
-	string seqName = "";
-	int okIPileup = load_next_pileup_line(pileupLine, minBaseQ, iPileup);
-	if(debug){
-		cerr << "DEBUG: " << get_debug_info_pileup_line(pileupLine) << endl;
-	}
-
-	/* output buffer */
-	int oFaPosition = 0;
-	string oFaLine = string(FASTA_WIDTH, ' ');
-
-	/* reading input fasta */
-	string iFaLine;
-	while (getline(iFa, iFaLine))
-	{
-		if (iFaLine.length() > 0)
-		{
-			if (iFaLine[0] == '>')
-			{
-				/*
-					fasta header
-				*/
-
-				auto spacePos=iFaLine.find_first_of(" \t");
-				if (spacePos==string::npos){
-					spacePos=iFaLine.length();
-				}
-
-				seqName = iFaLine.substr(1, spacePos - 1);
-				oFaPosition = 0;
-				//cout << ">" << seqName << endl;
-			}
-			else
-			{
-				/*
-					fasta body
-				*/
-				for (int i = 0; i < (int)iFaLine.length(); i++)
-				{
-					/* is a nucleotide?  */
-					if (iFaLine[i] != '\r' && iFaLine[i] != '\n' && iFaLine[i] != ' ')
-					{
-						if(!is_genomic_char(iFaLine[i])){
-							error_message_exit(string() + "Unknown character in Fasta.\n"
-							+ "Error in Function '" + __FUNCTION__
-									+ "' (" __FILE__ ", " + BOOST_PP_STRINGIZE(__LINE__)
-										+ ")");
-						}
-
-						/*
-							is there a corresponding position in pileup?
-							(1+ ... because it is 0-based)
-						*/
-						if (okIPileup && pileupLine.position == 1 + oFaPosition && pileupLine.chr.compare(seqName) == 0)
-						{
-							/************
-								yes => try to update, load next pileup line
-							**************/
-							char oldChar=iFaLine[i];
-							char newChar=' ';
-							switch (method)
-							{
-							case CM_PARIKH:
-								newChar=call_variant_parikh(iFaLine[i], pileupLine, minCoverage, acceptanceLevel);
-								break;
-							default:
-								error_message_exit(string() + "An unsupported method.\n"
-										+ "Error in Function '" + __FUNCTION__
-										+ "' (" __FILE__ ", " + BOOST_PP_STRINGIZE(__LINE__)
-										+ ")");
-								break;
-
-							}
-
-							if(tolower(newChar) != tolower(oldChar))
-							{
-								/*
-									There was an update.
-								 */
-								//cerr << "update at pos " << oFaPosition << endl;
-								/*if(oVcf!= 0){
-									*oVcf << vcf_line(seqName, oFaPosition, oldChar, newChar) << endl;
-								}*/
-								cout << vcf_line(seqName, oFaPosition, oldChar, newChar) << endl;
-							}
-
-							/* modify corresponding part of buffer, load next line from pileup */
-							oFaLine[(oFaPosition++) % FASTA_WIDTH] = newChar;
-							okIPileup = load_next_pileup_line(pileupLine, minBaseQ, iPileup);
-							if(debug){
-								cerr << "DEBUG: " << get_debug_info_pileup_line(pileupLine) << endl;
-							}
-						}
-						else
-						{
-							/* no, print fasta char */
-							oFaLine[(oFaPosition++) % FASTA_WIDTH] = tolower(iFaLine[i]);
-						}
-
-						/* fasta columning :) */
-						if (oFaPosition % FASTA_WIDTH == 0)
-						{
-							//cout << oFaLine << endl;
-						}
-					}
-				} // for i
-			} // if(iFaLine[0]=='>')
-		}
-	}
-	/* the rest of the last line (flushing the buffer) */
-	//cout << oFaLine.substr(0, oFaPosition % FASTA_WIDTH) << endl;
-
-	if (!iPileup.eof()){
-		cerr<<"Some lines of the pileup were not read, e.g.,:" << endl;
-		for(int i=1;i<4;i++){
-			string line;
-			getline(iPileup, line);
-			cerr << line << endl;
-			if (iPileup.eof())
-			{
-				break;
-			}
-		}
-		error_message_exit("Error appered.");
-	}
-	iFa.close();
-	//oVcf->close();
-
-	return 0;
-}
-
-inline char call_variant_parikh(const char &originalBase, const PileupLineType& pileupLine, const int &minCoverage, const float &majority)
-{
-	//TODO: assert
-	if (pileupLine.strictCoverage >= minCoverage)
-	{
-
-		float majority = (parikhMinRate * pileupLine.strictCoverage);
-
-		char candidat = tolower(originalBase);
-
-		if (pileupLine.aSize + pileupLine.ASize > majority)
-		{
-			candidat = 'A';
-		}
-		else if (pileupLine.cSize + pileupLine.CSize > majority)
-		{
-			candidat = 'C';
-		}
-		else if (pileupLine.gSize + pileupLine.GSize > majority)
-		{
-			candidat = 'G';
-		}
-		else if (pileupLine.tSize + pileupLine.TSize > majority)
-		{
-			candidat = 'T';
-		}
-
-		if (tolower(candidat) == tolower(originalBase))
-		{
-			/* no update */
-			return tolower(originalBase);
-		}
-		else
-		{
-			/* update */
-			return candidat;
-		}
-	}
-	else
-	{
-		/* no update */
-		return tolower(originalBase);
-	}
-}
-
-string vcf_header ()
-{
 	/*
-		##contig=<ID=chr1,length=1075152>\n\
-		##INFO=<ID=mt,Number=1,Type=String,Description=\"Variant Type: SUBSTITUTE/INSERT/DELETE\">\n\
+		Read SAM headers
 	*/
 
-	return "\
-##fileformat=VCFv4.1\n\
-#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n\
-";
-}
+	hts_itr_t *iter=NULL;
 
-string vcf_line (const string &chr, int pos, char oldNucl, char newNucl)
-{
-	stringstream ss;
-	ss << chr << "\t" << pos+1 << "\t" << ".\t" << oldNucl << "\t"  << newNucl
-	   <<  "\t100\tPASS\tmt=SUBSTITUTE";
-	return ss.str();
-}
+	samFile *in = NULL;
+	bam1_t *b= NULL;
+	bam_hdr_t *header = NULL;
 
-
-string get_debug_info_pileup_line(const PileupLineType &pileupLine)
-{
-
-	string AValues;
-	string aValues;
-	string CValues;
-	string cValues;
-	string GValues;
-	string gValues;
-	string TValues;
-	string tValues;
-
-	{
-		stringstream ss;
-		for (int i = 0; i < pileupLine.ASize; i++)
-			ss << pileupLine.A[i] << " ";
-		AValues = ss.str();
+	in = sam_open(sam_fn.c_str(), "r");
+	if(in==NULL) {
+		fprintf(stderr,"Problem with opening input ('%s').", sam_fn.c_str());
+		return -1;
 	}
-	{
-		stringstream ss;
-		for (int i = 0; i < pileupLine.aSize; i++)
-			ss << pileupLine.a[i] << " ";
-		aValues = ss.str();
-	}
-	{
-		stringstream ss;
-		for (int i = 0; i < pileupLine.CSize; i++)
-			ss << pileupLine.C[i] << " ";
-		CValues = ss.str();
-	}
-	{
-		stringstream ss;
-		for (int i = 0; i < pileupLine.cSize; i++)
-			ss << pileupLine.c[i] << " ";
-		cValues = ss.str();
-	}
-	{
-		stringstream ss;
-		for (int i = 0; i < pileupLine.GSize; i++)
-			ss << pileupLine.G[i] << " ";
-		GValues = ss.str();
-	}
-	{
-		stringstream ss;
-		for (int i = 0; i < pileupLine.gSize; i++)
-			ss << pileupLine.g[i] << " ";
-		gValues = ss.str();
-	}
-	{
-		stringstream ss;
-		for (int i = 0; i < pileupLine.TSize; i++)
-			ss << pileupLine.T[i] << " ";
-		TValues = ss.str();
-	}
-	{
-		stringstream ss;
-		for (int i = 0; i < pileupLine.tSize; i++)
-			ss << pileupLine.t[i] << " ";
-		tValues = ss.str();
+	if ((header = sam_hdr_read(in)) == 0){
+		fprintf(stderr,"SAM headers are missing or corrupted.");
+		return -1;
 	}
 
-	string output = (boost::format(
-					 "\n---------------------------------------\n\
-chr:             %1%\n\
-bases:           %2%\n\
-qualities:       %3%\n\
-position:        %4%\n\
-coverage:        %5%\n\
-strict coverage: %6%\n\
-\n\
-A (%7%):         %8%\n\
-a (%9%):         %10%\n\
-C (%11%):         %12%\n\
-c (%13%):         %14%\n\
-G (%15%):         %16%\n\
-g (%17%):         %18%\n\
-T (%19%):         %20%\n\
-t (%21%):         %22%\n\
----------------------------------------\n")
-				 % pileupLine.chr
-				 % pileupLine.bases
-				 % pileupLine.qualities
-				 % pileupLine.position
-				 % pileupLine.coverage
-				 % pileupLine.strictCoverage
-				 % pileupLine.ASize % AValues
-				 % pileupLine.aSize % aValues
-				 % pileupLine.CSize % CValues
-				 % pileupLine.cSize % cValues
-				 % pileupLine.GSize % GValues
-				 % pileupLine.gSize % gValues
-				 % pileupLine.TSize % TValues
-				 % pileupLine.tSize % tValues).str();
+	b = bam_init1();
 
-	return output;
-}
+	/*
+		Load FASTA
+	*/
+	gzFile fp;  
+    kseq_t *seq;  
+    int l;  
+    fp = gzopen(fasta_fn.c_str(), "r");
+    seq = kseq_init(fp);
+    while ((l = kseq_read(seq)) >= 0) {
+        printf("name: %s\n", seq->name.s);  
+        if (seq->comment.l) printf("comment: %s\n", seq->comment.s);  
+        printf("seq: %s\n", seq->seq.s);  
+        if (seq->qual.l) printf("qual: %s\n", seq->qual.s);  
+    }  
+    kseq_destroy(seq); // STEP 5: destroy seq  
+    gzclose(fp); // STEP 6: close the file handler  
 
-inline int load_next_pileup_line(PileupLineType &pileupLine, const int &minBaseQuality, istream &input = cin)
-{
-	/* read line, if end of file => stop */
-	string line;
-	getline(input, line);
-	if (input.eof())
-	{
-		return 0;
+	/*
+		Read alignments (main loop)
+	*/
+	if (debug){
+		fprintf(stderr, "Reading alignments started.");
 	}
-	char *cstr;
-	cstr = new char[line.size() + 1];
-	strcpy(cstr, line.c_str());
+	int r;
+    while ((r = sam_read1(in, header, b)) >= 0) { // read one alignment from `in'
 
-	/* save new data into pileupLine*/
-	pileupLine.chr = strtok(cstr, "\t");
-	pileupLine.position = atoi(strtok(NULL, "\t"));
-	char refBase = strtok(NULL, "\t")[0];
-	pileupLine.coverage = atoi(strtok(NULL, "\t"));
+		printf("pos %d, chrom %d, map q %d, flag %d, name %s \n",
+			b->core.pos+1,b->core.tid, b->core.qual, b->core.flag, b->data+b->core.l_qname-2);
 
-	/* delete old data from pileupLine */
-	pileupLine.ASize = 0;
-	pileupLine.aSize = 0;
-	pileupLine.CSize = 0;
-	pileupLine.cSize = 0;
-	pileupLine.GSize = 0;
-	pileupLine.gSize = 0;
-	pileupLine.TSize = 0;
-	pileupLine.tSize = 0;
-	pileupLine.astSize = 0;
-	pileupLine.bases = "";
-	pileupLine.qualities = "";
-	pileupLine.strictCoverage = 0;
+		const char* rname=(char*)b->data+b->core.l_qname;
+		if (strcmp(rname,CMD_FLUSH)==0){
+			// todo: flush fasta
+			break;
+		}
 
-	/* continue only when coverage is enough */
-	if (pileupLine.coverage > 0)
-	{
+    	if (((b->core.flag & BAM_FUNMAP)==0) && (b->core.qual)>=cps.min_mapq){
 
-		pileupLine.bases = strtok(NULL, "\t");
-		pileupLine.qualities = strtok(NULL, "\t");
-		/* load bases */
-		int posQ = 0;
-		/*
-			state:
-				0 ... normal
-				1 ... reading number after + or -
-		 */
-		int state = 0;
-		int numberStartsAt=0;
-		for (int posB = 0; posB < (int)pileupLine.bases.length(); posB++)
+    	}
+    	else {
+    		if (debug){
+				fprintf(stderr, "Read '%s' is not used for updating counters\n", rname);
+    		}
+    	}
+
+		const auto cigar = bam_get_cigar(b);
+
+        for (int k = 0; k < b->core.n_cigar; k++)
 		{
-			/* reading number? */
-			if (state==1)
-			{
-				/* not reading number? */
-				if (!isdigit(pileupLine.bases[posB]))
-				{
-					/* set normal state, skip enough positions */
-					state = 0;
-					posB += atoi(pileupLine.bases.substr(numberStartsAt, posB - numberStartsAt).c_str());
-				}
-			}
-			/* already normal reading? */
-			if (state==0)
-			{
-				int currentQuality = QUALITY_TO_INT(pileupLine.qualities, posQ);
-				char currentChar = pileupLine.bases[posB];
-				if (currentChar=='.')
-				{
-					currentChar=toupper(refBase);
-				}
-				else if (currentChar==',')
-				{
-					currentChar=tolower(refBase);
-				}
-				switch (currentChar)
-				{
-				case '\n':
-					break;
-				case '\r':
-					break;
-				case '$':
-					break;
-				case '^':
-					//cout << "huraa" << endl;
-					/* skip the quality information */
-					++posB;
-					break;
-				case ' ':
-					break;
-				case 'A':
-					if (minBaseQuality <= currentQuality)
-					{
-						pileupLine.A[pileupLine.ASize++] = currentQuality;
-						pileupLine.strictCoverage++;
-					}
-					posQ++;
-					break;
-				case 'a':
-					if (minBaseQuality <= currentQuality)
-					{
-						pileupLine.a[pileupLine.aSize++] = currentQuality;
-						pileupLine.strictCoverage++;
-					}
-					posQ++;
-					break;
-				case 'C':
-					if (minBaseQuality <= currentQuality)
-					{
-						pileupLine.C[pileupLine.CSize++] = currentQuality;
-						pileupLine.strictCoverage++;
-					}
-					posQ++;
-					break;
-				case 'c':
-					if (minBaseQuality <= currentQuality)
-					{
-						pileupLine.c[pileupLine.cSize++] = currentQuality;
-						pileupLine.strictCoverage++;
-					}
-					posQ++;
-					break;
-				case 'G':
-					if (minBaseQuality <= currentQuality)
-					{
-						pileupLine.G[pileupLine.GSize++] = currentQuality;
-						pileupLine.strictCoverage++;
-					}
-					posQ++;
-					break;
-				case 'g':
-					if (minBaseQuality <= currentQuality)
-					{
-						pileupLine.g[pileupLine.gSize++] = currentQuality;
-						pileupLine.strictCoverage++;
-					}
-					posQ++;
-					break;
-				case 'T':
-					if (minBaseQuality <= currentQuality)
-					{
-						pileupLine.T[pileupLine.TSize++] = currentQuality;
-						pileupLine.strictCoverage++;
-					}
-					posQ++;
-					break;
-				case 't':
-					if (minBaseQuality <= currentQuality)
-					{
-						pileupLine.t[pileupLine.tSize++] = currentQuality;
-						pileupLine.strictCoverage++;
-					}
-					posQ++;
-					break;
-				case '*':
-					if (minBaseQuality <= currentQuality)
-					{
-						pileupLine.ast[pileupLine.astSize++] = currentQuality;
-						pileupLine.strictCoverage++;
-					}
-					posQ++;
-					break;
-				case '-':
-				case '+':
-					/* must be followed by a number */
-					state = 1;
-					numberStartsAt = posB + 1;
-					break;
+			const int op = bam_cigar_op(cigar[k]);
+			const int ol = bam_cigar_oplen(cigar[k]);
 
-				}
-			} // switch (state)
-		} // for posB
-		assert(posQ == (int)pileupLine.qualities.length() && "Length of qualities and bases are not same. Probably a bug of the program.");
-	} // if (pileupLine.coverage>0)
+			printf("%d%c",ol,BAM_CIGAR_STR[op]);
 
-	//printPileupLine(pileupLine,cerr);
+		}
+        printf("\n");
+    }
+	if (debug){
+		fprintf(stderr, "Reading alignments finished.");
+	}
 
-	return 1;
+
+	/*
+		Free memory.
+	*/
+
+
+	hts_itr_destroy(iter);
+	bam_destroy1(b);
+	bam_hdr_destroy(header);
+	sam_close(in);
+
+	return 0;
 }
