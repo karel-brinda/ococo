@@ -17,11 +17,13 @@
 #include "htslib/khash.h"
 #include "htslib/kseq.h"
 
+KSEQ_INIT(gzFile, gzread);
+
 const char CMD_FLUSH[]="flush";
 
 static char bam_nt16_nt4_table[] = { 4, 0, 1, 4, 2, 4, 4, 4, 3, 4, 4, 4, 4, 4, 4, 4 };
 
-typedef uint16_t counters_t ;
+typedef uint16_t counter_t ;
 typedef unsigned char nt16_t ;
 
 
@@ -37,6 +39,7 @@ typedef struct {
 	int min_baseq;
 }  cons_params_t;
 
+/*
 typedef struct {
 	char *name;
 	int length;
@@ -47,6 +50,65 @@ typedef struct {
 	int nseqs;
 	seqstat_t *seqstats;
 } stats_t;
+*/
+
+struct stats_t {
+	int n_seqs;
+	int *seq_len;
+	char **seq_name;
+	counter_t **counters;
+
+	stats_t():
+		n_seqs(0),seq_len(NULL), seq_name(NULL), counters(NULL)
+	{		
+	}
+
+	stats_t(bam_hdr_t &h):
+		n_seqs(h.n_targets), seq_len(new int[n_seqs]), seq_name(new char*[n_seqs]), counters(new counter_t*[n_seqs])
+	{
+		for (int i=0;i<n_seqs;i++){
+			seq_name[i]=new char[seq_len[i] + 1];
+     		memcpy(seq_name[i], h.target_name[i],seq_len[i] + 1);
+
+			counters[i]=new counter_t[seq_len[i]]();
+			//printf("seq %s, len %d\n",stats->seqstats[i].name,stats->seqstats[i].length);
+		}
+	}
+
+	~stats_t(){
+		for (int i=0;i<n_seqs;i++){
+			delete[] seq_name[i];
+			delete[] counters[i];
+		}
+		delete[] seq_len;
+		delete[] seq_name; 
+		delete[] counters; 
+	}
+
+
+	//int generate_fasta(char *fasta_fn, stats_t *stats, cons_params_t cps){
+	//	return 0;
+	//}
+
+	int load_fasta(string fasta_fn)
+	{
+		gzFile fp;  
+	    kseq_t *seq;  
+	    int l;  
+	    fp = gzopen(fasta_fn.c_str(), "r");
+	    seq = kseq_init(fp);
+	    while ((l = kseq_read(seq)) >= 0) {
+	        printf("name: %s\n", seq->name.s);  
+	        if (seq->comment.l) printf("comment: %s\n", seq->comment.s);  
+	        printf("seq: %s\n", seq->seq.s);  
+	        if (seq->qual.l) printf("qual: %s\n", seq->qual.s);  
+	    }  
+	    kseq_destroy(seq); // STEP 5: destroy seq  
+	    gzclose(fp); // STEP 6: close the file handler
+	    return 0;
+	}
+};
+
 
 /*
 	nt16: A=1, C=2, G=4, T=8
@@ -95,71 +157,48 @@ typedef struct {
 */
 
 
-inline int _NUCL_SHIFT(nt16_t nt16) {
+inline int _CELL_SHIFT(nt16_t nt16) {
 		return 4 * bam_nt16_nt4_table[nt16];
 }
 
-inline counters_t _COUNTER_VAL(counters_t counters,nt16_t nt16) {
-		return (counters>>_NUCL_SHIFT(nt16)) & 0x0f;
+inline counter_t _COUNTER_CELL_VAL(counter_t counter,nt16_t nt16) {
+		return (counter>>_CELL_SHIFT(nt16)) & 0x0f;
 }
 
-inline counters_t _COUNTER_SET(counters_t counters,nt16_t nt16,int value) {
+inline counter_t _COUNTER_CELL_SET(counter_t counter,nt16_t nt16,int value) {
 	return
 		(
-			value << _NUCL_SHIFT(nt16) \
+			value << _CELL_SHIFT(nt16) \
 		) | (
-			counters
+			counter
 			^
-			(counters & (0x0f << _NUCL_SHIFT(nt16)))
+			(counter & (0x0f << _CELL_SHIFT(nt16)))
 		);
 }
 
 
-inline counters_t _COUNTER_INC_NODIV(counters_t counters,nt16_t nt16) {
-		 return _COUNTER_SET (counters,nt16,_COUNTER_VAL(counters,nt16)+1);
+inline counter_t _COUNTER_CELL_INC_NODIV(counter_t counter,nt16_t nt16) {
+		 return _COUNTER_CELL_SET (counter,nt16,_COUNTER_CELL_VAL(counter,nt16)+1);
 	}
 
-inline counters_t _COUNTERS_NORMALIZE(counters_t counters,bool divide) {
-		return (counters >> divide) & 0x7777;
+inline counter_t _COUNTER_NORMALIZE(counter_t counter,bool divide) {
+		return (counter >> divide) & 0x7777;
 	}
 
-inline counters_t _COUNTER_INC(counters_t counters,nt16_t nt16) { \
-		return _COUNTER_INC_NODIV (
-			_COUNTERS_NORMALIZE (counters,_COUNTER_VAL(counters,nt16)==0x0f),
+inline counter_t _COUNTER_CELL_INC(counter_t counter,nt16_t nt16) { \
+		return _COUNTER_CELL_INC_NODIV (
+			_COUNTER_NORMALIZE (counter,_COUNTER_CELL_VAL(counter,nt16)==0x0f),
 			nt16
 		);
 	}
 
-inline void STATS_UPDATE(stats_t *stats,int seqid,int pos,nt16_t nt16) {
-		((stats->seqstats[seqid]).counters)[pos] =
-		_COUNTER_INC (((stats->seqstats)[seqid].counters)[pos],nt16);
+inline void STATS_UPDATE(stats_t &stats,int seqid,int pos,nt16_t nt16) {
+		fprintf(stderr,"Going to update stats: chrom %d, pos %d, nucl %d\n", seqid, pos, nt16);
+		stats.counters[seqid][pos] = _COUNTER_CELL_INC (stats.counters[seqid][pos],nt16);
 	}
 
-KSEQ_INIT(gzFile, gzread);
 
-int generate_fasta(char *fasta_fn, stats_t *stats, cons_params_t cps){
-	return 0;
-}
-
-int load_fasta(const char *fasta_fn, stats_t *stats)
-{
-	gzFile fp;  
-    kseq_t *seq;  
-    int l;  
-    fp = gzopen(fasta_fn, "r");
-    seq = kseq_init(fp);
-    while ((l = kseq_read(seq)) >= 0) {
-        printf("name: %s\n", seq->name.s);  
-        if (seq->comment.l) printf("comment: %s\n", seq->comment.s);  
-        printf("seq: %s\n", seq->seq.s);  
-        if (seq->qual.l) printf("qual: %s\n", seq->qual.s);  
-    }  
-    kseq_destroy(seq); // STEP 5: destroy seq  
-    gzclose(fp); // STEP 6: close the file handler
-    return 0;
-}
-
-int init_stats(bam_hdr_t *header, stats_t *stats){
+/*int init_stats(bam_hdr_t *header, stats_t *stats){
 	stats = new stats_t;
 	stats->nseqs=header->n_targets;
 	stats->seqstats=new seqstat_t[stats->nseqs];
@@ -171,9 +210,9 @@ int init_stats(bam_hdr_t *header, stats_t *stats){
 		printf("seq %s, len %d\n",stats->seqstats[i].name,stats->seqstats[i].length);
 	}
 	return 0;
-}
+}*/
 
-int free_seq_stat(seqstat_t *seqstat) {
+/*int free_seq_stat(seqstat_t *seqstat) {
 	free(seqstat->name);
 	free(seqstat->counters);
 	free(seqstat);
@@ -187,7 +226,7 @@ int free_stats(stats_t *stats) {
 	free(stats);
 	return 0;
 }
-
+*/
 
 int main(int argc, const char* argv[])
 {
@@ -275,9 +314,7 @@ int main(int argc, const char* argv[])
 		return -1;
 	}
 
-	stats_t *stats=NULL;
-	init_stats(header, stats);
-
+	stats_t stats(*header);
 
 	/*
 		Load FASTA.
@@ -291,7 +328,7 @@ int main(int argc, const char* argv[])
 		}
 	}
 	if (fasta_fn.size()>0){
-		load_fasta(fasta_fn.c_str(), stats);
+		stats.load_fasta(fasta_fn);
 	}
 
 
@@ -329,17 +366,17 @@ int main(int argc, const char* argv[])
 				const int op = bam_cigar_op(cigar[k]);
 				const int ol = bam_cigar_oplen(cigar[k]);
 				int ni=0;
-				uint8_t nts16=0;
+				uint8_t nt16=0;
 
 				switch (op) {
 					case BAM_CMATCH:
 					case BAM_CDIFF:
 					case BAM_CEQUAL:
-						nts16=bam_seqi(seq, i);
+						nt16=bam_seqi(seq, i);
 						for (ni=i+ol;i<ni;i++){
 							// opravdu &stats?
-							fprintf(stderr,"Going to update stats: chrom %d, pos %d, nucl %d\n", chrom, pos+i, nts16);
-							STATS_UPDATE(stats,chrom,pos+i,nts16);
+							fprintf(stderr,"Going to update stats: chrom %d, pos %d, nucl %d\n", chrom, pos+i, nt16);
+							STATS_UPDATE(stats,chrom,pos+i,nt16);
 						}
 						break;
 
@@ -383,8 +420,6 @@ int main(int argc, const char* argv[])
 	/*
 		Free memory.
 	*/
-
-	free_stats(stats);
 
 	hts_itr_destroy(iter);
 	bam_destroy1(b);
