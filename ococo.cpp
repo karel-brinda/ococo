@@ -199,7 +199,9 @@ inline counter_t _COUNTER_CELL_INC(counter_t counter,nt16_t nt16) { \
 
 inline void STATS_UPDATE(stats_t &stats,int seqid,int pos,nt16_t nt16) {
 		fprintf(stderr,"Going to update stats: chrom %d, pos %d, nucl %d\n", seqid, pos, nt16);
+		fprintf(stderr,"Counter at pos %d: %x\n", pos, stats.counters[seqid][pos]);
 		stats.counters[seqid][pos] = _COUNTER_CELL_INC (stats.counters[seqid][pos],nt16);
+		fprintf(stderr,"Counter at pos %d: %x\n", pos, stats.counters[seqid][pos]);
 	}
 
 
@@ -358,7 +360,7 @@ int main(int argc, const char* argv[])
 		const int mapq=b->core.qual;
 		const int flags=b->core.flag;
 
-		fprintf(stderr,"pos %d, chrom %d, map q %d, flag %d, name %s \n",pos,chrom,mapq, flags, rname);
+		//fprintf(stderr,"pos %d, chrom %d, map q %d, flag %d, name %s \n",pos,chrom,mapq, flags, rname);
 
 		if (strcmp(rname,CMD_FLUSH)==0){
 			// todo: flush fasta
@@ -378,10 +380,10 @@ int main(int argc, const char* argv[])
 					case BAM_CMATCH:
 					case BAM_CDIFF:
 					case BAM_CEQUAL:
-						nt16=bam_seqi(seq, i);
 						for (ni=i+ol;i<ni;i++){
+							nt16=bam_seqi(seq, i);
 							// opravdu &stats?
-							fprintf(stderr,"Going to update stats: chrom %d, pos %d, nucl %d\n", chrom, pos+i, nt16);
+							//fprintf(stderr,"Going to update stats: chrom %d, pos %d, nucl %d\n", chrom, pos+i, nt16);
 							STATS_UPDATE(stats,chrom,pos+i,nt16);
 						}
 						break;
