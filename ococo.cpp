@@ -64,14 +64,19 @@ struct stats_t {
 	}
 
 	stats_t(bam_hdr_t &h):
-		n_seqs(h.n_targets), seq_len(new int[n_seqs]), seq_name(new char*[n_seqs]), counters(new counter_t*[n_seqs])
+		n_seqs(h.n_targets), seq_len(new int[n_seqs]()), seq_name(new char*[n_seqs]()), counters(new counter_t*[n_seqs]())
 	{
 		for (int i=0;i<n_seqs;i++){
-			seq_name[i]=new char[seq_len[i] + 1];
-     		memcpy(seq_name[i], h.target_name[i],seq_len[i] + 1);
+			seq_len[i]=h.target_len[i];
+			fprintf(stderr,"allocating %d chars\n",seq_len[i]);
+			const int seq_len_name=strlen(h.target_name[i]);
+			seq_name[i]=new char[seq_len_name+1];
+			//printf("name: %s\n",h.target_name[i]);
+     		memcpy(seq_name[i], h.target_name[i],seq_len_name+1);
 
 			counters[i]=new counter_t[seq_len[i]]();
 			//printf("seq %s, len %d\n",stats->seqstats[i].name,stats->seqstats[i].length);
+			fprintf(stderr,"ok\n");
 		}
 	}
 
@@ -98,9 +103,9 @@ struct stats_t {
 	    fp = gzopen(fasta_fn.c_str(), "r");
 	    seq = kseq_init(fp);
 	    while ((l = kseq_read(seq)) >= 0) {
-	        printf("name: %s\n", seq->name.s);  
+	        fprintf(stderr,"name: %s\n", seq->name.s);  
 	        if (seq->comment.l) printf("comment: %s\n", seq->comment.s);  
-	        printf("seq: %s\n", seq->seq.s);  
+	        fprintf(stderr,"seq: %s\n", seq->seq.s);  
 	        if (seq->qual.l) printf("qual: %s\n", seq->qual.s);  
 	    }  
 	    kseq_destroy(seq); // STEP 5: destroy seq  
@@ -242,7 +247,8 @@ int main(int argc, const char* argv[])
 
 	bool debug=false;
 	string fasta_fn;
-	string sam_fn("-");
+	//string sam_fn("-");
+	string sam_fn("BWA-MEM.bam"); //debuging
 
 	/*
 		Parse command-line parameters.
@@ -352,7 +358,7 @@ int main(int argc, const char* argv[])
 		const int mapq=b->core.qual;
 		const int flags=b->core.flag;
 
-		printf("pos %d, chrom %d, map q %d, flag %d, name %s \n",pos,chrom,mapq, flags, rname);
+		fprintf(stderr,"pos %d, chrom %d, map q %d, flag %d, name %s \n",pos,chrom,mapq, flags, rname);
 
 		if (strcmp(rname,CMD_FLUSH)==0){
 			// todo: flush fasta
