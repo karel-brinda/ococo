@@ -34,8 +34,9 @@ inline char rand_nucl(int a, int c, int g, int t){
 	const char nucls[] = {'A','C','G','T'};
 
 	const int sum=a+c+g+t;
-	const int prefsum[]={a,a+c,a+c+g,a+c+g+t};
 	const int max_val=max({a,c,g,t});
+	const int vec[]={a,c,g,t};
+	const int prefsum[]={a,a+c,a+c+g,a+c+g+t};
 
 	//printf(" a %d, c %d, g %d, t %d \n",a,c,g,t);
 	if (sum<min_vote){
@@ -45,14 +46,21 @@ inline char rand_nucl(int a, int c, int g, int t){
 	//int rn=randint(0,sum);
 	const int rn=rand() % sum;
 	char nucl;
+	int count;
+
 
 	//printf("rn %d\n",rn);
 	for(int i=0;i<4;i++){
 		if (prefsum[i] > rn) {
 			nucl=nucls[i];
+			count=vec[i];
 			//printf("selected i %d\n",i);
 			break;
 		}
+	}
+
+	if(count!=max_val){
+		nucl=tolower(nucl);
 	}
 
 	//printf("%c ",nucl);
@@ -102,13 +110,19 @@ int stats_t::load_fasta(string fasta_fn, int weight) {
 	fp = gzopen(fasta_fn.c_str(), "r");
 	seq = kseq_init(fp);
 	for(int s=0;(l = kseq_read(seq)) >= 0;s++) {
-		assert(strcmp(seq->name.s,seq_name[l])==0);
-		assert((int)seq->seq.l == seq_len[l]);
+		/*printf("%s\n",seq_name[s]);
+		printf("%s\n",seq->name.s);
+		printf("\n");
+		printf("%d\n",seq_len[s]);
+		printf("%d\n",seq->seq.l);
+		printf("\n");*/
+		assert(strcmp(seq->name.s,seq_name[s])==0);
+		assert((int)seq->seq.l == seq_len[s]);
 		if (seq->comment.l && seq_comment[s]==NULL){
 			seq_comment[s]=new char[seq->comment.l+1];
 			memcpy(seq_comment[s], seq->comment.s,seq->comment.l+1);
 		}
-		fprintf(stderr,"seq: %s\n", seq->seq.s);  
+		//fprintf(stderr,"seq: %s\n", seq->seq.s);  
 
 		for(unsigned int i=0;i<seq->seq.l;i++){
 			assert(counters[s][i]==0);
@@ -128,8 +142,13 @@ int stats_t::generate_fasta(string fasta_fn) {
 
 	char fasta_buffer[fasta_line_l];
 	for(int s=0;s<n_seqs;s++){
-		printf("%s\n",seq_name[s]);
-		fprintf(fp,">%s\n",seq_name[s]);
+		//printf("%s\n",seq_name[s]);
+		if(seq_comment[s]){
+			fprintf(fp,">%s %s\n",seq_name[s],seq_comment[s]);
+		}
+		else{
+			fprintf(fp,">%s\n",seq_name[s]);
+		}
 
 		for (int i=0,j=0;i<seq_len[s];i++,j++){
 			//fasta_buffer[j]='A';
@@ -153,9 +172,9 @@ int stats_t::generate_fasta(string fasta_fn) {
 
 void stats_t::debug_print_counters(){
 	for(int s=0;s<n_seqs;s++){
-		printf("%s\n",seq_name[s]);
+		fprintf(stderr,"%s\n",seq_name[s]);
 		for (int i=0;i<seq_len[s];i++){
-			printf("%8d %04x \n",i,counters[s][i]);
+			fprintf(stderr,"%8d %04x \n",i,counters[s][i]);
 		}
 	}
 }
@@ -175,9 +194,8 @@ int main(int argc, const char* argv[])
 	};
 
 	bool debug=false;
-	string fasta_fn("test.fa");
-	//string sam_fn("-");
-	string sam_fn("test.bam"); //debuging
+	string fasta_fn;
+	string sam_fn("-");
 
 	/*
 		Parse command-line parameters.
@@ -193,6 +211,7 @@ int main(int argc, const char* argv[])
 		po::options_description vol("OPTIONS description");
 
 		vol.add_options()
+				("sam,s", po::value<string>(&sam_fn), "Input SAM file (- for standard input) [-].")
 				("reference,r", po::value<string>(&fasta_fn), "FASTA reference file (with existing FAI index)")
 				//("algorithm,a", po::value<string>(&alg), "Algorithm for updates: majority / randomized [majority]")
 				//("counter-size,s", po::value<int>(&counterSize), "Size of counter per nucleotide in bits [3]")
@@ -336,8 +355,6 @@ int main(int argc, const char* argv[])
 				//printf("%d%c",ol,BAM_CIGAR_STR[op]);
 
 			}
-			printf("\n");
-
 		}
 		else {
 			if (debug){
@@ -355,10 +372,10 @@ int main(int argc, const char* argv[])
 	*/
 
 
-	printf("writing_file\n");
+	//printf("writing_file\n");
 	stats.generate_fasta("a.fa");
 	//stats.debug_print_counters();
-	printf("ok\n");
+	//printf("ok\n");
 
 	hts_itr_destroy(iter);
 	bam_destroy1(b);

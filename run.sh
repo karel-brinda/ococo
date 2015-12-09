@@ -1,4 +1,6 @@
 #! /usr/bin/env bash
 
-cmake . && make && samtools view -h BWA-MEM.bam | ./ococo -d
+set -x trace
+
+./ococo -s test.bam -r test.fa
 

@@ -66,6 +66,8 @@ struct stats_t {
 };
 
 
+inline char rand_nucl(int a, int c, int g, int t);
+
 
 
 /*
@@ -157,36 +159,4 @@ inline void STATS_UPDATE(stats_t &stats,int seqid,int pos,nt16_t nt16) {
 		//fprintf(stderr,"Counter at pos %d: %04x\n", pos, stats.counters[seqid][pos]);
 	}
 
-
-/*int init_stats(bam_hdr_t *header, stats_t *stats){
-	stats = new stats_t;
-	stats->nseqs=header->n_targets;
-	stats->seqstats=new seqstat_t[stats->nseqs];
-
-	for (int i=0;i<stats->nseqs;i++){
-		stats->seqstats[i].length=header->target_len[i];
-		stats->seqstats[i].name=strdup(header->target_name[i]);
-		stats->seqstats[i].counters=new counters_t[stats->seqstats[i].length];
-		printf("seq %s, len %d\n",stats->seqstats[i].name,stats->seqstats[i].length);
-	}
-	return 0;
-}*/
-
-/*int free_seq_stat(seqstat_t *seqstat) {
-	free(seqstat->name);
-	free(seqstat->counters);
-	free(seqstat);
-	return 0;
-}
-
-int free_stats(stats_t *stats) {
-	for (int i=0;i<stats->nseqs;i++){
-		free_seq_stat(&stats->seqstats[i]);
-	}
-	free(stats);
-	return 0;
-}
-*/
-
 #endif
-
