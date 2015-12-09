@@ -1,30 +1,8 @@
 #include "ococo.h"
 #include <zlib.h>  
-#include <boost/utility/binary.hpp>
 
-#include <stdint.h>
-#include <stdlib.h>
-#include <cstring>
-#include <cstdio>
-#include <unistd.h>
-#include <math.h>
-#include <inttypes.h>
-#include <stdbool.h>
-#include <assert.h>
-#include "htslib/sam.h"
-#include "htslib/faidx.h"
-#include "htslib/kstring.h"
-#include "htslib/khash.h"
-#include "htslib/kseq.h"
 
 KSEQ_INIT(gzFile, gzread);
-
-const char CMD_FLUSH[]="flush";
-
-static char bam_nt16_nt4_table[] = { 4, 0, 1, 4, 2, 4, 4, 4, 3, 4, 4, 4, 4, 4, 4, 4 };
-
-typedef uint16_t counter_t ;
-typedef unsigned char nt16_t ;
 
 
 //enum ConsAlg { CA_MAJORITY , CA_STOCHASTIC };
@@ -52,188 +30,137 @@ typedef struct {
 } stats_t;
 */
 
-struct stats_t {
-	int n_seqs;
-	int *seq_len;
-	char **seq_name;
-	counter_t **counters;
+inline char rand_nucl(int a, int c, int g, int t){
+	const char nucls[] = {'A','C','G','T'};
 
-	stats_t():
-		n_seqs(0),seq_len(NULL), seq_name(NULL), counters(NULL)
-	{		
+	const int sum=a+c+g+t;
+	const int prefsum[]={a,a+c,a+c+g,a+c+g+t};
+	const int max_val=max({a,c,g,t});
+
+	//printf(" a %d, c %d, g %d, t %d \n",a,c,g,t);
+	if (sum<min_vote){
+		return 'N';
 	}
 
-	stats_t(bam_hdr_t &h):
-		n_seqs(h.n_targets), seq_len(new int[n_seqs]()), seq_name(new char*[n_seqs]()), counters(new counter_t*[n_seqs]())
-	{
-		for (int i=0;i<n_seqs;i++){
-			seq_len[i]=h.target_len[i];
-			fprintf(stderr,"allocating %d chars\n",seq_len[i]);
-			const int seq_len_name=strlen(h.target_name[i]);
-			seq_name[i]=new char[seq_len_name+1];
-			//printf("name: %s\n",h.target_name[i]);
-     		memcpy(seq_name[i], h.target_name[i],seq_len_name+1);
+	//int rn=randint(0,sum);
+	const int rn=rand() % sum;
+	char nucl;
 
-			counters[i]=new counter_t[seq_len[i]]();
-			//printf("seq %s, len %d\n",stats->seqstats[i].name,stats->seqstats[i].length);
-			fprintf(stderr,"ok\n");
+	//printf("rn %d\n",rn);
+	for(int i=0;i<4;i++){
+		if (prefsum[i] > rn) {
+			nucl=nucls[i];
+			//printf("selected i %d\n",i);
+			break;
 		}
 	}
 
-	~stats_t(){
-		for (int i=0;i<n_seqs;i++){
-			delete[] seq_name[i];
-			delete[] counters[i];
+	//printf("%c ",nucl);
+
+	return nucl;
+}
+
+stats_t::stats_t():
+		n_seqs(0),seq_len(NULL), seq_name(NULL), seq_comment(NULL), counters(NULL)
+{
+}
+
+stats_t::stats_t(bam_hdr_t &h):
+		n_seqs(h.n_targets), seq_len(new int[n_seqs]()), seq_name(new char*[n_seqs]()), seq_comment(new char*[n_seqs]()), counters(new counter_t*[n_seqs]())
+{
+	for (int i=0;i<n_seqs;i++){
+		seq_len[i]=h.target_len[i];
+		//fprintf(stderr,"allocating %d chars\n",seq_len[i]);
+		const int seq_len_name=strlen(h.target_name[i]);
+		seq_name[i]=new char[seq_len_name+1];
+		//printf("name: %s\n",h.target_name[i]);
+		memcpy(seq_name[i], h.target_name[i],seq_len_name+1);
+
+		counters[i]=new counter_t[seq_len[i]]();
+		//printf("seq %s, len %d\n",stats->seqstats[i].name,stats->seqstats[i].length);
+		//fprintf(stderr,"ok\n");
+	}
+}
+
+stats_t::~stats_t(){
+	for (int i=0;i<n_seqs;i++){
+		delete[] seq_name[i];
+		delete[] seq_comment[i];
+		delete[] counters[i];
+	}
+	delete[] seq_len;
+	delete[] seq_name; 
+	delete[] seq_comment; 
+	delete[] counters; 
+}
+
+
+int stats_t::load_fasta(string fasta_fn, int weight) {
+	gzFile fp;  
+	kseq_t *seq;  
+	int l;  
+	fp = gzopen(fasta_fn.c_str(), "r");
+	seq = kseq_init(fp);
+	for(int s=0;(l = kseq_read(seq)) >= 0;s++) {
+		assert(strcmp(seq->name.s,seq_name[l])==0);
+		assert((int)seq->seq.l == seq_len[l]);
+		if (seq->comment.l && seq_comment[s]==NULL){
+			seq_comment[s]=new char[seq->comment.l+1];
+			memcpy(seq_comment[s], seq->comment.s,seq->comment.l+1);
 		}
-		delete[] seq_len;
-		delete[] seq_name; 
-		delete[] counters; 
-	}
+		fprintf(stderr,"seq: %s\n", seq->seq.s);  
 
-
-	//int generate_fasta(char *fasta_fn, stats_t *stats, cons_params_t cps){
-	//	return 0;
-	//}
-
-	int load_fasta(string fasta_fn)
-	{
-		gzFile fp;  
-	    kseq_t *seq;  
-	    int l;  
-	    fp = gzopen(fasta_fn.c_str(), "r");
-	    seq = kseq_init(fp);
-	    while ((l = kseq_read(seq)) >= 0) {
-	        fprintf(stderr,"name: %s\n", seq->name.s);  
-	        if (seq->comment.l) printf("comment: %s\n", seq->comment.s);  
-	        fprintf(stderr,"seq: %s\n", seq->seq.s);  
-	        if (seq->qual.l) printf("qual: %s\n", seq->qual.s);  
-	    }  
-	    kseq_destroy(seq); // STEP 5: destroy seq  
-	    gzclose(fp); // STEP 6: close the file handler
-	    return 0;
-	}
-};
-
-
-/*
-	nt16: A=1, C=2, G=4, T=8
-*/
-
-/*
-#define _NUCL_SHIFT(nt16) { \
-		(4 * bam_nt16_nt4_table[nt16]) \
-	}
-
-#define _COUNTER_VAL(counters,nt16) { \
-		(counters>>_NUCL_SHIFT(nt16)) & 0x0f \
-	}
-
-#define _COUNTER_SET(counters,nt16,value) { \
-		( \
-			value << _NUCL_SHIFT(nt16) \
-		) | ( \
-			counters \
-			^ \
-			(counters & (0x0f << _NUCL_SHIFT(nt16))) \
-		) \
-	}
-
-
-#define _COUNTER_INC_NODIV(counters,nt16) { \
-		 _COUNTER_SET (counters,nt16,_COUNTER_VAL(counters,nt16)+1) \
-	}
-
-#define _COUNTERS_NORMALIZE(counters,divide) {\
-		(counters >> divide) & 0x7777 \
-	}
-
-#define _COUNTER_INC(counters,nt16) { \
-		_COUNTER_INC_NODIV ( \
-			_COUNTERS_NORMALIZE (counters,_COUNTER_VAL(counters,nt16)==0x0f), \
-			nt16 \
-		) \
-	}
-
-#define STATS_UPDATE(stats,seqid,pos,nts16) { \
-		((stats->seqstats)[seqid].counters)[pos] = \
-		_COUNTER_INC (((stats->seqstats)[seqid].counters)[pos],nts16), \
-		(void)0 \
-	}
-*/
-
-
-inline int _CELL_SHIFT(nt16_t nt16) {
-		return 4 * bam_nt16_nt4_table[nt16];
-}
-
-inline counter_t _COUNTER_CELL_VAL(counter_t counter,nt16_t nt16) {
-		return (counter>>_CELL_SHIFT(nt16)) & 0x0f;
-}
-
-inline counter_t _COUNTER_CELL_SET(counter_t counter,nt16_t nt16,int value) {
-	return
-		(
-			value << _CELL_SHIFT(nt16) \
-		) | (
-			counter
-			^
-			(counter & (0x0f << _CELL_SHIFT(nt16)))
-		);
-}
-
-
-inline counter_t _COUNTER_CELL_INC_NODIV(counter_t counter,nt16_t nt16) {
-		 return _COUNTER_CELL_SET (counter,nt16,_COUNTER_CELL_VAL(counter,nt16)+1);
-	}
-
-inline counter_t _COUNTER_NORMALIZE(counter_t counter,bool divide) {
-		return (counter >> divide) & 0x7777;
-	}
-
-inline counter_t _COUNTER_CELL_INC(counter_t counter,nt16_t nt16) { \
-		return _COUNTER_CELL_INC_NODIV (
-			_COUNTER_NORMALIZE (counter,_COUNTER_CELL_VAL(counter,nt16)==0x0f),
-			nt16
-		);
-	}
-
-inline void STATS_UPDATE(stats_t &stats,int seqid,int pos,nt16_t nt16) {
-		fprintf(stderr,"Going to update stats: chrom %d, pos %d, nucl %d\n", seqid, pos, nt16);
-		fprintf(stderr,"Counter at pos %d: %x\n", pos, stats.counters[seqid][pos]);
-		stats.counters[seqid][pos] = _COUNTER_CELL_INC (stats.counters[seqid][pos],nt16);
-		fprintf(stderr,"Counter at pos %d: %x\n", pos, stats.counters[seqid][pos]);
-	}
-
-
-/*int init_stats(bam_hdr_t *header, stats_t *stats){
-	stats = new stats_t;
-	stats->nseqs=header->n_targets;
-	stats->seqstats=new seqstat_t[stats->nseqs];
-
-	for (int i=0;i<stats->nseqs;i++){
-		stats->seqstats[i].length=header->target_len[i];
-		stats->seqstats[i].name=strdup(header->target_name[i]);
-		stats->seqstats[i].counters=new counters_t[stats->seqstats[i].length];
-		printf("seq %s, len %d\n",stats->seqstats[i].name,stats->seqstats[i].length);
-	}
-	return 0;
-}*/
-
-/*int free_seq_stat(seqstat_t *seqstat) {
-	free(seqstat->name);
-	free(seqstat->counters);
-	free(seqstat);
+		for(unsigned int i=0;i<seq->seq.l;i++){
+			assert(counters[s][i]==0);
+			const nt16_t nt16=seq_nt16_table[(int)seq->seq.s[i]];
+			counters[s][i]=_COUNTER_CELL_SET(0,nt16,weight);
+		}
+		//if (seq->qual.l) printf("qual: %s\n", seq->qual.s);  
+	}  
+	kseq_destroy(seq); // STEP 5: destroy seq  
+	gzclose(fp); // STEP 6: close the file handler
 	return 0;
 }
 
-int free_stats(stats_t *stats) {
-	for (int i=0;i<stats->nseqs;i++){
-		free_seq_stat(&stats->seqstats[i]);
+int stats_t::generate_fasta(string fasta_fn) {
+	FILE *fp;  
+	fp = fopen(fasta_fn.c_str(), "w+");
+
+	char fasta_buffer[fasta_line_l];
+	for(int s=0;s<n_seqs;s++){
+		printf("%s\n",seq_name[s]);
+		fprintf(fp,">%s\n",seq_name[s]);
+
+		for (int i=0,j=0;i<seq_len[s];i++,j++){
+			//fasta_buffer[j]='A';
+			const int counter_a=_COUNTER_CELL_VAL(counters[s][i],seq_nt16_table['A']);
+			const int counter_c=_COUNTER_CELL_VAL(counters[s][i],seq_nt16_table['C']);
+			const int counter_g=_COUNTER_CELL_VAL(counters[s][i],seq_nt16_table['G']);
+			const int counter_t=_COUNTER_CELL_VAL(counters[s][i],seq_nt16_table['T']);
+			fasta_buffer[j]=rand_nucl(counter_a,counter_c,counter_g,counter_t);
+			if(j==fasta_line_l || i==seq_len[s]-1){
+				fwrite(fasta_buffer,1,j,fp);
+				fwrite("\n",1,1,fp);
+				j=0;
+			}
+		}
+
 	}
-	free(stats);
+
+	fclose(fp); // STEP 6: close the file handler
 	return 0;
 }
-*/
+
+void stats_t::debug_print_counters(){
+	for(int s=0;s<n_seqs;s++){
+		printf("%s\n",seq_name[s]);
+		for (int i=0;i<seq_len[s];i++){
+			printf("%8d %04x \n",i,counters[s][i]);
+		}
+	}
+}
+
+
 
 int main(int argc, const char* argv[])
 {
@@ -248,9 +175,9 @@ int main(int argc, const char* argv[])
 	};
 
 	bool debug=false;
-	string fasta_fn;
+	string fasta_fn("test.fa");
 	//string sam_fn("-");
-	string sam_fn("BWA-MEM.bam"); //debuging
+	string sam_fn("test.bam"); //debuging
 
 	/*
 		Parse command-line parameters.
@@ -336,7 +263,7 @@ int main(int argc, const char* argv[])
 		}
 	}
 	if (fasta_fn.size()>0){
-		stats.load_fasta(fasta_fn);
+		stats.load_fasta(fasta_fn,2);
 	}
 
 
@@ -348,7 +275,7 @@ int main(int argc, const char* argv[])
 	}
 	int r;
 	b = bam_init1();
-    while ((r = sam_read1(in, header, b)) >= 0) { // read one alignment from `in'
+	while ((r = sam_read1(in, header, b)) >= 0) { // read one alignment from `in'
 		const char* rname=bam_get_qname(b);
 		const uint8_t *seq=bam_get_seq(b);
 		const uint8_t *qual=bam_get_qual(b);
@@ -367,9 +294,9 @@ int main(int argc, const char* argv[])
 			break;
 		}
 
-    	if (((b->core.flag & BAM_FUNMAP)==0) && (b->core.qual)>=cps.min_mapq){
+		if (((flags & BAM_FUNMAP)==0) && mapq>=cps.min_mapq){
 
-	        for (int k=0,i=0; k < n_cigar; k++)
+			for (int k=0,i=0; k < n_cigar; k++)
 			{
 				const int op = bam_cigar_op(cigar[k]);
 				const int ol = bam_cigar_oplen(cigar[k]);
@@ -382,8 +309,6 @@ int main(int argc, const char* argv[])
 					case BAM_CEQUAL:
 						for (ni=i+ol;i<ni;i++){
 							nt16=bam_seqi(seq, i);
-							// opravdu &stats?
-							//fprintf(stderr,"Going to update stats: chrom %d, pos %d, nucl %d\n", chrom, pos+i, nt16);
 							STATS_UPDATE(stats,chrom,pos+i,nt16);
 						}
 						break;
@@ -411,15 +336,15 @@ int main(int argc, const char* argv[])
 				//printf("%d%c",ol,BAM_CIGAR_STR[op]);
 
 			}
-	        printf("\n");
+			printf("\n");
 
-    	}
-    	else {
-    		if (debug){
+		}
+		else {
+			if (debug){
 				fprintf(stderr, "Read '%s' is not used for updating counters\n", rname);
-    		}
-    	}
-    }
+			}
+		}
+	}
 	if (debug){
 		fprintf(stderr, "Reading alignments finished.\n");
 	}
@@ -428,6 +353,12 @@ int main(int argc, const char* argv[])
 	/*
 		Free memory.
 	*/
+
+
+	printf("writing_file\n");
+	stats.generate_fasta("a.fa");
+	//stats.debug_print_counters();
+	printf("ok\n");
 
 	hts_itr_destroy(iter);
 	bam_destroy1(b);
