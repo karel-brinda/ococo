@@ -157,10 +157,10 @@ int stats_t::generate_fasta(string fasta_fn) {
 			const int counter_g=_COUNTER_CELL_VAL(counters[s][i],seq_nt16_table['G']);
 			const int counter_t=_COUNTER_CELL_VAL(counters[s][i],seq_nt16_table['T']);
 			fasta_buffer[j]=rand_nucl(counter_a,counter_c,counter_g,counter_t);
-			if(j==fasta_line_l || i==seq_len[s]-1){
-				fwrite(fasta_buffer,1,j,fp);
+			if(j==fasta_line_l-1 || i==seq_len[s]-1){
+				fwrite(fasta_buffer,1,j+1,fp);
 				fwrite("\n",1,1,fp);
-				j=0;
+				j=-1;
 			}
 		}
 
