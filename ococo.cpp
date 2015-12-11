@@ -78,7 +78,6 @@ int main(int argc, const char* argv[])
 	/*
 	 * Read SAM headers.
 	 */
-
 	hts_itr_t *iter=NULL;
 
 	samFile *in = NULL;
@@ -94,6 +93,7 @@ int main(int argc, const char* argv[])
 	}
 
 	stats_t stats(*header);
+	assert(stats.check_state());
 
 	/*
 	 * Load FASTA and stats.
@@ -133,7 +133,7 @@ int main(int argc, const char* argv[])
 
 		//fprintf(stderr,"pos %d, chrom %d, map q %d, flag %d, name %s \n",pos,chrom,mapq, flags, rname);
 
-		if (((flags & BAM_FUNMAP)==0) && mapq>=cps.min_mapq){
+		if (((flags & BAM_FUNMAP)==0) && stats.seq_used[chrom] && mapq>=cps.min_mapq){
 
 			for (int k=0,i=0; k < n_cigar; k++)
 			{
@@ -190,12 +190,12 @@ int main(int argc, const char* argv[])
 	 * Generate consensus and export stats.
 	 */
 	stats.generate_consensus("consensus.fa");
+	stats.export_stats("stats.st");
 
 
 	/*
 	 * Free memory.
 	 */
-
 	hts_itr_destroy(iter);
 	bam_destroy1(b);
 	bam_hdr_destroy(header);
@@ -269,21 +269,22 @@ stats_t::stats_t():
 stats_t::stats_t(bam_hdr_t &h):
 		n_seqs(h.n_targets),
 		seq_used(new bool[n_seqs]()),
-		seq_len(new uint16_t[n_seqs]()),
+		seq_len(new int32_t[n_seqs]()),
 		seq_name(new char*[n_seqs]()),
 		seq_comment(new char*[n_seqs]()),
 		counters(new counter_t*[n_seqs]())
 {
-	assert(check_headers_bam_hdr(h));
-	for (int i=0;i<n_seqs;i++){
-		seq_len[i]=h.target_len[i];
+	for (int s=0;s<n_seqs;s++){
+		seq_len[s]=h.target_len[s];
+		printf("len %d\n",h.target_len[s]);
+		seq_used[s]=true;
 		//fprintf(stderr,"allocating %d chars\n",seq_len[i]);
-		const int seq_len_name=strlen(h.target_name[i]);
-		seq_name[i]=new char[seq_len_name+1];
+		const int seq_len_name=strlen(h.target_name[s]);
+		seq_name[s]=new char[seq_len_name+1];
 		//printf("name: %s\n",h.target_name[i]);
-		memcpy(seq_name[i], h.target_name[i],seq_len_name+1);
+		memcpy(seq_name[s], h.target_name[s],seq_len_name+1);
 
-		counters[i]=new counter_t[seq_len[i]]();
+		counters[s]=new counter_t[seq_len[s]]();
 		//printf("seq %s, len %d\n",stats->seqstats[i].name,stats->seqstats[i].length);
 		//fprintf(stderr,"ok\n");
 	}
@@ -336,7 +337,7 @@ bool stats_t::check_state(){
 		return false;
 
 	for(int i=0;i<n_seqs;i++){
-		if(seq_name[i]==NULL || seq_comment[i]==NULL || counters[i]==NULL){
+		if(seq_name[i]==NULL || counters[i]==NULL){
 			return false;
 		}
 	}
@@ -350,6 +351,7 @@ bool stats_t::check_headers_fai(const string &fai_fn){
 	//todo
 	return true;
 }
+
 bool stats_t::check_headers_bam_hdr(const bam_hdr_t &h){
 	if (!check_state()) return false;
 
@@ -357,7 +359,7 @@ bool stats_t::check_headers_bam_hdr(const bam_hdr_t &h){
 	//if ((int)seq->seq.l != seq_len[s]) return false;
 
 	for(int s=0;s<n_seqs;s++){
-		if(seq_len[s]!=h.target_len[s]) return false;
+		if(seq_len[s]!=(int)h.target_len[s]) return false;
 		if (strcmp(h.target_name[s],seq_name[s])!=0) return false;
 	}
 
@@ -376,17 +378,17 @@ int stats_t::import_stats(const string &stats_fn){
 	FILE *fo=fopen(stats_fn.c_str(),"r");
 
 	char delim[stats_delim_l]={};
-	uint16_t seq_name_l;
-	uint16_t seq_comment_l;
+	int16_t seq_name_l;
+	int16_t seq_comment_l;
 
-	uint16_t n_seqs_loaded;
-	bool     seq_used_loaded;
-	uint16_t seq_len_loaded;
-	uint16_t seq_name_l_loaded;
-	uint16_t seq_comment_l_loaded;
+	int16_t n_seqs_loaded;
+	bool    seq_used_loaded;
+	int32_t seq_len_loaded;
+	int16_t seq_name_l_loaded;
+	int16_t seq_comment_l_loaded;
 
 	/* number of seqs */
-	fread(&n_seqs_loaded,sizeof(uint16_t),1,fo);
+	fread(&n_seqs_loaded,sizeof(int16_t),1,fo);
 	assert(n_seqs_loaded = n_seqs);
 
 	for(int i=0;i<n_seqs;i++){
@@ -401,11 +403,11 @@ int stats_t::import_stats(const string &stats_fn){
 		seq_comment_l=strlen(seq_comment[i]);
 		fread(&seq_used_loaded,sizeof(bool),1,fo);
 		assert(seq_used_loaded==seq_used[i]);
-		fread(&seq_len_loaded,sizeof(uint16_t),1,fo);
+		fread(&seq_len_loaded,sizeof(int32_t),1,fo);
 		assert(seq_len_loaded==seq_len[i]);
-		fread(&seq_name_l_loaded,sizeof(uint16_t),1,fo);
+		fread(&seq_name_l_loaded,sizeof(int16_t),1,fo);
 		assert(seq_name_l_loaded==seq_name_l);
-		fread(&seq_comment_l_loaded,sizeof(uint16_t),1,fo);
+		fread(&seq_comment_l_loaded,sizeof(int16_t),1,fo);
 		assert(seq_comment_l_loaded==seq_comment_l);
 
 		/* strings */
@@ -430,14 +432,14 @@ int stats_t::export_stats(const string &stats_fn){
 	FILE *fo=fopen(stats_fn.c_str(),"w+");
 
 	char delim[stats_delim_l]={};
-	uint16_t seq_name_l;
-	uint16_t seq_comment_l;
+	int16_t seq_name_l;
+	int16_t seq_comment_l;
 
 	delim[0]='\255';
 	delim[stats_delim_l-1]='\255';
 
 	/* number of seqs */
-	fwrite(&n_seqs,sizeof(uint16_t),1,fo);
+	fwrite(&n_seqs,sizeof(int16_t),1,fo);
 
 	for(int i=0;i<n_seqs;i++){
 
@@ -446,17 +448,23 @@ int stats_t::export_stats(const string &stats_fn){
 
 		/* lengts */
 		seq_name_l=strlen(seq_name[i]);
-		seq_comment_l=strlen(seq_comment[i]);
+		if (seq_comment[i]==NULL){
+			seq_comment_l=0;
+		}
+		else{
+			seq_comment_l=strlen(seq_comment[i]);
+		}
 		fwrite(&seq_used[i],sizeof(bool),1,fo);
-		fwrite(&seq_len[i],sizeof(uint16_t),1,fo);
-		fwrite(&seq_name_l,sizeof(uint16_t),1,fo);
-		fwrite(&seq_comment_l,sizeof(uint16_t),1,fo);
+		fwrite(&seq_len[i],sizeof(int32_t),1,fo);
+		fwrite(&seq_name_l,sizeof(int16_t),1,fo);
+		fwrite(&seq_comment_l,sizeof(int16_t),1,fo);
 
 		/* strings */
 		assert(seq_name[i] != NULL);
 		fwrite(seq_name[i],sizeof(char),seq_name_l+1,fo);
-		assert(seq_comment[i] != NULL);
-		fwrite(seq_comment[i],sizeof(char),seq_comment_l+1,fo);
+		if(seq_comment[i] != NULL){
+			fwrite(seq_comment[i],sizeof(char),seq_comment_l+1,fo);
+		}
 
 		/* counters */
 		assert(counters[i] != NULL);

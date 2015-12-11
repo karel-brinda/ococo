@@ -74,9 +74,9 @@ bool file_exists(const string &fn);
  ********************************/
 
 struct stats_t {
-	uint16_t  n_seqs;
+	int16_t   n_seqs;
 	bool      *seq_used;
-	uint16_t  *seq_len;
+	int32_t   *seq_len;
 	char      **seq_name;
 	char      **seq_comment;
 	counter_t **counters;
@@ -159,26 +159,27 @@ inline counter_t _COUNTER_CELL_SET(counter_t counter,nt16_t nt16,int value) {
 }
 
 inline counter_t _COUNTER_CELL_INC_NODIV(counter_t counter,nt16_t nt16) {
-		 return _COUNTER_CELL_SET (counter,nt16,_COUNTER_CELL_VAL(counter,nt16)+1);
-	}
+	return _COUNTER_CELL_SET (counter,nt16,_COUNTER_CELL_VAL(counter,nt16)+1);
+}
 
 inline counter_t _COUNTER_NORMALIZE(counter_t counter,bool divide) {
-		if(divide) fprintf(stderr,"Shift counter: %04x\n", counter);
+	if(divide) fprintf(stderr,"Shift counter: %04x\n", counter);
 		return (counter >> divide) & 0x7777;
-	}
+}
 
 inline counter_t _COUNTER_CELL_INC(counter_t counter,nt16_t nt16) { \
-		return _COUNTER_CELL_INC_NODIV (
-			_COUNTER_NORMALIZE (counter,_COUNTER_CELL_VAL(counter,nt16)==0x0f),
-			nt16
-		);
-	}
+	return _COUNTER_CELL_INC_NODIV (
+		_COUNTER_NORMALIZE (counter,_COUNTER_CELL_VAL(counter,nt16)==0x0f),
+		nt16
+	);
+}
 
 inline void STATS_UPDATE(stats_t &stats,int seqid,int pos,nt16_t nt16) {
-		//fprintf(stderr,"Going to update stats: chrom %d, pos %d, nucl %d\n", seqid, pos, nt16);
-		//fprintf(stderr,"Counter at pos %d: %04x\n", pos, stats.counters[seqid][pos]);
-		stats.counters[seqid][pos] = _COUNTER_CELL_INC (stats.counters[seqid][pos],nt16);
-		//fprintf(stderr,"Counter at pos %d: %04x\n", pos, stats.counters[seqid][pos]);
-	}
+	assert(stats.seq_len[seqid]>pos);
+	//fprintf(stderr,"Going to update stats: chrom %d, pos %d, nucl %d\n", seqid, pos, nt16);
+	//fprintf(stderr,"Counter at pos %d: %04x\n", pos, stats.counters[seqid][pos]);
+	stats.counters[seqid][pos] = _COUNTER_CELL_INC (stats.counters[seqid][pos],nt16);
+	//fprintf(stderr,"Counter at pos %d: %04x\n", pos, stats.counters[seqid][pos]);
+}
 
 #endif
