@@ -28,112 +28,115 @@
 
 using namespace std;
 
-const int fasta_line_l=50;
 
-const int min_vote=2;
 
-const int stats_delim_l=10;
+/*********************
+ *** Configuration ***
+ *********************/
 
-//extern const unsigned char seq_nt16_table[256];
-//extern const char seq_nt16_str[16];
-//extern const unsigned char seq_nt16_int[256];
-//static char bam_nt16_nt4_table[] = { 4, 0, 1, 4, 2, 4, 4, 4, 3, 4, 4, 4, 4, 4, 4, 4 };
+const int  fasta_line_l = 50;
+const int      min_vote =  2;
+const int stats_delim_l = 10;
+
+
+
+/****************************
+ *** Auxiliary data types ***
+ ****************************/
 
 typedef uint16_t counter_t ;
 typedef unsigned char nt16_t ;
 
+typedef struct {
+	int min_mapq;
+	int min_baseq;
+} cons_params_t;
 
+
+
+/***************************
+ *** Auxiliary functions ***
+ ***************************/
+
+// Generate randomly nucleotide with respect to given frequencies.
+inline char rand_nucl(int a, int c, int g, int t);
+
+// Print error message and exit with code -1.
 void error_exit(const char * format, ...);
+
+// Test if a file exists.
 bool file_exists(const string &fn);
 
+
+
+/********************************
+ *** Structure for statistics ***
+ ********************************/
+
 struct stats_t {
-	uint16_t n_seqs;
-	bool *seq_used;
-	uint16_t *seq_len;
-	char **seq_name;
-	char **seq_comment;
+	uint16_t  n_seqs;
+	bool      *seq_used;
+	uint16_t  *seq_len;
+	char      **seq_name;
+	char      **seq_comment;
 	counter_t **counters;
 
 	stats_t();
 	stats_t(bam_hdr_t &h);
 	~stats_t();
 
+
+	/***********************
+	 *** Loading headers ***
+	 ***********************/
+
+	// Load headers from a FAI index.
 	int load_headers_fai(const string &fai_fn);
-	int load_headers_fa(const string &fasta_fn, int weight=0);
+
+	// Load header from a FASTA file and initialize statistics (to level).
+	int load_headers_fa(const string &fasta_fn, int level=0);
+
+	// Loader header from a BAM.
 	int load_headers_bam_hdr(const bam_hdr_t &h);
 
+
+	/************************
+	 *** Checking headers ***
+	 ************************/
+
+	// Check if everything was initialized.
+	bool check_state();
+
+	// Check if a FAI header corresponds to the stats.
 	bool check_headers_fai(const string &fai_fn);
+
+	// Check if a BAM header corresponds to the stats.
 	bool check_headers_bam_hdr(const bam_hdr_t &h);
+
+
+	/***********
+	 *** I/O ***
+	 ***********/
 
 	int import_stats(const string &stats_fn);
 	int export_stats(const string &stats_fn);
 
-	int generate_fasta(const string &fasta_fn);
+	// Generate consensus probabilistically.
+	int generate_consensus(const string &fasta_fn);
+
+
+	/****************
+	 *** Debuging ***
+	 ****************/
 
 	void debug_print_counters();
 };
 
 
-/*! @typedef
- @abstract Structure for parameters for consensus calling..
- @field min_mapq    Minimum mapping quality to increase counter.
- @field min_baseq   Minimum base quality to increase counter.
- */
-typedef struct {
-	int min_mapq;
-	int min_baseq;
-}  cons_params_t;
 
-
-inline char rand_nucl(int a, int c, int g, int t);
-
-
-
-/*
-	nt16: A=1, C=2, G=4, T=8
-*/
-
-/*
-#define _NUCL_SHIFT(nt16) { \
-		(4 * bam_nt16_nt4_table[nt16]) \
-	}
-
-#define _COUNTER_VAL(counters,nt16) { \
-		(counters>>_NUCL_SHIFT(nt16)) & 0x0f \
-	}
-
-#define _COUNTER_SET(counters,nt16,value) { \
-		( \
-			value << _NUCL_SHIFT(nt16) \
-		) | ( \
-			counters \
-			^ \
-			(counters & (0x0f << _NUCL_SHIFT(nt16))) \
-		) \
-	}
-
-
-#define _COUNTER_INC_NODIV(counters,nt16) { \
-		 _COUNTER_SET (counters,nt16,_COUNTER_VAL(counters,nt16)+1) \
-	}
-
-#define _COUNTERS_NORMALIZE(counters,divide) {\
-		(counters >> divide) & 0x7777 \
-	}
-
-#define _COUNTER_INC(counters,nt16) { \
-		_COUNTER_INC_NODIV ( \
-			_COUNTERS_NORMALIZE (counters,_COUNTER_VAL(counters,nt16)==0x0f), \
-			nt16 \
-		) \
-	}
-
-#define STATS_UPDATE(stats,seqid,pos,nts16) { \
-		((stats->seqstats)[seqid].counters)[pos] = \
-		_COUNTER_INC (((stats->seqstats)[seqid].counters)[pos],nts16), \
-		(void)0 \
-	}
-*/
+/**********************************
+ *** Manipulating with counters ***
+ **********************************/
 
 
 inline int _CELL_SHIFT(nt16_t nt16) {

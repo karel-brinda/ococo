@@ -1,6 +1,11 @@
 ococo
 a.fa
 
+*~
+
+*.anjuta
+.anjuta*
+
 CMakeCache.txt
 CMakeFiles
 CMakeScripts

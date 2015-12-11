@@ -37,8 +37,8 @@ int main(int argc, const char* argv[])
 
 		vol.add_options()
 				("input,i", po::value<string>(&sam_fn)->required(), "Input SAM/BAM file (- for standard input).")
-				("fa0,f", po::value<string>(&fasta0_fn), "Initial FASTA reference file.")
-				("fa1,g", po::value<string>(&fasta1_fn), "Up-to-date FASTA reference.")
+				("init-fasta,f", po::value<string>(&fasta0_fn), "Initial FASTA reference.")
+				("consensus-fasta,c", po::value<string>(&fasta1_fn), "Consensus (up-to-date FASTA reference).")
 				("stats,s", po::value<string>(&stats_fn), "File with up-to-date statistics.")
 				//("algorithm,a", po::value<string>(&alg), "Algorithm for updates: majority / randomized [majority]")
 				//("counter-size,s", po::value<int>(&counterSize), "Size of counter per nucleotide in bits [3]")
@@ -112,7 +112,7 @@ int main(int argc, const char* argv[])
 
 
 	/*
-	 * Read alignments (main loop).
+	 * Process alignments.
 	 */
 	if (debug){
 		fprintf(stderr, "Reading alignments started.\n");
@@ -187,17 +187,14 @@ int main(int argc, const char* argv[])
 	}
 
 	/*
-	 * Save FASTA and stats.
+	 * Generate consensus and export stats.
 	 */
+	stats.generate_consensus("consensus.fa");
+
 
 	/*
 	 * Free memory.
 	 */
-
-	//printf("writing_file\n");
-	stats.generate_fasta("a.fa");
-	//stats.debug_print_counters();
-	//printf("ok\n");
 
 	hts_itr_destroy(iter);
 	bam_destroy1(b);
@@ -277,6 +274,7 @@ stats_t::stats_t(bam_hdr_t &h):
 		seq_comment(new char*[n_seqs]()),
 		counters(new counter_t*[n_seqs]())
 {
+	assert(check_headers_bam_hdr(h));
 	for (int i=0;i<n_seqs;i++){
 		seq_len[i]=h.target_len[i];
 		//fprintf(stderr,"allocating %d chars\n",seq_len[i]);
@@ -312,12 +310,6 @@ int stats_t::load_headers_fa(const string &fasta_fn, int weight) {
 	fp = gzopen(fasta_fn.c_str(), "r");
 	seq = kseq_init(fp);
 	for(int s=0;(l = kseq_read(seq)) >= 0;s++) {
-		/*printf("%s\n",seq_name[s]);
-		printf("%s\n",seq->name.s);
-		printf("\n");
-		printf("%d\n",seq_len[s]);
-		printf("%d\n",seq->seq.l);
-		printf("\n");*/
 		assert(strcmp(seq->name.s,seq_name[s])==0);
 		assert((int)seq->seq.l == seq_len[s]);
 		if (seq->comment.l && seq_comment[s]==NULL){
@@ -338,16 +330,49 @@ int stats_t::load_headers_fa(const string &fasta_fn, int weight) {
 	return 0;
 }
 
+bool stats_t::check_state(){
+	if(n_seqs==0) return false;
+	if(seq_used==NULL || seq_len==NULL || seq_name==NULL || seq_comment==NULL || counters==NULL)
+		return false;
+
+	for(int i=0;i<n_seqs;i++){
+		if(seq_name[i]==NULL || seq_comment[i]==NULL || counters[i]==NULL){
+			return false;
+		}
+	}
+
+	return true;
+}
+
 bool stats_t::check_headers_fai(const string &fai_fn){
+	if (!check_state()) return false;
+
 	//todo
 	return true;
 }
 bool stats_t::check_headers_bam_hdr(const bam_hdr_t &h){
-	//todo
+	if (!check_state()) return false;
+
+	//if (strcmp(seq->name.s,seq_name[s])!=0) return false;
+	//if ((int)seq->seq.l != seq_len[s]) return false;
+
+	for(int s=0;s<n_seqs;s++){
+		if(seq_len[s]!=h.target_len[s]) return false;
+		if (strcmp(h.target_name[s],seq_name[s])!=0) return false;
+	}
+
+
+	/*for(int i=0;i<n_seqs;i++){
+		if (strcmp(seq->name.s,seq_name[s])!=0) return false;
+		if ((int)seq->seq.l != seq_len[s]) return false;
+	}*/
+
 	return true;
 }
 
 int stats_t::import_stats(const string &stats_fn){
+	assert(check_state());
+
 	FILE *fo=fopen(stats_fn.c_str(),"r");
 
 	char delim[stats_delim_l]={};
@@ -359,11 +384,6 @@ int stats_t::import_stats(const string &stats_fn){
 	uint16_t seq_len_loaded;
 	uint16_t seq_name_l_loaded;
 	uint16_t seq_comment_l_loaded;
-
-	assert(seq_used!=NULL);
-	assert(seq_len!=NULL);
-	assert(seq_name!=NULL);
-	assert(seq_comment!=NULL);
 
 	/* number of seqs */
 	fread(&n_seqs_loaded,sizeof(uint16_t),1,fo);
@@ -389,15 +409,13 @@ int stats_t::import_stats(const string &stats_fn){
 		assert(seq_comment_l_loaded==seq_comment_l);
 
 		/* strings */
-		assert(seq_name[i] != NULL);
+		// values of strings are not checked
 		char seq_name_loaded[seq_name_l+1];
 		fread(seq_name_loaded,sizeof(char),seq_name_l+1,fo);
-		assert(seq_comment[i] != NULL);
 		char seq_comment_loaded[seq_comment_l+1];
 		fread(seq_comment_loaded,sizeof(char),seq_comment_l+1,fo);
 
 		/* counters */
-		assert(counters[i]!=NULL);
 		fread(counters[i],sizeof(counter_t),seq_len[i],fo);
 	}
 
@@ -407,6 +425,8 @@ int stats_t::import_stats(const string &stats_fn){
 }
 
 int stats_t::export_stats(const string &stats_fn){
+	assert(check_state());
+
 	FILE *fo=fopen(stats_fn.c_str(),"w+");
 
 	char delim[stats_delim_l]={};
@@ -448,7 +468,9 @@ int stats_t::export_stats(const string &stats_fn){
 }
 
 
-int stats_t::generate_fasta(const string &fasta_fn) {
+int stats_t::generate_consensus(const string &fasta_fn) {
+	assert(check_state());
+
 	FILE *fp;  
 	fp = fopen(fasta_fn.c_str(), "w+");
 
@@ -478,7 +500,7 @@ int stats_t::generate_fasta(const string &fasta_fn) {
 
 	}
 
-	fclose(fp); // STEP 6: close the file handler
+	fclose(fp);
 	return 0;
 }
 
