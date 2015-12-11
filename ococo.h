@@ -1,6 +1,7 @@
 #ifndef _OCOCO_H_
 #define _OCOCO_H_
 
+
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
@@ -12,6 +13,8 @@
 #include <assert.h>
 #include <zlib.h>  
 
+#define BOOST_LOG_DYN_LINK
+
 #include <boost/format.hpp>
 
 #include <boost/program_options.hpp>
@@ -19,6 +22,9 @@
 #include <boost/program_options/parsers.hpp>
 #include <boost/program_options/variables_map.hpp>
 
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
+#include <boost/log/expressions.hpp>
 
 #include "htslib/sam.h"
 #include "htslib/faidx.h"
@@ -28,7 +34,7 @@
 
 
 using namespace std;
-
+namespace logging = boost::log;
 
 
 /*********************
@@ -38,7 +44,6 @@ using namespace std;
 const int  fasta_line_l = 50;
 const int      min_vote =  2;
 const int stats_delim_l = 10;
-
 
 
 /****************************
@@ -68,6 +73,14 @@ void error_exit(const char * format, ...);
 // Test if a file exists.
 bool file_exists(const string &fn);
 
+// Init Boost logging,
+void boost_logging_init()
+{
+	logging::core::get()->set_filter
+	(
+		logging::trivial::severity >= logging::trivial::warning
+	);
+}
 
 
 /********************************

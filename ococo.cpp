@@ -1,12 +1,11 @@
 #include "ococo.h"
 
-#include <boost/log/trivial.hpp>
-
-
 KSEQ_INIT(gzFile, gzread);
 
 int main(int argc, const char* argv[])
 {
+
+	boost_logging_init();
 
 	/*
     BOOST_LOG_TRIVIAL(trace) << "A trace severity message";
