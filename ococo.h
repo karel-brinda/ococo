@@ -11,8 +11,6 @@
 #include <math.h>
 #include <assert.h>
 
-
-
 #include <boost/format.hpp>
 
 #include <boost/program_options.hpp>
@@ -34,7 +32,7 @@ const int fasta_line_l=50;
 
 const int min_vote=2;
 
-const char CMD_FLUSH[]="flush";
+const int stats_delim_l=10;
 
 //extern const unsigned char seq_nt16_table[256];
 //extern const char seq_nt16_str[16];
@@ -44,9 +42,14 @@ const char CMD_FLUSH[]="flush";
 typedef uint16_t counter_t ;
 typedef unsigned char nt16_t ;
 
+
+void error_exit(const char * format, ...);
+bool file_exists(const string &fn);
+
 struct stats_t {
-	int n_seqs;
-	int *seq_len;
+	uint16_t n_seqs;
+	bool *seq_used;
+	uint16_t *seq_len;
 	char **seq_name;
 	char **seq_comment;
 	counter_t **counters;
@@ -54,10 +57,32 @@ struct stats_t {
 	stats_t();
 	stats_t(bam_hdr_t &h);
 	~stats_t();
-	int load_fasta(string fasta_fn, int weight);
-	int generate_fasta(string fasta_fn);
+
+	int load_headers_fai(const string &fai_fn);
+	int load_headers_fa(const string &fasta_fn, int weight=0);
+	int load_headers_bam_hdr(const bam_hdr_t &h);
+
+	bool check_headers_fai(const string &fai_fn);
+	bool check_headers_bam_hdr(const bam_hdr_t &h);
+
+	int import_stats(const string &stats_fn);
+	int export_stats(const string &stats_fn);
+
+	int generate_fasta(const string &fasta_fn);
+
 	void debug_print_counters();
 };
+
+
+/*! @typedef
+ @abstract Structure for parameters for consensus calling..
+ @field min_mapq    Minimum mapping quality to increase counter.
+ @field min_baseq   Minimum base quality to increase counter.
+ */
+typedef struct {
+	int min_mapq;
+	int min_baseq;
+}  cons_params_t;
 
 
 inline char rand_nucl(int a, int c, int g, int t);
