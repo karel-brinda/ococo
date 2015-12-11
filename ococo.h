@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <assert.h>
+#include <zlib.h>  
 
 #include <boost/format.hpp>
 

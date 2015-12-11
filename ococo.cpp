@@ -1,11 +1,21 @@
 #include "ococo.h"
-#include <zlib.h>  
+
+#include <boost/log/trivial.hpp>
 
 
 KSEQ_INIT(gzFile, gzread);
 
 int main(int argc, const char* argv[])
 {
+
+	/*
+    BOOST_LOG_TRIVIAL(trace) << "A trace severity message";
+    BOOST_LOG_TRIVIAL(debug) << "A debug severity message";
+    BOOST_LOG_TRIVIAL(info) << "An informational severity message";
+    BOOST_LOG_TRIVIAL(warning) << "A warning severity message";
+    BOOST_LOG_TRIVIAL(error) << "An error severity message";
+    BOOST_LOG_TRIVIAL(fatal) << "A fatal severity message";
+	*/
 
 	/*
 	 * Default configuration.
@@ -106,10 +116,14 @@ int main(int argc, const char* argv[])
 			fprintf(stderr, "No FASTA provided.\n");
 		}
 	}
-	if (fasta0_fn.size()>0){
-		stats.load_headers_fa(fasta0_fn,2);
+	if (stats_fn.size()>0 && file_exists(stats_fn)){
+		stats.import_stats(stats_fn);
 	}
-
+	else{
+		if (fasta0_fn.size()>0){
+			stats.load_headers_fa(fasta0_fn,2);
+		}
+	}
 
 	/*
 	 * Process alignments.
@@ -189,8 +203,13 @@ int main(int argc, const char* argv[])
 	/*
 	 * Generate consensus and export stats.
 	 */
-	stats.generate_consensus("consensus.fa");
-	stats.export_stats("stats.st");
+	if (fasta1_fn.size()>0){
+		stats.generate_consensus(fasta1_fn);
+	}
+
+	if (stats_fn.size()>0){
+		stats.export_stats(stats_fn);
+	}
 
 
 	/*
@@ -400,7 +419,7 @@ int stats_t::import_stats(const string &stats_fn){
 
 		/* lengts */
 		seq_name_l=strlen(seq_name[i]);
-		seq_comment_l=strlen(seq_comment[i]);
+		seq_comment_l=seq_comment[i]==NULL ? 0 : strlen(seq_comment[i]);
 		fread(&seq_used_loaded,sizeof(bool),1,fo);
 		assert(seq_used_loaded==seq_used[i]);
 		fread(&seq_len_loaded,sizeof(int32_t),1,fo);
@@ -448,12 +467,8 @@ int stats_t::export_stats(const string &stats_fn){
 
 		/* lengts */
 		seq_name_l=strlen(seq_name[i]);
-		if (seq_comment[i]==NULL){
-			seq_comment_l=0;
-		}
-		else{
-			seq_comment_l=strlen(seq_comment[i]);
-		}
+		seq_comment_l=seq_comment[i]==NULL ? 0 : strlen(seq_comment[i]);
+
 		fwrite(&seq_used[i],sizeof(bool),1,fo);
 		fwrite(&seq_len[i],sizeof(int32_t),1,fo);
 		fwrite(&seq_name_l,sizeof(int16_t),1,fo);
@@ -505,7 +520,6 @@ int stats_t::generate_consensus(const string &fasta_fn) {
 				j=-1;
 			}
 		}
-
 	}
 
 	fclose(fp);
