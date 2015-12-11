@@ -95,7 +95,7 @@ struct stats_t {
 	char      **seq_comment;
 	counter_t **counters;
 
-	stats_t();
+	//stats_t();
 	stats_t(bam_hdr_t &h);
 	~stats_t();
 

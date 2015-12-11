@@ -42,9 +42,10 @@ int main(int argc, const char* argv[])
 		po::positional_options_description pos;
 		pos.add("input-file", -1);
 
-		po::options_description vol("OPTIONS description");
+		po::options_description vol("Ococo: On-line consensus calling.");
 
 		vol.add_options()
+			    //("help", "Print help message")
 				("input,i", po::value<string>(&sam_fn)->required(), "Input SAM/BAM file (- for standard input).")
 				("init-fasta,f", po::value<string>(&fasta0_fn), "Initial FASTA reference.")
 				("consensus-fasta,c", po::value<string>(&fasta1_fn), "Consensus (up-to-date FASTA reference).")
@@ -62,16 +63,22 @@ int main(int argc, const char* argv[])
 		try
 		{
 			po::store(po::command_line_parser(argc, argv).options(vol).positional(pos).run(),vm); // can throw
+			po::notify(vm); // throws on error, so do after help in case there are any problems
 
 			if(vm.count("debug")){
 				debug=true;
 			}
 
-			po::notify(vm); // throws on error, so do after help in case there are any problems
+			/*if (vm.count("help")) {
+				cout << vol << "\n";
+				return EXIT_FAILURE;
+			}*/
+
 
 		}
 		catch(po::error& e)
 		{
+			cout << vol << "\n";
 			fprintf(stderr,"Error: %s.\n",e.what());
 			return EXIT_FAILURE;
 		}
@@ -222,6 +229,7 @@ int main(int argc, const char* argv[])
 	return 0;
 }
 
+
 void error_exit(const char * format, ...){
 	va_list args;
 	va_start (args, format);
@@ -252,7 +260,7 @@ inline char rand_nucl(int a, int c, int g, int t){
 	//int rn=randint(0,sum);
 	const int rn=rand() % sum;
 	char nucl;
-	int count;
+	int count=0;
 
 
 	//printf("rn %d\n",rn);
@@ -274,15 +282,16 @@ inline char rand_nucl(int a, int c, int g, int t){
 	return nucl;
 }
 
-stats_t::stats_t():
+
+/*stats_t::stats_t():
 		n_seqs(0),
 		seq_used(NULL),
 		seq_len(NULL),
 		seq_name(NULL),
 		seq_comment(NULL),
 		counters(NULL)
-{
-}
+{}*/
+
 
 stats_t::stats_t(bam_hdr_t &h):
 		n_seqs(h.n_targets),
@@ -307,6 +316,7 @@ stats_t::stats_t(bam_hdr_t &h):
 		//fprintf(stderr,"ok\n");
 	}
 }
+
 
 stats_t::~stats_t(){
 	for (int i=0;i<n_seqs;i++){
@@ -349,6 +359,7 @@ int stats_t::load_headers_fa(const string &fasta_fn, int weight) {
 	return 0;
 }
 
+
 bool stats_t::check_state(){
 	if(n_seqs==0) return false;
 	if(seq_used==NULL || seq_len==NULL || seq_name==NULL || seq_comment==NULL || counters==NULL)
@@ -363,12 +374,14 @@ bool stats_t::check_state(){
 	return true;
 }
 
+
 bool stats_t::check_headers_fai(const string &fai_fn){
 	if (!check_state()) return false;
 
 	//todo
 	return true;
 }
+
 
 bool stats_t::check_headers_bam_hdr(const bam_hdr_t &h){
 	if (!check_state()) return false;
@@ -389,6 +402,7 @@ bool stats_t::check_headers_bam_hdr(const bam_hdr_t &h){
 
 	return true;
 }
+
 
 int stats_t::import_stats(const string &stats_fn){
 	assert(check_state());
@@ -443,6 +457,7 @@ int stats_t::import_stats(const string &stats_fn){
 	fclose(fo);
 	return 0;
 }
+
 
 int stats_t::export_stats(const string &stats_fn){
 	assert(check_state());
@@ -508,10 +523,10 @@ int stats_t::generate_consensus(const string &fasta_fn) {
 
 		for (int i=0,j=0;i<seq_len[s];i++,j++){
 			//fasta_buffer[j]='A';
-			const int counter_a=_COUNTER_CELL_VAL(counters[s][i],seq_nt16_table['A']);
-			const int counter_c=_COUNTER_CELL_VAL(counters[s][i],seq_nt16_table['C']);
-			const int counter_g=_COUNTER_CELL_VAL(counters[s][i],seq_nt16_table['G']);
-			const int counter_t=_COUNTER_CELL_VAL(counters[s][i],seq_nt16_table['T']);
+			const int counter_a=_COUNTER_CELL_VAL(counters[s][i],seq_nt16_table[(int)'A']);
+			const int counter_c=_COUNTER_CELL_VAL(counters[s][i],seq_nt16_table[(int)'C']);
+			const int counter_g=_COUNTER_CELL_VAL(counters[s][i],seq_nt16_table[(int)'G']);
+			const int counter_t=_COUNTER_CELL_VAL(counters[s][i],seq_nt16_table[(int)'T']);
 			fasta_buffer[j]=rand_nucl(counter_a,counter_c,counter_g,counter_t);
 			if(j==fasta_line_l-1 || i==seq_len[s]-1){
 				fwrite(fasta_buffer,1,j+1,fp);
@@ -524,6 +539,7 @@ int stats_t::generate_consensus(const string &fasta_fn) {
 	fclose(fp);
 	return 0;
 }
+
 
 void stats_t::debug_print_counters(){
 	for(int s=0;s<n_seqs;s++){
