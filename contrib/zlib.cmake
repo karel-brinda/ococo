@@ -15,8 +15,9 @@ ExternalProject_Add(zlib
 #    CMAKE_ARGS -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
 #               -DCMAKE_INSTALL_PREFIX=${zlib_INSTALL}
 #               -DAMD64=ON
-    LOG_DOWNLOAD 1
-    LOG_INSTALL 1
+    LOG_DOWNLOAD ON
+    LOG_CONFIGURE ON
+    LOG_BUILD ON 
     )
 
 include_directories(${zlib_INSTALL}/include)

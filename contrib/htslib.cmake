@@ -20,7 +20,9 @@ ExternalProject_Add(htslib
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${MAKE_COMMAND} lib-static
     INSTALL_COMMAND ${MAKE_COMMAND} install prefix=${htslib_INSTALL}
-    LOG_DOWNLOAD 1
+    LOG_DOWNLOAD ON
+    LOG_CONFIGURE ON
+    LOG_BUILD ON 
     )
 
 add_dependencies(htslib zlib)

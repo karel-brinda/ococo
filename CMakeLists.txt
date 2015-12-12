@@ -9,6 +9,7 @@ INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
 
 include("contrib/htslib.cmake")
 include("contrib/zlib.cmake")
+include("contrib/googletest.cmake")
 
 #list( APPEND CMAKE_CXX_FLAGS "-std=gnu++11  -O3 -DNDEBUG ${CMAKE_CXX_FLAGS}")
 list( APPEND CMAKE_CXX_FLAGS "-std=c++11")
