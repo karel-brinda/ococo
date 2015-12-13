@@ -74,13 +74,7 @@ void error_exit(const char * format, ...);
 bool file_exists(const string &fn);
 
 // Init Boost logging,
-void boost_logging_init()
-{
-	logging::core::get()->set_filter
-	(
-		logging::trivial::severity >= logging::trivial::warning
-	);
-}
+void boost_logging_init();
 
 
 /********************************

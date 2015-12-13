@@ -17,6 +17,8 @@ add_subdirectory(tests)
 list( APPEND CMAKE_CXX_FLAGS "-std=c++11")
 add_definitions( -Wall -D_FILE_OFFSET_BITS=64 -g)
 
-add_executable( ococo ococo.cpp)
-add_dependencies( ococo htslib zlib)
-target_link_libraries( ococo ${Boost_LIBRARIES}  ${htslib_LIB} ${zlib_LIB} )
+add_library (ococo_lib ococo.cpp)
+
+add_executable( ococo main.cpp)
+add_dependencies( ococo htslib zlib ococo_lib)
+target_link_libraries( ococo ococo_lib ${Boost_LIBRARIES}  ${htslib_LIB} ${zlib_LIB} )

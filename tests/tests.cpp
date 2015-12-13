@@ -1,6 +1,8 @@
 //#include <stdio.h>
 //#include "ulysses/bloom.hpp"
 
+#include "ococo.h"
+
 #include "gtest/gtest.h"
 
     namespace {
@@ -37,7 +39,10 @@
         
         // Tests that the Foo::Bar() method does Abc.
         TEST_F(FooTest, MethodBarDoesAbc) {
-            EXPECT_EQ(0, 0);
+            counter_t c0 = 0;
+            counter_t c1 = _COUNTER_NORMALIZE(c0,true);
+            counter_t c2 = _COUNTER_NORMALIZE(c1,false);
+            EXPECT_EQ(c1, c2);
         }
         
         // Tests that Foo does Xyz.
