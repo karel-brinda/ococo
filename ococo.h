@@ -50,6 +50,10 @@ const int stats_delim_l = 10;
  *** Counters ***
  ****************/
 
+/*
+	data type for a single counter (corresponds to a single position in genome)
+	- counter structure (merged cells): 0...0|cell_T|cell_G|cell_C|cell_A
+*/
 typedef uint16_t counter_t ;
 
 const int cell_bits=4;
@@ -59,6 +63,7 @@ const counter_t counter_norm_mask=cell_maxval_shifted \
 	| (cell_maxval_shifted<<cell_bits)        \
 	| (cell_maxval_shifted<<2*cell_bits)      \
 	| (cell_maxval_shifted<<3*cell_bits);
+
 
 /****************************
  *** Auxiliary data types ***
@@ -70,7 +75,6 @@ typedef struct {
 	int min_mapq;
 	int min_baseq;
 } cons_params_t;
-
 
 
 /***************************
@@ -159,16 +163,23 @@ struct stats_t {
  *** Manipulating with counters ***
  **********************************/
 
+const int nt16_A = 0x1;
+const int nt16_C = 0x2;
+const int nt16_G = 0x4;
+const int nt16_T = 0x8;
+const int nt16_N = 0xf;
+
 
 inline int _CELL_SHIFT(nt16_t nt16) {
-		return cell_bits * seq_nt16_int[nt16];
+	return cell_bits * seq_nt16_int[nt16];
 }
 
 inline counter_t _COUNTER_CELL_VAL(counter_t counter,nt16_t nt16) {
-		return (counter>>_CELL_SHIFT(nt16)) & cell_maxval;
+	return (counter>>_CELL_SHIFT(nt16)) & cell_maxval;
 }
 
 inline counter_t _COUNTER_CELL_SET(counter_t counter,nt16_t nt16,int value) {
+	assert(value>>cell_bits==0);
 	return
 		(
 			value << _CELL_SHIFT(nt16) \
@@ -180,17 +191,18 @@ inline counter_t _COUNTER_CELL_SET(counter_t counter,nt16_t nt16,int value) {
 }
 
 inline counter_t _COUNTER_CELL_INC_NODIV(counter_t counter,nt16_t nt16) {
+	assert(_COUNTER_CELL_VAL(counter,nt16)!=cell_maxval);
 	return _COUNTER_CELL_SET (counter,nt16,_COUNTER_CELL_VAL(counter,nt16)+1);
 }
 
 inline counter_t _COUNTER_NORMALIZE(counter_t counter,bool divide) {
-	if(divide) fprintf(stderr,"Shift counter: %04x\n", counter);
-		return (counter >> divide) & counter_norm_mask;
+	//if(divide) fprintf(stderr,"Shift counter: %04x\n", counter);
+	return divide ? (counter >> 1) & counter_norm_mask : counter;
 }
 
-inline counter_t _COUNTER_CELL_INC(counter_t counter,nt16_t nt16) { \
+inline counter_t _COUNTER_CELL_INC(counter_t counter,nt16_t nt16) {
 	return _COUNTER_CELL_INC_NODIV (
-		_COUNTER_NORMALIZE (counter,_COUNTER_CELL_VAL(counter,nt16)==0x0f),
+		_COUNTER_NORMALIZE (counter,_COUNTER_CELL_VAL(counter,nt16)==cell_maxval),
 		nt16
 	);
 }
