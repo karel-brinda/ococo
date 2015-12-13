@@ -1,4 +1,4 @@
-include_directories(..)
+include_directories(../..)
 
 list( APPEND CMAKE_CXX_FLAGS "-Wall -std=c++11")
 

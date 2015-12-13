@@ -10,7 +10,7 @@ include("contrib/htslib.cmake")
 include("contrib/zlib.cmake")
 include("contrib/googletest.cmake")
 
-add_subdirectory(tests)
+add_subdirectory(tests/unittests)
 
 #list( APPEND CMAKE_CXX_FLAGS "-std=gnu++11  -O3 -DNDEBUG ${CMAKE_CXX_FLAGS}")
 list( APPEND CMAKE_CXX_FLAGS "-Wall -std=c++11")

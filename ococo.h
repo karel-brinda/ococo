@@ -56,6 +56,7 @@ const int stats_delim_l = 10;
 */
 typedef uint16_t counter_t ;
 
+const int counter_size=sizeof(counter_t);
 const int cell_bits=4;
 const counter_t cell_maxval=(1<<cell_bits)-1;
 const counter_t cell_maxval_shifted=cell_maxval>>1;
