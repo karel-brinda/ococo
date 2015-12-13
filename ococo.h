@@ -46,11 +46,24 @@ const int      min_vote =  2;
 const int stats_delim_l = 10;
 
 
+/****************
+ *** Counters ***
+ ****************/
+
+typedef uint16_t counter_t ;
+
+const int cell_bits=4;
+const counter_t cell_maxval=(1<<cell_bits)-1;
+const counter_t cell_maxval_shifted=cell_maxval>>1;
+const counter_t counter_norm_mask=cell_maxval_shifted \
+	| (cell_maxval_shifted<<cell_bits)        \
+	| (cell_maxval_shifted<<2*cell_bits)      \
+	| (cell_maxval_shifted<<3*cell_bits);
+
 /****************************
  *** Auxiliary data types ***
  ****************************/
 
-typedef uint16_t counter_t ;
 typedef unsigned char nt16_t ;
 
 typedef struct {
@@ -148,11 +161,11 @@ struct stats_t {
 
 
 inline int _CELL_SHIFT(nt16_t nt16) {
-		return 4 * seq_nt16_int[nt16];
+		return cell_bits * seq_nt16_int[nt16];
 }
 
 inline counter_t _COUNTER_CELL_VAL(counter_t counter,nt16_t nt16) {
-		return (counter>>_CELL_SHIFT(nt16)) & 0x0f;
+		return (counter>>_CELL_SHIFT(nt16)) & cell_maxval;
 }
 
 inline counter_t _COUNTER_CELL_SET(counter_t counter,nt16_t nt16,int value) {
@@ -162,7 +175,7 @@ inline counter_t _COUNTER_CELL_SET(counter_t counter,nt16_t nt16,int value) {
 		) | (
 			counter
 			^
-			(counter & (0x0f << _CELL_SHIFT(nt16)))
+			(counter & (cell_maxval << _CELL_SHIFT(nt16)))
 		);
 }
 
@@ -172,7 +185,7 @@ inline counter_t _COUNTER_CELL_INC_NODIV(counter_t counter,nt16_t nt16) {
 
 inline counter_t _COUNTER_NORMALIZE(counter_t counter,bool divide) {
 	if(divide) fprintf(stderr,"Shift counter: %04x\n", counter);
-		return (counter >> divide) & 0x7777;
+		return (counter >> divide) & counter_norm_mask;
 }
 
 inline counter_t _COUNTER_CELL_INC(counter_t counter,nt16_t nt16) { \
