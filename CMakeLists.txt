@@ -11,6 +11,8 @@ include("contrib/htslib.cmake")
 include("contrib/zlib.cmake")
 include("contrib/googletest.cmake")
 
+add_subdirectory(tests)
+
 #list( APPEND CMAKE_CXX_FLAGS "-std=gnu++11  -O3 -DNDEBUG ${CMAKE_CXX_FLAGS}")
 list( APPEND CMAKE_CXX_FLAGS "-std=c++11")
 add_definitions( -Wall -D_FILE_OFFSET_BITS=64 -g)
