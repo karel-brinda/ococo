@@ -6,6 +6,9 @@ a.fa
 *.anjuta
 .anjuta*
 
+CTestTestfile.cmake
+Testing
+
 CMakeCache.txt
 CMakeFiles
 CMakeScripts
