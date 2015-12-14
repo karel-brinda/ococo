@@ -83,7 +83,43 @@ typedef struct {
  ***************************/
 
 // Generate randomly nucleotide with respect to given frequencies.
-inline char rand_nucl(int a, int c, int g, int t);
+inline char rand_nucl(int a, int c, int g, int t){
+	const char nucls[] = {'A','C','G','T'};
+
+	const int sum=a+c+g+t;
+	const int max_val=max({a,c,g,t});
+	const int vec[]={a,c,g,t};
+	const int prefsum[]={a,a+c,a+c+g,a+c+g+t};
+
+	//printf(" a %d, c %d, g %d, t %d \n",a,c,g,t);
+	if (sum<min_vote){
+		return 'N';
+	}
+
+	//int rn=randint(0,sum);
+	const int rn=rand() % sum;
+	char nucl;
+	int count=0;
+
+
+	//printf("rn %d\n",rn);
+	for(int i=0;i<4;i++){
+		if (prefsum[i] > rn) {
+			nucl=nucls[i];
+			count=vec[i];
+			//printf("selected i %d\n",i);
+			break;
+		}
+	}
+
+	if(count!=max_val){
+		nucl=tolower(nucl);
+	}
+
+	//printf("%c ",nucl);
+
+	return nucl;
+}
 
 // Print error message and exit with code -1.
 void error_exit(const char * format, ...);

@@ -15,7 +15,7 @@ include("contrib/htslib.cmake")
 include("contrib/zlib.cmake")
 include("contrib/googletest.cmake")
 
-add_subdirectory(tests/unittests)
+add_subdirectory(tests/unit_tests)
 
 #list( APPEND CMAKE_CXX_FLAGS "-std=gnu++11  -O3 -DNDEBUG ${CMAKE_CXX_FLAGS}")
 list(APPEND CMAKE_CXX_FLAGS "-Wall -std=c++11")
@@ -41,4 +41,5 @@ install(TARGETS ococo DESTINATION bin)
 #########
 
 enable_testing()
-add_test(NAME unittests COMMAND unittests)
+add_test(NAME unit_tests COMMAND unittests)
+#add_test(NAME integration_tests COMMAND "cd tests/integration_test/ && ./integration_tests.bats")

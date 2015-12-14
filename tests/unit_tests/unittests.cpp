@@ -126,13 +126,13 @@ namespace {
 
 
 int main(int argc, char** argv){
-	cout << "DEBUG INFO" << endl;
+	cout << endl << "DEBUG INFO" << endl;
 
-	cout << "counter_size " << dec << counter_size << "B" << endl;
-	cout << "cell_bits " << dec << cell_bits << endl;
-	cout << "cell_maxval 0x" << hex << cell_maxval << endl;
-	cout << "cell_maxval_shifted 0x" << hex  << cell_maxval_shifted << endl;
-	cout << "counter_norm_mask 0x" << hex  << counter_norm_mask << endl << endl;
+	cout << "\tcounter_size " << dec << counter_size << "B" << endl;
+	cout << "\tcell_bits " << dec << cell_bits << endl;
+	cout << "\tcell_maxval 0x" << hex << cell_maxval << endl;
+	cout << "\tcell_maxval_shifted 0x" << hex  << cell_maxval_shifted << endl;
+	cout << "\tcounter_norm_mask 0x" << hex  << counter_norm_mask << endl << endl;
  
 	::testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();
