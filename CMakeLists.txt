@@ -22,3 +22,11 @@ target_link_libraries(ococo_lib ${htslib_LIB} ${zlib_LIB} )
 add_executable( ococo main.cpp)
 add_dependencies( ococo htslib zlib ococo_lib)
 target_link_libraries( ococo ococo_lib ${Boost_LIBRARIES}  ${htslib_LIB} ${zlib_LIB} )
+
+
+#########
+# TESTS #
+#########
+
+enable_testing()
+add_test(NAME unittests COMMAND unittests)
