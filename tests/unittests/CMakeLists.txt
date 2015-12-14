@@ -8,4 +8,4 @@ add_executable(unittests unittests.cpp)
 find_package (Threads REQUIRED)
 
 #target_link_libraries(unittests ${googletest_LIB} ococo_lib ${PThreadLib} )
-target_link_libraries(unittests ${googletest_LIB} ococo_lib ${CMAKE_THREAD_LIBS_INIT} )
+target_link_libraries(unittests ${googletest_LIB} ococo_lib ${CMAKE_THREAD_LIBS_INIT} ${Boost_LIBRARIES} ${htslib_LIB} ${zlib_LIB})

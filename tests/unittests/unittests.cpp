@@ -6,34 +6,34 @@ vector<int> nucls{nt16_A,nt16_C,nt16_G,nt16_T};
 
 namespace {
 	
-	// The fixture for testing class Foo.
 	class CounterTest : public ::testing::Test {
 	protected:
-		// You can remove any or all of the following functions if its body
-		// is empty.
-		
 		CounterTest() {
-			// You can do set-up work for each test here.
 		}
 		
 		virtual ~CounterTest() {
-			// You can do clean-up work that doesn't throw exceptions here.
 		}
 		
-		// If the constructor and destructor are not enough for setting up
-		// and cleaning up each test, you can define the following methods:
-		
 		virtual void SetUp() {
-			// Code here will be called immediately after the constructor (right
-			// before each test).
 		}
 		
 		virtual void TearDown() {
-			// Code here will be called immediately after each test (right
-			// before the destructor).
+		}
+	};
+	
+	class NuclGeneratorTest : public ::testing::Test {
+	protected:
+		NuclGeneratorTest() {
 		}
 		
-		// Objects declared here can be used by all tests in the test case for Foo.
+		virtual ~NuclGeneratorTest() {
+		}
+		
+		virtual void SetUp() {
+		}
+		
+		virtual void TearDown() {
+		}
 	};
 	
 	TEST_F(CounterTest, AllIncrements) {
@@ -98,6 +98,26 @@ namespace {
 
 			ASSERT_EQ(c1, c2);
 		}
+	}
+
+	TEST_F(NuclGeneratorTest, IndividualNucleotides) {
+		char nucl;
+
+		nucl=rand_nucl(0,0,0,0);
+		ASSERT_EQ(nucl, 'N');
+
+		nucl=rand_nucl(5,0,0,0);
+		ASSERT_EQ(nucl, 'A');
+
+		nucl=rand_nucl(0,5,0,0);
+		ASSERT_EQ(nucl, 'C');
+
+		nucl=rand_nucl(0,0,5,0);
+		ASSERT_EQ(nucl, 'G');
+
+		nucl=rand_nucl(0,0,0,5);
+		ASSERT_EQ(nucl, 'T');
+
 	}
 	
 	
