@@ -264,15 +264,15 @@ struct stats_t {
 
 	inline char get_nucl(int ref, int pos) const;
 	inline void set_nucl(int ref, int pos, unsigned char nucl);
-    inline counter_t get_counter_value(int ref, int pos);
+    //inline counter_t get_counter_value(int ref, int pos);
+    void get_counters_values(int ref, int pos, counter_t &a, counter_t &c, counter_t &g, counter_t &t) const;
 
-
-	/****************
+    /****************
 	 *** Debuging ***
 	 ****************/
 
-	void debug_print_counters();
-    string debug_vector_counters(int ref, int pos);
+	void debug_print_counters() const;
+    string debug_str_counters(int ref, int pos) const;
 };
 
 

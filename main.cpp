@@ -192,7 +192,7 @@ int main(int argc, const char* argv[])
                     for (ni=i+ol;i<ni;i++){
                         nt16=bam_seqi(seq, i);
                         STATS_UPDATE(stats,chrom,pos+i,nt16);
-                        BOOST_LOG_TRIVIAL(trace) << "Incrementing counter: chrom=" << chrom << ", pos=" << pos+i << ", nucl=" << nt16_nt256[nt16] << ". New state: refbase='" << stats.get_nucl(chrom, pos+i) << "', vector: "<<stats.debug_vector_counters(chrom,pos);
+                        BOOST_LOG_TRIVIAL(trace) << "Incrementing counter: chrom=" << chrom << ", pos=" << pos+i << ", nucl=" << nt16_nt256[nt16] << ". New state: refbase='" << stats.get_nucl(chrom, pos+i) << "', counters: " << stats.debug_str_counters(chrom,pos);
                     }
                     break;
                     

@@ -329,6 +329,13 @@ int stats_t::call_consensus_position(int ref, int pos, bool print_vcf) {
 	return 0;
 }
 
+void stats_t::get_counters_values(int ref, int pos, counter_t &a, counter_t &c, counter_t &g, counter_t &t) const {
+    a=_COUNTER_CELL_VAL(counters[ref][pos],seq_nt16_table[(int)'A']);
+    c=_COUNTER_CELL_VAL(counters[ref][pos],seq_nt16_table[(int)'C']);
+    g=_COUNTER_CELL_VAL(counters[ref][pos],seq_nt16_table[(int)'G']);
+    t=_COUNTER_CELL_VAL(counters[ref][pos],seq_nt16_table[(int)'T']);
+}
+
 
 inline char stats_t::get_nucl(int ref, int pos) const {
 	if (counters[ref][pos]==0){
@@ -387,11 +394,15 @@ void stats_t::print_vcf_substitution(int ref, int pos, unsigned char old_base, u
 }
 
 
-string stats_t::debug_vector_counters(int ref, int pos) {
-    return "";
+string stats_t::debug_str_counters(int ref, int pos) const {
+    counter_t a,c,g,t;
+    get_counters_values(ref, pos, a, c, g, t);
+    std::stringstream ss;
+    ss << "(" << a << "," << c << "," << g << "," << t << ")";
+    return ss.str();
 }
 
-void stats_t::debug_print_counters(){
+void stats_t::debug_print_counters() const {
 	for(int s=0;s<n_seqs;s++){
 		fprintf(stderr,"%s\n",seq_name[s]);
 		for (int i=0;i<seq_len[s];i++){
