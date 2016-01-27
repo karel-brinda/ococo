@@ -1,6 +1,8 @@
 #ifndef _OCOCO_H_
 #define _OCOCO_H_
 
+#pragma once 
+
 
 #include <iostream>
 #include <cstdlib>
@@ -51,13 +53,16 @@ const int stats_delim_l = 10;
  ****************/
 
 /*
-	data type for a single counter (corresponds to a single position in genome)
+	data type for a single position in the genome (=4 counters)
 	- counter structure (merged cells): 0...0|cell_T|cell_G|cell_C|cell_A
 */
 typedef uint16_t counter_t ;
 
 const int counter_size=sizeof(counter_t);
 const int cell_bits=4;
+
+static_assert(cell_bits*4 <= counter_size*8,"Counter type is too small");
+
 const counter_t cell_maxval=(1<<cell_bits)-1;
 const counter_t cell_maxval_shifted=cell_maxval>>1;
 const counter_t counter_norm_mask=cell_maxval_shifted \
@@ -66,21 +71,79 @@ const counter_t counter_norm_mask=cell_maxval_shifted \
 	| (cell_maxval_shifted<<3*cell_bits);
 
 
-/****************************
- *** Auxiliary data types ***
- ****************************/
+/**************************
+ *** Translation tables ***
+ **************************/
 
-typedef unsigned char nt16_t ;
+typedef uint8_t nt4_t ;
+typedef uint8_t nt16_t ;
 
 typedef struct {
 	int min_mapq;
 	int min_baseq;
 } cons_params_t;
 
+//const uint8_t nt4_A = 0x0;
+//const uint8_t nt4_C = 0x1;
+//const uint8_t nt4_G = 0x2;
+//const uint8_t nt4_T = 0x3;
+//const uint8_t nt4_N = 0x4;
+
+const uint8_t nt256_nt4[] = {
+	0, 1, 2, 3,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
+	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+	4, 0, 4, 1,  4, 4, 4, 2,  4, 4, 4, 4,  4, 4, 4, 4, 
+	4, 4, 4, 4,  3, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+	4, 0, 4, 1,  4, 4, 4, 2,  4, 4, 4, 4,  4, 4, 4, 4, 
+	4, 4, 4, 4,  3, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4
+};
+
+const uint8_t nt16_nt4[] = {
+	4, 0, 1, 4,
+	2, 4, 4, 4,
+	3, 4, 4, 4,
+	4, 4, 4, 4
+};
+
+const uint8_t nt256_nt16[] = {
+    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+     1, 2, 4, 8, 15,15,15,15, 15,15,15,15, 15, 0 /*=*/,15,15,
+    15, 1,14, 2, 13,15,15, 4, 11,15,15,12, 15, 3,15,15,
+    15,15, 5, 6,  8,15, 7, 9, 15,10,15,15, 15,15,15,15,
+    15, 1,14, 2, 13,15,15, 4, 11,15,15,12, 15, 3,15,15,
+    15,15, 5, 6,  8,15, 7, 9, 15,10,15,15, 15,15,15,15,
+
+    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
+    15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15
+};
+
+const char nt16_nt256[] = "=ACMGRSVTWYHKDBN";
+
+const char nt4_nt256[] = "ACGTN";
+
 
 /***************************
  *** Auxiliary functions ***
  ***************************/
+
 
 // Generate randomly nucleotide with respect to given frequencies.
 inline char rand_nucl(int a, int c, int g, int t){
@@ -139,8 +202,10 @@ struct stats_t {
 	int16_t   n_seqs;
 	bool      *seq_used;
 	int32_t   *seq_len;
+	int32_t   *seq_comprseqlen;
 	char      **seq_name;
 	char      **seq_comment;
+	uint8_t   **seq_comprseq;
 	counter_t **counters;
 
 	//stats_t();
@@ -156,7 +221,7 @@ struct stats_t {
 	int load_headers_fai(const string &fai_fn);
 
 	// Load header from a FASTA file and initialize statistics (to level).
-	int load_headers_fa(const string &fasta_fn, int level=0);
+	int load_fasta(const string &fasta_fn, uint16_t initial_weight);
 
 	// Loader header from a BAM.
 	int load_headers_bam_hdr(const bam_hdr_t &h);
@@ -167,13 +232,13 @@ struct stats_t {
 	 ************************/
 
 	// Check if everything was initialized.
-	bool check_state();
+	bool check_state() const;
 
 	// Check if a FAI header corresponds to the stats.
-	bool check_headers_fai(const string &fai_fn);
+	bool check_headers_fai(const string &fai_fn) const;
 
 	// Check if a BAM header corresponds to the stats.
-	bool check_headers_bam_hdr(const bam_hdr_t &h);
+	bool check_headers_bam_hdr(const bam_hdr_t &h) const;
 
 
 	/***********
@@ -181,10 +246,24 @@ struct stats_t {
 	 ***********/
 
 	int import_stats(const string &stats_fn);
-	int export_stats(const string &stats_fn);
+	int export_stats(const string &stats_fn) const;
 
-	// Generate consensus probabilistically.
-	int generate_consensus(const string &fasta_fn);
+	// Call consensus probabilistically.
+	int call_consensus(bool print_vcf);
+	int call_consensus_position(int ref, int pos, bool print_vcf);
+
+	int save_fasta(const string &fasta_fn) const;
+
+	void print_vcf_header() const;
+	void print_vcf_substitution(int ref, int pos, unsigned char old_base, unsigned char new_base) const;
+
+
+	/*****************
+	 *** Auxiliary ***
+	 *****************/
+
+	inline char get_nucl(int ref, int pos) const;
+	inline void set_nucl(int ref, int pos, unsigned char nucl);
 
 
 	/****************

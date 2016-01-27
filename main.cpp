@@ -46,7 +46,7 @@ int main(int argc, const char* argv[])
 		vol.add_options()
 			    //("help", "Print help message")
 				("input,i", po::value<string>(&sam_fn)->required(), "Input SAM/BAM file (- for standard input).")
-				("init-fasta,f", po::value<string>(&fasta0_fn), "Initial FASTA reference.")
+				("init-fasta,f", po::value<string>(&fasta0_fn), "Initial FASTA reference (if not provided, sequence of N's is considered as the reference).")
 				("consensus-fasta,c", po::value<string>(&fasta1_fn), "Consensus (up-to-date FASTA reference).")
 				("stats,s", po::value<string>(&stats_fn), "File with up-to-date statistics.")
 				//("algorithm,a", po::value<string>(&alg), "Algorithm for updates: majority / randomized [majority]")
@@ -126,7 +126,7 @@ int main(int argc, const char* argv[])
 	}
 	else{
 		if (fasta0_fn.size()>0){
-			stats.load_headers_fa(fasta0_fn,2);
+			stats.load_fasta(fasta0_fn,2);
 		}
 	}
 
@@ -209,7 +209,8 @@ int main(int argc, const char* argv[])
 	 * Generate consensus and export stats.
 	 */
 	if (fasta1_fn.size()>0){
-		stats.generate_consensus(fasta1_fn);
+		stats.call_consensus(false);
+		stats.save_fasta(fasta1_fn);
 	}
 
 	if (stats_fn.size()>0){

@@ -41,12 +41,14 @@ stats_t::stats_t(bam_hdr_t &h):
 		n_seqs(h.n_targets),
 		seq_used(new bool[n_seqs]()),
 		seq_len(new int32_t[n_seqs]()),
+		seq_comprseqlen(new int32_t[n_seqs]()),
 		seq_name(new char*[n_seqs]()),
 		seq_comment(new char*[n_seqs]()),
 		counters(new counter_t*[n_seqs]())
 {
 	for (int s=0;s<n_seqs;s++){
 		seq_len[s]=h.target_len[s];
+		seq_comprseqlen[s]=(int32_t)ceil(seq_len[s]/4.0);
 		printf("len %d\n",h.target_len[s]);
 		seq_used[s]=true;
 		//fprintf(stderr,"allocating %d chars\n",seq_len[i]);
@@ -55,6 +57,7 @@ stats_t::stats_t(bam_hdr_t &h):
 		//printf("name: %s\n",h.target_name[i]);
 		memcpy(seq_name[s], h.target_name[s],seq_len_name+1);
 
+		seq_comprseq[s]=new uint8_t[seq_comprseqlen[s]]();
 		counters[s]=new counter_t[seq_len[s]]();
 		//printf("seq %s, len %d\n",stats->seqstats[i].name,stats->seqstats[i].length);
 		//fprintf(stderr,"ok\n");
@@ -66,17 +69,20 @@ stats_t::~stats_t(){
 	for (int i=0;i<n_seqs;i++){
 		delete[] seq_name[i];
 		delete[] seq_comment[i];
+		delete[] seq_comprseq[i];
 		delete[] counters[i];
 	}
 	delete[] seq_used;
 	delete[] seq_len;
+	delete[] seq_comprseqlen;
 	delete[] seq_name; 
 	delete[] seq_comment; 
-	delete[] counters; 
+	delete[] seq_comprseq;
+	delete[] counters;
 }
 
 
-int stats_t::load_headers_fa(const string &fasta_fn, int weight) {
+int stats_t::load_fasta(const string &fasta_fn, uint16_t initial_weight) {
 	gzFile fp;  
 	kseq_t *seq;  
 	int l;  
@@ -91,10 +97,15 @@ int stats_t::load_headers_fa(const string &fasta_fn, int weight) {
 		}
 		//fprintf(stderr,"seq: %s\n", seq->seq.s);  
 
-		for(unsigned int i=0;i<seq->seq.l;i++){
+		for(uint32_t i=0;i<seq->seq.l;i++){
 			assert(counters[s][i]==0);
-			const nt16_t nt16=seq_nt16_table[(int)seq->seq.s[i]];
-			counters[s][i]=_COUNTER_CELL_SET(0,nt16,weight);
+
+			char &nucl = seq->seq.s[i];
+			set_nucl(s,i,nucl);
+			const nt16_t nt16=nt256_nt16[(int)nucl];
+
+			assert(counters[s][i]==0);
+			counters[s][i]=_COUNTER_CELL_SET(0,nt16,initial_weight);
 		}
 		//if (seq->qual.l) printf("qual: %s\n", seq->qual.s);  
 	}  
@@ -104,7 +115,39 @@ int stats_t::load_headers_fa(const string &fasta_fn, int weight) {
 }
 
 
-bool stats_t::check_state(){
+int stats_t::save_fasta(const string &fasta_fn) const {
+	assert(check_state());
+
+	FILE *fp;  
+	fp = fopen(fasta_fn.c_str(), "w+");
+
+	char fasta_buffer[fasta_line_l];
+	for(int s=0;s<n_seqs;s++){
+		//printf("%s\n",seq_name[s]);
+		if(seq_comment[s]){
+			fprintf(fp,">%s %s\n",seq_name[s],seq_comment[s]);
+		}
+		else{
+			fprintf(fp,">%s\n",seq_name[s]);
+		}
+
+		for (int i=0,j=0;i<seq_len[s];i++,j++){
+			fasta_buffer[j]=get_nucl(s,i);
+
+			if(j==fasta_line_l-1 || i==seq_len[s]-1){
+				fwrite(fasta_buffer,1,j+1,fp);
+				fwrite("\n",1,1,fp);
+				j=-1;
+			}
+		}
+	}
+
+	fclose(fp);
+	return 0;
+}
+
+
+bool stats_t::check_state() const {
 	if(n_seqs==0) return false;
 	if(seq_used==NULL || seq_len==NULL || seq_name==NULL || seq_comment==NULL || counters==NULL)
 		return false;
@@ -119,7 +162,7 @@ bool stats_t::check_state(){
 }
 
 
-bool stats_t::check_headers_fai(const string &fai_fn){
+bool stats_t::check_headers_fai(const string &fai_fn) const {
 	if (!check_state()) return false;
 
 	//todo
@@ -127,7 +170,7 @@ bool stats_t::check_headers_fai(const string &fai_fn){
 }
 
 
-bool stats_t::check_headers_bam_hdr(const bam_hdr_t &h){
+bool stats_t::check_headers_bam_hdr(const bam_hdr_t &h) const {
 	if (!check_state()) return false;
 
 	//if (strcmp(seq->name.s,seq_name[s])!=0) return false;
@@ -203,7 +246,7 @@ int stats_t::import_stats(const string &stats_fn){
 }
 
 
-int stats_t::export_stats(const string &stats_fn){
+int stats_t::export_stats(const string &stats_fn) const {
 	assert(check_state());
 
 	FILE *fo=fopen(stats_fn.c_str(),"w+");
@@ -249,39 +292,92 @@ int stats_t::export_stats(const string &stats_fn){
 }
 
 
-int stats_t::generate_consensus(const string &fasta_fn) {
+int stats_t::call_consensus(bool print_vcf) {
 	assert(check_state());
 
-	FILE *fp;  
-	fp = fopen(fasta_fn.c_str(), "w+");
-
-	char fasta_buffer[fasta_line_l];
 	for(int s=0;s<n_seqs;s++){
-		//printf("%s\n",seq_name[s]);
-		if(seq_comment[s]){
-			fprintf(fp,">%s %s\n",seq_name[s],seq_comment[s]);
-		}
-		else{
-			fprintf(fp,">%s\n",seq_name[s]);
-		}
-
-		for (int i=0,j=0;i<seq_len[s];i++,j++){
-			//fasta_buffer[j]='A';
-			const int counter_a=_COUNTER_CELL_VAL(counters[s][i],seq_nt16_table[(int)'A']);
-			const int counter_c=_COUNTER_CELL_VAL(counters[s][i],seq_nt16_table[(int)'C']);
-			const int counter_g=_COUNTER_CELL_VAL(counters[s][i],seq_nt16_table[(int)'G']);
-			const int counter_t=_COUNTER_CELL_VAL(counters[s][i],seq_nt16_table[(int)'T']);
-			fasta_buffer[j]=rand_nucl(counter_a,counter_c,counter_g,counter_t);
-			if(j==fasta_line_l-1 || i==seq_len[s]-1){
-				fwrite(fasta_buffer,1,j+1,fp);
-				fwrite("\n",1,1,fp);
-				j=-1;
-			}
+		for (int i=0;i<seq_len[s];i++){
+			call_consensus_position(s, i, print_vcf);
 		}
 	}
 
-	fclose(fp);
 	return 0;
+}
+
+int stats_t::call_consensus_position(int ref, int pos, bool print_vcf) {
+	const int16_t counter_a=_COUNTER_CELL_VAL(counters[ref][pos],seq_nt16_table[(int)'A']);
+	const int16_t counter_c=_COUNTER_CELL_VAL(counters[ref][pos],seq_nt16_table[(int)'C']);
+	const int16_t counter_g=_COUNTER_CELL_VAL(counters[ref][pos],seq_nt16_table[(int)'G']);
+	const int16_t counter_t=_COUNTER_CELL_VAL(counters[ref][pos],seq_nt16_table[(int)'T']);
+
+	const char new_base=rand_nucl(counter_a,counter_c,counter_g,counter_t);
+	const char old_base=get_nucl(ref,pos);
+
+	if(old_base!=new_base){
+		if(print_vcf){
+			print_vcf_substitution(ref,pos,old_base,new_base);
+		}
+		set_nucl(ref,pos,new_base);
+	}
+
+	return 0;
+}
+
+
+inline char stats_t::get_nucl(int ref, int pos) const {
+	if (counters[ref][pos]==0){
+		// empty statistics => unknown nucleotide
+		return 'N';
+	}
+	else {
+		// non-empty statistics => look into comprseq
+
+		const uint32_t comprseq_coor_1 = pos >> 2;
+		const uint32_t comprseq_coor_2 = 3- (pos & 0x3);
+
+		const nt4_t &nt4 = (seq_comprseq[ref][comprseq_coor_1] >> comprseq_coor_2) & 0x3;
+		return nt4_nt256[nt4];
+	}
+}
+
+
+inline void stats_t::set_nucl(int ref, int pos, unsigned char nucl){
+	const nt4_t nt4=nt256_nt4[(int)nucl] & 0x3;
+
+	const uint32_t comprseq_coor_1 = pos >> 2;
+	const uint32_t comprseq_coor_2 = 3 - (pos & 0x3);
+
+	uint8_t &cell=seq_comprseq[ref][comprseq_coor_1];
+	cell ^=	cell & (0x3 << comprseq_coor_2);
+	cell |= nt4 << comprseq_coor_2;
+}
+
+
+void stats_t::print_vcf_header() const {
+	assert(check_state());
+
+	//todo: date
+	printf(
+		"##fileformat=VCFv4.3\n"
+		"##fileDate=20150000\n"
+		//"##reference=%s\n"
+		"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+	);
+
+}
+
+
+void stats_t::print_vcf_substitution(int ref, int pos, unsigned char old_base, unsigned char new_base) const {
+	assert(check_state());
+
+	printf(
+		"%s\t%d\t.\t%c\t%c\t100\tPASS\t.\n",
+		seq_name[ref],
+		pos+1,
+		old_base,
+		new_base
+	);
+
 }
 
 
