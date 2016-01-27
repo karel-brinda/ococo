@@ -264,6 +264,7 @@ struct stats_t {
 
 	inline char get_nucl(int ref, int pos) const;
 	inline void set_nucl(int ref, int pos, unsigned char nucl);
+    inline counter_t get_counter_value(int ref, int pos);
 
 
 	/****************
@@ -271,6 +272,7 @@ struct stats_t {
 	 ****************/
 
 	void debug_print_counters();
+    string debug_vector_counters(int ref, int pos);
 };
 
 
@@ -279,12 +281,13 @@ struct stats_t {
  *** Manipulating with counters ***
  **********************************/
 
+/*
 const int nt16_A = 0x1;
 const int nt16_C = 0x2;
 const int nt16_G = 0x4;
 const int nt16_T = 0x8;
 const int nt16_N = 0xf;
-
+*/
 
 inline int _CELL_SHIFT(nt16_t nt16) {
 	return cell_bits * seq_nt16_int[nt16];

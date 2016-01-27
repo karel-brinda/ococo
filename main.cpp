@@ -1,6 +1,15 @@
 #include "ococo.h"
 
 
+void boost_logging_init()
+{
+	logging::core::get()->set_filter
+	(
+		logging::trivial::severity >= logging::trivial::trace
+	);
+}
+
+
 int main(int argc, const char* argv[])
 {
 
@@ -14,6 +23,8 @@ int main(int argc, const char* argv[])
     BOOST_LOG_TRIVIAL(error) << "An error severity message";
     BOOST_LOG_TRIVIAL(fatal) << "A fatal severity message";
 	*/
+
+    BOOST_LOG_TRIVIAL(info) << "Ococo starting.";
 
 	/*
 	 * Default configuration.
@@ -34,6 +45,7 @@ int main(int argc, const char* argv[])
 	 * Parse command-line parameters.
 	 */
 
+    BOOST_LOG_TRIVIAL(info) << "Parsing command-line parameters.";
 	try
 	{
 		namespace po = boost::program_options;
@@ -99,6 +111,7 @@ int main(int argc, const char* argv[])
 	bam1_t *b= NULL;
 	bam_hdr_t *header = NULL;
 
+    BOOST_LOG_TRIVIAL(info) << "SAM/BAM reader initialization: reading '" << sam_fn.c_str() << "'.";
 	in = sam_open(sam_fn.c_str(), "r");
 	if(in==NULL) {
 		error_exit("Problem with opening input ('%s').\n", sam_fn.c_str());
@@ -113,19 +126,14 @@ int main(int argc, const char* argv[])
 	/*
 	 * Load FASTA and stats.
 	 */
-	if (debug){
-		if(fasta0_fn.size()>0){
-			fprintf(stderr, "Loading FASTA: %s.\n",fasta0_fn.c_str());
-		}
-		else{
-			fprintf(stderr, "No FASTA provided.\n");
-		}
-	}
 	if (stats_fn.size()>0 && file_exists(stats_fn)){
+	    BOOST_LOG_TRIVIAL(info) << "Importing statistics: '" << stats_fn << "'.";
 		stats.import_stats(stats_fn);
 	}
 	else{
+	    BOOST_LOG_TRIVIAL(info) << "No file with statistics provided.";
 		if (fasta0_fn.size()>0){
+		    BOOST_LOG_TRIVIAL(info) << "Loading FASTA: '" << fasta0_fn << "'.";
 			stats.load_fasta(fasta0_fn,2);
 		}
 	}
@@ -133,16 +141,15 @@ int main(int argc, const char* argv[])
 	/*
 	 * Process alignments.
 	 */
-	if (debug){
-		fprintf(stderr, "Reading alignments started.\n");
-	}
+    BOOST_LOG_TRIVIAL(info) << "Starting the main loop.";
+
 	int r;
 	b = bam_init1();
 	while ((r = sam_read1(in, header, b)) >= 0) { // read one alignment from `in'
 		const char* rname=bam_get_qname(b);
 		const uint8_t *seq=bam_get_seq(b);
 		const uint8_t *qual=bam_get_qual(b);
-		const uint32_t *cigar = bam_get_cigar(b);
+		const uint32_t *cigar=bam_get_cigar(b);
 		const int n_cigar=b->core.n_cigar;
 		//+b->core.l_qname
 		const int chrom=b->core.tid;
@@ -152,79 +159,103 @@ int main(int argc, const char* argv[])
 
 		//fprintf(stderr,"pos %d, chrom %d, map q %d, flag %d, name %s \n",pos,chrom,mapq, flags, rname);
 
-		if (((flags & BAM_FUNMAP)==0) && stats.seq_used[chrom] && mapq>=cps.min_mapq){
+	    BOOST_LOG_TRIVIAL(debug) << "Reading alignment: rname='" << rname << ", chrom=" << chrom << ", pos=" << pos <<", mapq="<< mapq << ", flags=" << flags;
 
-			for (int k=0,i=0; k < n_cigar; k++)
-			{
-				const int op = bam_cigar_op(cigar[k]);
-				const int ol = bam_cigar_oplen(cigar[k]);
-				int ni=0;
-				uint8_t nt16=0;
 
-				switch (op) {
-					case BAM_CMATCH:
-					case BAM_CDIFF:
-					case BAM_CEQUAL:
-						for (ni=i+ol;i<ni;i++){
-							nt16=bam_seqi(seq, i);
-							STATS_UPDATE(stats,chrom,pos+i,nt16);
-						}
-						break;
+        if ((flags & BAM_FUNMAP)!=0){
+            BOOST_LOG_TRIVIAL(debug) << "Discarded: read is not aligned.";
+            continue;
+        }
+        
+        if (!stats.seq_used[chrom]){
+            BOOST_LOG_TRIVIAL(debug) << "Discarded: consensus calling is off for this chromosome.";
+            continue;
+        }
+        
+        if (mapq<cps.min_mapq){
+            BOOST_LOG_TRIVIAL(debug) << "Discarded: mapping quality is too low.";
+            continue;
+        }
+        
 
-					case BAM_CDEL:
-					case BAM_CSOFT_CLIP:
-					case BAM_CREF_SKIP:
-						i+=ol;
-						break;
+        for (int k=0,i=0; k < n_cigar; k++)
+        {
+            const int op = bam_cigar_op(cigar[k]);
+            const int ol = bam_cigar_oplen(cigar[k]);
+            int ni=0;
+            uint8_t nt16=0;
+            
+            switch (op) {
+                case BAM_CMATCH:
+                case BAM_CDIFF:
+                case BAM_CEQUAL:
+                    for (ni=i+ol;i<ni;i++){
+                        nt16=bam_seqi(seq, i);
+                        STATS_UPDATE(stats,chrom,pos+i,nt16);
+                        BOOST_LOG_TRIVIAL(trace) << "Incrementing counter: chrom=" << chrom << ", pos=" << pos+i << ", nucl=" << nt16_nt256[nt16] << ". New state: refbase='" << stats.get_nucl(chrom, pos+i) << "', vector: "<<stats.debug_vector_counters(chrom,pos);
+                    }
+                    break;
+                    
+                case BAM_CDEL:
+                case BAM_CSOFT_CLIP:
+                case BAM_CREF_SKIP:
+                    i+=ol;
+                    break;
+                    
+                case BAM_CBACK:
+                    BOOST_LOG_TRIVIAL(warning) << "Backward operation in CIGAR strings is not supported.";
+                    continue;
+                case BAM_CINS:
+                    break;
+                    
+                case BAM_CPAD:
+                case BAM_CHARD_CLIP:
+                    break;
+                    
+                    //update stats
+                    //skip ref
+                    
+            }
+            //printf("%d%c",ol,BAM_CIGAR_STR[op]);
+            
+        }
 
-					case BAM_CBACK:
-						fprintf(stderr,"Backward operation in CIGAR string is not supported.\n");
-						exit(1);
-					case BAM_CINS:
-						break;
-
-					case BAM_CPAD:
-					case BAM_CHARD_CLIP:
-						break;
-
-					//update stats
-						//skip ref
-
-				}
-				//printf("%d%c",ol,BAM_CIGAR_STR[op]);
-
-			}
-		}
-		else {
-			if (debug){
-				fprintf(stderr, "Read '%s' is not used for updating counters\n", rname);
-			}
-		}
-	}
-	if (debug){
-		fprintf(stderr, "Reading alignments finished.\n");
-	}
+        BOOST_LOG_TRIVIAL(debug) << "Alignment incorporated into statistics.";
+    }
 
 	/*
-	 * Generate consensus and export stats.
+	 * Calling final consensus and export stats.
 	 */
+    BOOST_LOG_TRIVIAL(info) << "Calling consensus for the entire reference sequence.";
+	stats.call_consensus(true);
+	
 	if (fasta1_fn.size()>0){
-		stats.call_consensus(false);
+	    BOOST_LOG_TRIVIAL(info) << "Saving FASTA: '" << fasta1_fn << "'.";
 		stats.save_fasta(fasta1_fn);
 	}
+    else {
+        BOOST_LOG_TRIVIAL(info) << "FASTA not saved.";
+    }
 
 	if (stats_fn.size()>0){
+        BOOST_LOG_TRIVIAL(info) << "Saving statistics: '" << stats_fn << "'.";
 		stats.export_stats(stats_fn);
 	}
+    else {
+        BOOST_LOG_TRIVIAL(info) << "Statistics not saved.";
+    }
 
 
 	/*
 	 * Free memory.
 	 */
+    BOOST_LOG_TRIVIAL(info) << "Freeing memory.";
 	hts_itr_destroy(iter);
 	bam_destroy1(b);
 	bam_hdr_destroy(header);
 	sam_close(in);
+
+    BOOST_LOG_TRIVIAL(info) << "Ococo finished. Bye.";
 
 	return 0;
 }

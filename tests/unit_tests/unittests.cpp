@@ -2,7 +2,12 @@
 #include "gtest/gtest.h"
 
 
-vector<int> nucls{nt16_A,nt16_C,nt16_G,nt16_T};
+vector<int> nucls {
+    nt256_nt16[(int)'A'],
+    nt256_nt16[(int)'C'],
+    nt256_nt16[(int)'G'],
+    nt256_nt16[(int)'T']
+};
 
 namespace {
 	
@@ -57,19 +62,19 @@ namespace {
 		{
 			// c1 := max possible values, then overflow
 			c1=0;
-			c1 = _COUNTER_CELL_SET(c1,nt16_A,cell_maxval);
-			c1 = _COUNTER_CELL_SET(c1,nt16_C,cell_maxval);
-			c1 = _COUNTER_CELL_SET(c1,nt16_G,cell_maxval);
-			c1 = _COUNTER_CELL_SET(c1,nt16_T,cell_maxval);
+			c1 = _COUNTER_CELL_SET(c1,nt256_nt16[(int)'A'],cell_maxval);
+			c1 = _COUNTER_CELL_SET(c1,nt256_nt16[(int)'C'],cell_maxval);
+			c1 = _COUNTER_CELL_SET(c1,nt256_nt16[(int)'G'],cell_maxval);
+			c1 = _COUNTER_CELL_SET(c1,nt256_nt16[(int)'T'],cell_maxval);
 
 			c1 = _COUNTER_CELL_INC(c1,nucl);
 
 			// c2 := max values after overflowing, then pivot
 			c2=0;
-			c2 = _COUNTER_CELL_SET(c1,nt16_A,cell_maxval_shifted);
-			c2 = _COUNTER_CELL_SET(c1,nt16_C,cell_maxval_shifted);
-			c2 = _COUNTER_CELL_SET(c1,nt16_G,cell_maxval_shifted);
-			c2 = _COUNTER_CELL_SET(c1,nt16_T,cell_maxval_shifted);
+			c2 = _COUNTER_CELL_SET(c1,nt256_nt16[(int)'A'],cell_maxval_shifted);
+			c2 = _COUNTER_CELL_SET(c1,nt256_nt16[(int)'C'],cell_maxval_shifted);
+			c2 = _COUNTER_CELL_SET(c1,nt256_nt16[(int)'G'],cell_maxval_shifted);
+			c2 = _COUNTER_CELL_SET(c1,nt256_nt16[(int)'T'],cell_maxval_shifted);
 
 			c2 = _COUNTER_CELL_SET(c2,nucl,1<<(cell_bits-1));
 

@@ -2,6 +2,7 @@
 
 KSEQ_INIT(gzFile, gzread);
 
+/*
 void boost_logging_init()
 {
 	logging::core::get()->set_filter
@@ -9,7 +10,7 @@ void boost_logging_init()
 		logging::trivial::severity >= logging::trivial::warning
 	);
 }
-
+*/
 
 void error_exit(const char * format, ...){
 	va_list args;
@@ -44,11 +45,13 @@ stats_t::stats_t(bam_hdr_t &h):
 		seq_comprseqlen(new int32_t[n_seqs]()),
 		seq_name(new char*[n_seqs]()),
 		seq_comment(new char*[n_seqs]()),
+		seq_comprseq(new uint8_t*[n_seqs]()),
 		counters(new counter_t*[n_seqs]())
 {
 	for (int s=0;s<n_seqs;s++){
 		seq_len[s]=h.target_len[s];
 		seq_comprseqlen[s]=(int32_t)ceil(seq_len[s]/4.0);
+		printf("haha %d\n",seq_comprseqlen[s]);
 		printf("len %d\n",h.target_len[s]);
 		seq_used[s]=true;
 		//fprintf(stderr,"allocating %d chars\n",seq_len[i]);
@@ -305,6 +308,9 @@ int stats_t::call_consensus(bool print_vcf) {
 }
 
 int stats_t::call_consensus_position(int ref, int pos, bool print_vcf) {
+    BOOST_LOG_TRIVIAL(debug) << "Calling consensus for position " << pos;
+
+
 	const int16_t counter_a=_COUNTER_CELL_VAL(counters[ref][pos],seq_nt16_table[(int)'A']);
 	const int16_t counter_c=_COUNTER_CELL_VAL(counters[ref][pos],seq_nt16_table[(int)'C']);
 	const int16_t counter_g=_COUNTER_CELL_VAL(counters[ref][pos],seq_nt16_table[(int)'G']);
@@ -380,6 +386,10 @@ void stats_t::print_vcf_substitution(int ref, int pos, unsigned char old_base, u
 
 }
 
+
+string stats_t::debug_vector_counters(int ref, int pos) {
+    return "";
+}
 
 void stats_t::debug_print_counters(){
 	for(int s=0;s<n_seqs;s++){
