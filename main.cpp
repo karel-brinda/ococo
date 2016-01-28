@@ -47,7 +47,6 @@ int main(int argc, const char* argv[])
 
     ococo::consensus_params_t params;
 
-	bool debug=false;
 	string fasta0_fn;
 	string fasta1_fn;
 	string stats_fn;
@@ -67,19 +66,22 @@ int main(int argc, const char* argv[])
 
 		po::options_description vol("Ococo: On-line consensus calling.");
 
+        string strategy, mode;
+        
 		vol.add_options()
 			    //("help", "Print help message")
 				("input,i", po::value<string>(&sam_fn)->required(), "Input SAM/BAM file (- for standard input).")
 				("init-fasta,f", po::value<string>(&fasta0_fn), "Initial FASTA reference (if not provided, sequence of N's is considered as the reference).")
 				("consensus-fasta,c", po::value<string>(&fasta1_fn), "Consensus (up-to-date FASTA reference).")
 				("stats,s", po::value<string>(&stats_fn), "File with up-to-date statistics.")
-				//("algorithm,a", po::value<string>(&alg), "Algorithm for updates: majority / randomized [majority]")
+        ("strategy,a", po::value<string>(&strategy), "Strategy for updates: majority / randomized. [majority]")
+        ("mode,m", po::value<string>(&strategy), "Mode: real-time / batch. [batch]")
 				//("counter-size,s", po::value<int>(&counterSize), "Size of counter per nucleotide in bits [3]")
-				//("min-coverage,c", po::value<int>(&minCoverage), "Minimal coverage [3]")
-				("min-map-qual,m", po::value<int>(&params.min_mapq), "Minimal mapping quality. [1]")
-				("min-base-qual,b", po::value<int>(&params.min_baseq), "Minimal base quality. [0]")
+				("min-coverage,c", po::value<int>(&params.min_coverage), "Minimal coverage to update the reference. [3]")
+				("min-map-qual,m", po::value<int>(&params.min_mapq), "Minimal mapping quality to increment counter. [1]")
+				("min-base-qual,b", po::value<int>(&params.min_baseq), "Minimal base quality to increment counter. [0]")
 				//("accept-level,l", po::value<float>(&acceptanceLevel), "Acceptance level [0.60]")
-				("debug,d", "Debugging")
+				("vcf,v", "Print VCF output.")
 		;
 
 		po::variables_map vm;
@@ -88,16 +90,37 @@ int main(int argc, const char* argv[])
 			po::store(po::command_line_parser(argc, argv).options(vol).positional(pos).run(),vm); // can throw
 			po::notify(vm); // throws on error, so do after help in case there are any problems
 
-			if(vm.count("debug")){
-				debug=true;
-			}
-
+            params.print_vcf=vm.count("vcf");
+            
+            if (vm.count("strategy")) {
+                if (strategy=="majority"){
+                    params.strategy=ococo::strategy_t::MAJORITY;
+                }
+                else if (strategy=="stochastic"){
+                    params.strategy=ococo::strategy_t::STOCHASTIC;
+                }
+                else {
+                    fprintf(stderr,"Unknown strategy '%s'. Possible strategies are 'majority' and 'stochastic'\n",strategy.c_str());
+                }
+            }
+            
+            if (vm.count("mode")) {
+                if (mode=="batch"){
+                    params.mode=ococo::mode_t::BATCH;
+                }
+                else if (strategy=="real-time"){
+                    params.mode=ococo::mode_t::REALTIME;
+                }
+                else {
+                    fprintf(stderr,"Unknown mode '%s'. Possible strategies are 'batch' and 'real-time'\n",strategy.c_str());
+                }
+            }
+            
+            
 			/*if (vm.count("help")) {
 				cout << vol << "\n";
 				return EXIT_FAILURE;
 			}*/
-
-
 		}
 		catch(po::error& e)
 		{

@@ -50,12 +50,13 @@ namespace ococo {
     const int stats_delim_l = 10;
 
     enum mode_t {BATCH, REALTIME};
-    enum alg_t {STOCHASTIC, MAJORITY};
+    enum strategy_t {STOCHASTIC, MAJORITY};
     
     struct consensus_params_t {
         mode_t mode;
-        alg_t alg;
+        strategy_t strategy;
 
+        int min_coverage;
         int min_mapq;
         int min_baseq;
 
@@ -65,7 +66,8 @@ namespace ococo {
 
         consensus_params_t():
             mode(BATCH),
-            alg(MAJORITY),
+            strategy(MAJORITY),
+            min_coverage(1),
             min_mapq(1),
             min_baseq(0),
             print_vcf(true)
