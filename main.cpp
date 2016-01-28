@@ -153,13 +153,13 @@ int main(int argc, const char* argv[])
 		const int n_cigar=b->core.n_cigar;
 		//+b->core.l_qname
 		const int chrom=b->core.tid;
-		const int pos=b->core.pos;
+		const int read_pos=b->core.pos;
 		const int mapq=b->core.qual;
 		const int flags=b->core.flag;
 
 		//fprintf(stderr,"pos %d, chrom %d, map q %d, flag %d, name %s \n",pos,chrom,mapq, flags, rname);
 
-	    BOOST_LOG_TRIVIAL(debug) << "Reading alignment: rname='" << rname << ", chrom=" << chrom << ", pos=" << pos <<", mapq="<< mapq << ", flags=" << flags;
+	    BOOST_LOG_TRIVIAL(debug) << "Reading alignment: rname='" << rname << ", chrom=" << chrom << ", pos=" << read_pos <<", mapq="<< mapq << ", flags=" << flags;
 
 
         if ((flags & BAM_FUNMAP)!=0){
@@ -190,9 +190,11 @@ int main(int argc, const char* argv[])
                 case BAM_CDIFF:
                 case BAM_CEQUAL:
                     for (ni=i+ol;i<ni;i++){
+                        const int base_pos=read_pos+i;
                         nt16=bam_seqi(seq, i);
-                        STATS_UPDATE(stats,chrom,pos+i,nt16);
-                        BOOST_LOG_TRIVIAL(trace) << "Incrementing counter: chrom=" << chrom << ", pos=" << pos+i << ", nucl=" << ococo::nt16_nt256[nt16] << ". New state: refbase='" << stats.get_nucl(chrom, pos+i) << "', counters: " << stats.debug_str_counters(chrom,pos);
+                        BOOST_LOG_TRIVIAL(trace) << "Incrementing counter: chrom=" << chrom << ", pos=" << base_pos << ", nucl=" << ococo::nt16_nt256[nt16] << ". New state: refbase='" << stats.get_nucl(chrom, base_pos) << "', counters: " << stats.debug_str_counters(chrom,base_pos);
+                        STATS_UPDATE(stats,chrom,base_pos,nt16);
+                        BOOST_LOG_TRIVIAL(trace) << "           new state: counters: " << stats.debug_str_counters(chrom,base_pos);
                     }
                     break;
                     
