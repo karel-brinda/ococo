@@ -77,9 +77,9 @@ int main(int argc, const char* argv[])
         ("strategy,S", po::value<string>(&strategy), "Strategy for updates: majority / randomized. [majority]")
         ("mode,M", po::value<string>(&strategy), "Mode: real-time / batch. [batch]")
         //("counter-size,s", po::value<int>(&counterSize), "Size of counter per nucleotide in bits [3]")
-        ("min-MQ,q", po::value<int>(&params.min_mapq), "Minimal mapping quality to increment a counter. [1]")
-        ("min-BQ,Q", po::value<int>(&params.min_baseq), "Minimal base quality to increment a counter. [0]")
-        //("min-coverage,c", po::value<int>(&params.min_coverage), "Minimal coverage to update the reference. [3]")
+        ("min-MQ,q", po::value<int32_t>(&params.min_mapq), "Minimal mapping quality to increment a counter. [1]")
+        ("min-BQ,Q", po::value<int32_t>(&params.min_baseq), "Minimal base quality to increment a counter. [0]")
+        //("min-coverage,c", po::value<int32_t>(&params.min_coverage), "Minimal coverage to update the reference. [3]")
         //("accept-level,l", po::value<float>(&acceptanceLevel), "Acceptance level [0.60]")
         ("no-vcf,v", "Do not print VCF.")
         ;
@@ -142,15 +142,15 @@ int main(int argc, const char* argv[])
     /*
      * Read SAM headers.
      */
-    hts_itr_t *iter=NULL;
+    hts_itr_t *iter = nullptr;
     
-    samFile *in = NULL;
-    bam1_t *b= NULL;
-    bam_hdr_t *header = NULL;
+    samFile *in = nullptr;
+    bam1_t *b = nullptr;
+    bam_hdr_t *header = nullptr;
     
     BOOST_LOG_TRIVIAL(info) << "SAM/BAM reader initialization: reading '" << sam_fn.c_str() << "'.";
     in = sam_open(sam_fn.c_str(), "r");
-    if(in==NULL) {
+    if(in==nullptr) {
         ococo::error_exit("Problem with opening input ('%s').\n", sam_fn.c_str());
     }
     if ((header = sam_hdr_read(in)) == 0){
@@ -184,19 +184,19 @@ int main(int argc, const char* argv[])
      */
     BOOST_LOG_TRIVIAL(info) << "Starting the main loop.";
     
-    int r;
+    int32_t r;
     b = bam_init1();
     while ((r = sam_read1(in, header, b)) >= 0) { // read one alignment from `in'
         const char* rname=bam_get_qname(b);
         const uint8_t *seq=bam_get_seq(b);
         const uint8_t *qual=bam_get_qual(b);
         const uint32_t *cigar=bam_get_cigar(b);
-        const int n_cigar=b->core.n_cigar;
+        const int32_t n_cigar=b->core.n_cigar;
         //+b->core.l_qname
-        const int chrom=b->core.tid;
-        const int read_pos=b->core.pos;
-        const int mapq=b->core.qual;
-        const int flags=b->core.flag;
+        const int32_t chrom=b->core.tid;
+        const int32_t read_pos=b->core.pos;
+        const int32_t mapq=b->core.qual;
+        const int32_t flags=b->core.flag;
         
         //fprintf(stderr,"pos %d, chrom %d, map q %d, flag %d, name %s \n",pos,chrom,mapq, flags, rname);
         
@@ -219,10 +219,10 @@ int main(int argc, const char* argv[])
         }
         
         int32_t ref_pos;
-        for (int k=0,i=0; k < n_cigar; k++)
+        for (int32_t k=0,i=0; k < n_cigar; k++)
         {
-            const int op = bam_cigar_op(cigar[k]);
-            const int ol = bam_cigar_oplen(cigar[k]);
+            const int32_t op = bam_cigar_op(cigar[k]);
+            const int32_t ol = bam_cigar_oplen(cigar[k]);
             int ni=0;
             
             switch (op) {
@@ -235,11 +235,11 @@ int main(int argc, const char* argv[])
                         const uint8_t &bq=qual[i];
                         
                         if (bq<params.min_baseq){
-                            BOOST_LOG_TRIVIAL(trace) << "Omitting base (too low base quality): chrom=" << chrom << ", pos=" << ref_pos << ", nucl=" << ococo::nt16_nt256[nt16] << ", quality=" << (int)bq << ".";
+                            BOOST_LOG_TRIVIAL(trace) << "Omitting base (too low base quality): chrom=" << chrom << ", pos=" << ref_pos << ", nucl=" << ococo::nt16_nt256[nt16] << ", quality=" << (int32_t)bq << ".";
                             
                         }
                         else{
-                            BOOST_LOG_TRIVIAL(trace) << "Incrementing counter: chrom=" << chrom << ", pos=" << ref_pos << ", nucl=" << ococo::nt16_nt256[nt16] << ", quality=" << (int)bq << ". New state: refbase='" << stats.get_nucl(chrom, ref_pos) << "', counters: " << stats.debug_str_counters(chrom,ref_pos);
+                            BOOST_LOG_TRIVIAL(trace) << "Incrementing counter: chrom=" << chrom << ", pos=" << ref_pos << ", nucl=" << ococo::nt16_nt256[nt16] << ", quality=" << (int32_t)bq << ". New state: refbase='" << stats.get_nucl(chrom, ref_pos) << "', counters: " << stats.debug_str_counters(chrom,ref_pos);
                             STATS_INCREMENT(stats,chrom,ref_pos,nt16);
                             BOOST_LOG_TRIVIAL(trace) << "           new state: counters: " << stats.debug_str_counters(chrom,ref_pos);
 

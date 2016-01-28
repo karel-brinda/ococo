@@ -56,11 +56,11 @@ namespace ococo {
         mode_t mode;
         strategy_t strategy;
 
-        int min_coverage;
-        int min_mapq;
-        int min_baseq;
+        int32_t min_coverage;
+        int32_t min_mapq;
+        int32_t min_baseq;
 
-        int min_vote;
+        int32_t min_vote;
 
         bool print_vcf;
 
@@ -174,14 +174,14 @@ namespace ococo {
         }
         
         
-        const int max_val=max({a,c,g,t});
-        const int vec[]={a,c,g,t};
-        const int prefsum[]={a,a+c,a+c+g,a+c+g+t};
+        const int32_t max_val=max({a,c,g,t});
+        const int32_t vec[]={a,c,g,t};
+        const int32_t prefsum[]={a,a+c,a+c+g,a+c+g+t};
         
         //int rn=randint(0,sum);
-        const int rn=rand() % sum;
+        const int32_t rn=rand() % sum;
         uint8_t nucl;
-        int count=0;
+        int32_t count=0;
         
         //printf("rn %d\n",rn);
         for(int i=0;i<4;i++){
@@ -214,7 +214,7 @@ namespace ococo {
      ********************************/
     
     struct stats_t {
-        int16_t   n_seqs;
+        int32_t   n_seqs;
         bool      *seq_used;
         int32_t   *seq_len;
         int32_t   *seq_comprseqlen;
@@ -409,7 +409,7 @@ namespace ococo {
         for(int s=0;(l = kseq_read(seq)) >= 0;s++) {
             assert(strcmp((char*)seq->name.s,(char*)seq_name[s])==0);
             assert((int)seq->seq.l == seq_len[s]);
-            if (seq->comment.l && seq_comment[s]==NULL){
+            if (seq->comment.l && seq_comment[s]==nullptr){
                 seq_comment[s]=new uint8_t[seq->comment.l+1];
                 memcpy(seq_comment[s], seq->comment.s,seq->comment.l+1);
             }
@@ -467,11 +467,11 @@ namespace ococo {
     
     bool stats_t::check_state() const {
         if(n_seqs==0) return false;
-        if(seq_used==NULL || seq_len==NULL || seq_name==NULL || seq_comment==NULL || counters==NULL)
+        if(seq_used==nullptr || seq_len==nullptr || seq_name==nullptr || seq_comment==nullptr || counters==nullptr || seq_comprseq==nullptr || seq_comprseqlen==nullptr)
             return false;
         
         for(int i=0;i<n_seqs;i++){
-            if(seq_name[i]==NULL || counters[i]==NULL){
+            if(seq_name[i]==nullptr || counters[i]==nullptr || seq_comprseq[i]==nullptr){
                 return false;
             }
         }
@@ -520,17 +520,18 @@ namespace ococo {
         FILE *fo=fopen(stats_fn.c_str(),"r");
         
         uint8_t delim[stats_delim_l]={};
-        int16_t seq_name_l;
-        int16_t seq_comment_l;
+        int32_t seq_name_l;
+        int32_t seq_comment_l;
         
-        int16_t n_seqs_loaded;
+        int32_t n_seqs_loaded;
         bool    seq_used_loaded;
         int32_t seq_len_loaded;
-        int16_t seq_name_l_loaded;
-        int16_t seq_comment_l_loaded;
+        int32_t seq_name_l_loaded;
+        int32_t seq_comment_l_loaded;
+        int32_t seq_comprseqlen_loaded;
         
         /* number of seqs */
-        fread(&n_seqs_loaded,sizeof(int16_t),1,fo);
+        fread(&n_seqs_loaded,sizeof(int32_t),1,fo);
         assert(n_seqs_loaded = n_seqs);
         
         for(int i=0;i<n_seqs;i++){
@@ -542,24 +543,27 @@ namespace ococo {
             
             /* lengts */
             seq_name_l=strlen((char*)seq_name[i]);
-            seq_comment_l=seq_comment[i]==NULL ? 0 : strlen((char*)seq_comment[i]);
+            seq_comment_l=seq_comment[i]==nullptr ? 0 : strlen((char*)seq_comment[i]);
             fread(&seq_used_loaded,sizeof(bool),1,fo);
             assert(seq_used_loaded==seq_used[i]);
             fread(&seq_len_loaded,sizeof(int32_t),1,fo);
             assert(seq_len_loaded==seq_len[i]);
-            fread(&seq_name_l_loaded,sizeof(int16_t),1,fo);
+            fread(&seq_name_l_loaded,sizeof(int32_t),1,fo);
             assert(seq_name_l_loaded==seq_name_l);
-            fread(&seq_comment_l_loaded,sizeof(int16_t),1,fo);
+            fread(&seq_comment_l_loaded,sizeof(int32_t),1,fo);
             assert(seq_comment_l_loaded==seq_comment_l);
+            fread(&seq_comprseqlen_loaded,sizeof(int32_t),1,fo);
+            assert(seq_comprseqlen_loaded==seq_comprseqlen[i]);
             
             /* strings */
-            // values of strings are not checked
+            // todo: values of strings are not checked -> check
             uint8_t seq_name_loaded[seq_name_l+1];
             fread(seq_name_loaded,sizeof(uint8_t),seq_name_l+1,fo);
             uint8_t seq_comment_loaded[seq_comment_l+1];
             fread(seq_comment_loaded,sizeof(uint8_t),seq_comment_l+1,fo);
 
             /* reference sequences*/
+            fread(seq_comprseq[i],sizeof(uint8_t),seq_comprseqlen[i],fo);
             
             /* counters */
             fread(counters[i],sizeof(counter_t),seq_len[i],fo);
@@ -575,14 +579,14 @@ namespace ococo {
         FILE *fo=fopen(stats_fn.c_str(),"w+");
         
         uint8_t delim[stats_delim_l]={};
-        int16_t seq_name_l;
-        int16_t seq_comment_l;
+        int32_t seq_name_l;
+        int32_t seq_comment_l;
         
         delim[0]='\255';
         delim[stats_delim_l-1]='\255';
         
         /* number of seqs */
-        fwrite(&n_seqs,sizeof(int16_t),1,fo);
+        fwrite(&n_seqs,sizeof(int32_t),1,fo);
         
         for(int i=0;i<n_seqs;i++){
             
@@ -591,24 +595,27 @@ namespace ococo {
             
             /* lengts */
             seq_name_l=strlen((char*)seq_name[i]);
-            seq_comment_l=seq_comment[i]==NULL ? 0 : strlen((char*)seq_comment[i]);
+            seq_comment_l=seq_comment[i]==nullptr ? 0 : strlen((char*)seq_comment[i]);
             
             fwrite(&seq_used[i],sizeof(bool),1,fo);
             fwrite(&seq_len[i],sizeof(int32_t),1,fo);
-            fwrite(&seq_name_l,sizeof(int16_t),1,fo);
-            fwrite(&seq_comment_l,sizeof(int16_t),1,fo);
+            fwrite(&seq_name_l,sizeof(int32_t),1,fo);
+            fwrite(&seq_comment_l,sizeof(int32_t),1,fo);
+            fwrite(&seq_comprseqlen[i],sizeof(int32_t),1,fo);
             
             /* strings */
-            assert(seq_name[i] != NULL);
+            assert(seq_name[i] != nullptr);
             fwrite(seq_name[i],sizeof(uint8_t),seq_name_l+1,fo);
-            if(seq_comment[i] != NULL){
+            if(seq_comment[i] != nullptr){
                 fwrite(seq_comment[i],sizeof(uint8_t),seq_comment_l+1,fo);
             }
             
             /* reference sequences*/
+            assert(seq_comprseq[i]!=nullptr);
+            fwrite(seq_comprseq[i],sizeof(uint8_t),seq_comprseqlen[i],fo);
             
             /* counters */
-            assert(counters[i] != NULL);
+            assert(counters[i] != nullptr);
             fwrite(counters[i],sizeof(counter_t),seq_len[i],fo);
         }
         
