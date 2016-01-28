@@ -114,10 +114,10 @@ int main(int argc, const char* argv[])
     BOOST_LOG_TRIVIAL(info) << "SAM/BAM reader initialization: reading '" << sam_fn.c_str() << "'.";
 	in = sam_open(sam_fn.c_str(), "r");
 	if(in==NULL) {
-		error_exit("Problem with opening input ('%s').\n", sam_fn.c_str());
+        ococo::error_exit("Problem with opening input ('%s').\n", sam_fn.c_str());
 	}
 	if ((header = sam_hdr_read(in)) == 0){
-		error_exit("SAM headers are missing or corrupted.\n");
+        ococo::error_exit("SAM headers are missing or corrupted.\n");
 	}
 
     ococo::stats_t stats(*header);
@@ -126,7 +126,7 @@ int main(int argc, const char* argv[])
 	/*
 	 * Load FASTA and stats.
 	 */
-	if (stats_fn.size()>0 && file_exists(stats_fn)){
+    if (stats_fn.size()>0 && ococo::file_exists(stats_fn)){
 	    BOOST_LOG_TRIVIAL(info) << "Importing statistics: '" << stats_fn << "'.";
 		stats.import_stats(stats_fn);
 	}

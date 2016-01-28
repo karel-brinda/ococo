@@ -38,23 +38,23 @@
 using namespace std;
 namespace logging = boost::log;
 
-
-KSEQ_INIT(gzFile, gzread);
-
-void error_exit(const char * format, ...){
-    va_list args;
-    va_start (args, format);
-    vfprintf (stderr, format, args);
-    va_end (args);
-    exit(-1);
-}
-
-
-bool file_exists(const string &fn){
-    return access( fn.c_str(), F_OK ) != -1;
-}
-
 namespace ococo {
+    
+    KSEQ_INIT(gzFile, gzread);
+    
+    void error_exit(const char * format, ...){
+        va_list args;
+        va_start (args, format);
+        vfprintf (stderr, format, args);
+        va_end (args);
+        exit(-1);
+    }
+    
+    
+    bool file_exists(const string &fn){
+        return access( fn.c_str(), F_OK ) != -1;
+    }
+    
     
     /*********************
      *** Configuration ***

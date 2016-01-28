@@ -1,6 +1,7 @@
 ococo
 a.fa
 
+*.xcodeproj
 Debug/
 
 *~
