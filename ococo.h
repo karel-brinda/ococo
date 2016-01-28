@@ -47,8 +47,30 @@ namespace ococo {
      *********************/
     
     const int  fasta_line_l = 50;
-    const int      min_vote =  2;
     const int stats_delim_l = 10;
+
+    enum mode_t {BATCH, REALTIME};
+    enum alg_t {STOCHASTIC, MAJORITY};
+    
+    struct consensus_params_t {
+        mode_t mode;
+        alg_t alg;
+
+        int min_mapq;
+        int min_baseq;
+
+        int min_vote;
+
+        bool print_vcf;
+
+        consensus_params_t():
+            mode(BATCH),
+            alg(MAJORITY),
+            min_mapq(1),
+            min_baseq(0),
+            print_vcf(true)
+        {}
+    };
     
     
     /****************
@@ -78,23 +100,8 @@ namespace ococo {
      *** Translation tables ***
      **************************/
     
-    typedef uint8_t nt4_t ;
-    typedef uint8_t nt16_t ;
-    
-    
-    enum cons_calling_mode {BATCH, REALTIME};
-    enum cons_calling_alg {STOCHASTIC, MAJORITY};
-    
-    typedef struct {
-        int min_mapq;
-        int min_baseq;
-    } consensus_params_t;
-    
-    //const uint8_t nt4_A = 0x0;
-    //const uint8_t nt4_C = 0x1;
-    //const uint8_t nt4_G = 0x2;
-    //const uint8_t nt4_T = 0x3;
-    //const uint8_t nt4_N = 0x4;
+    typedef uint8_t nt4_t;
+    typedef uint8_t nt16_t;
     
     const uint8_t nt256_nt4[] = {
         0, 1, 2, 3,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
@@ -161,16 +168,10 @@ namespace ococo {
         const int vec[]={a,c,g,t};
         const int prefsum[]={a,a+c,a+c+g,a+c+g+t};
         
-        //printf(" a %d, c %d, g %d, t %d \n",a,c,g,t);
-        if (sum<min_vote){
-            return 'N';
-        }
-        
         //int rn=randint(0,sum);
         const int rn=rand() % sum;
         char nucl;
         int count=0;
-        
         
         //printf("rn %d\n",rn);
         for(int i=0;i<4;i++){
@@ -212,8 +213,10 @@ namespace ococo {
         uint8_t   **seq_comprseq;
         counter_t **counters;
         
+        consensus_params_t params;
+        
         //stats_t();
-        stats_t(bam_hdr_t &h);
+        stats_t(consensus_params_t params,bam_hdr_t &h);
         ~stats_t();
         
         
@@ -341,7 +344,7 @@ namespace ococo {
      *** Implementation ***
      **********************/
     
-    stats_t::stats_t(bam_hdr_t &h):
+    stats_t::stats_t(consensus_params_t params,bam_hdr_t &h):
     n_seqs(h.n_targets),
     seq_used(new bool[n_seqs]()),
     seq_len(new int32_t[n_seqs]()),
@@ -349,7 +352,8 @@ namespace ococo {
     seq_name(new char*[n_seqs]()),
     seq_comment(new char*[n_seqs]()),
     seq_comprseq(new uint8_t*[n_seqs]()),
-    counters(new counter_t*[n_seqs]())
+    counters(new counter_t*[n_seqs]()),
+    params(params)
     {
         for (int s=0;s<n_seqs;s++){
             seq_len[s]=h.target_len[s];
@@ -611,12 +615,10 @@ namespace ococo {
     int stats_t::call_consensus_position(int ref, int pos, bool print_vcf) {
         //BOOST_LOG_TRIVIAL(debug) << "Calling consensus for position " << pos;
         
-        const int16_t counter_a=_COUNTER_CELL_VAL(counters[ref][pos],seq_nt16_table[(int)'A']);
-        const int16_t counter_c=_COUNTER_CELL_VAL(counters[ref][pos],seq_nt16_table[(int)'C']);
-        const int16_t counter_g=_COUNTER_CELL_VAL(counters[ref][pos],seq_nt16_table[(int)'G']);
-        const int16_t counter_t=_COUNTER_CELL_VAL(counters[ref][pos],seq_nt16_table[(int)'T']);
+        counter_t A,C,G,T;
+        get_counters_values(ref, pos, A, C, G, T);
         
-        const char new_base=rand_nucl(counter_a,counter_c,counter_g,counter_t);
+        const char new_base=(A+C+G+T<params.min_vote) ? 'N' : rand_nucl(A,C,G,T);
         const char old_base=get_nucl(ref,pos);
         
         if(old_base!=new_base){

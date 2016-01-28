@@ -45,10 +45,7 @@ int main(int argc, const char* argv[])
 	 * Default configuration.
 	 */
 
-    ococo::consensus_params_t cps = {
-		1, // min_mapq
-		0, // min_baseq
-	};
+    ococo::consensus_params_t params;
 
 	bool debug=false;
 	string fasta0_fn;
@@ -79,8 +76,8 @@ int main(int argc, const char* argv[])
 				//("algorithm,a", po::value<string>(&alg), "Algorithm for updates: majority / randomized [majority]")
 				//("counter-size,s", po::value<int>(&counterSize), "Size of counter per nucleotide in bits [3]")
 				//("min-coverage,c", po::value<int>(&minCoverage), "Minimal coverage [3]")
-				("min-map-qual,m", po::value<int>(&cps.min_mapq), "Minimal mapping quality. [1]")
-				("min-base-qual,b", po::value<int>(&cps.min_baseq), "Minimal base quality. [0]")
+				("min-map-qual,m", po::value<int>(&params.min_mapq), "Minimal mapping quality. [1]")
+				("min-base-qual,b", po::value<int>(&params.min_baseq), "Minimal base quality. [0]")
 				//("accept-level,l", po::value<float>(&acceptanceLevel), "Acceptance level [0.60]")
 				("debug,d", "Debugging")
 		;
@@ -135,7 +132,7 @@ int main(int argc, const char* argv[])
         ococo::error_exit("SAM headers are missing or corrupted.\n");
 	}
 
-    ococo::stats_t stats(*header);
+    ococo::stats_t stats(params,*header);
 	assert(stats.check_state());
 
 	/*
@@ -187,7 +184,7 @@ int main(int argc, const char* argv[])
             continue;
         }
         
-        if (mapq<cps.min_mapq){
+        if (mapq<params.min_mapq){
             BOOST_LOG_TRIVIAL(debug) << "Discarded: mapping quality is too low.";
             continue;
         }
