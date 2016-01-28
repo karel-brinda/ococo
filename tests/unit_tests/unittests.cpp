@@ -1,6 +1,7 @@
 #include "ococo.h"
 #include "gtest/gtest.h"
 
+using namespace ococo;
 
 vector<int> nucls {
     nt256_nt16[(int)'A'],

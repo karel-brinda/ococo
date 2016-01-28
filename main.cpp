@@ -30,7 +30,7 @@ int main(int argc, const char* argv[])
 	 * Default configuration.
 	 */
 
-	cons_params_t cps = {
+    ococo::cons_params_t cps = {
 		1, // min_mapq
 		0, // min_baseq
 	};
@@ -120,7 +120,7 @@ int main(int argc, const char* argv[])
 		error_exit("SAM headers are missing or corrupted.\n");
 	}
 
-	stats_t stats(*header);
+    ococo::stats_t stats(*header);
 	assert(stats.check_state());
 
 	/*
@@ -192,7 +192,7 @@ int main(int argc, const char* argv[])
                     for (ni=i+ol;i<ni;i++){
                         nt16=bam_seqi(seq, i);
                         STATS_UPDATE(stats,chrom,pos+i,nt16);
-                        BOOST_LOG_TRIVIAL(trace) << "Incrementing counter: chrom=" << chrom << ", pos=" << pos+i << ", nucl=" << nt16_nt256[nt16] << ". New state: refbase='" << stats.get_nucl(chrom, pos+i) << "', counters: " << stats.debug_str_counters(chrom,pos);
+                        BOOST_LOG_TRIVIAL(trace) << "Incrementing counter: chrom=" << chrom << ", pos=" << pos+i << ", nucl=" << ococo::nt16_nt256[nt16] << ". New state: refbase='" << stats.get_nucl(chrom, pos+i) << "', counters: " << stats.debug_str_counters(chrom,pos);
                     }
                     break;
                     
