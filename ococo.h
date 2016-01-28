@@ -5,6 +5,7 @@
 
 
 #include <iostream>
+#include <sstream>
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
@@ -15,28 +16,13 @@
 #include <assert.h>
 #include <zlib.h>
 
-#define BOOST_LOG_DYN_LINK
-
-#include <boost/format.hpp>
-
-#include <boost/program_options.hpp>
-#include <boost/program_options/options_description.hpp>
-#include <boost/program_options/parsers.hpp>
-#include <boost/program_options/variables_map.hpp>
-
-#include <boost/log/core.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/log/expressions.hpp>
-
 #include "htslib/sam.h"
 #include "htslib/faidx.h"
 #include "htslib/kstring.h"
 #include "htslib/khash.h"
 #include "htslib/kseq.h"
 
-
 using namespace std;
-namespace logging = boost::log;
 
 namespace ococo {
     
@@ -95,10 +81,14 @@ namespace ococo {
     typedef uint8_t nt4_t ;
     typedef uint8_t nt16_t ;
     
+    
+    enum cons_calling_mode {BATCH, REALTIME};
+    enum cons_calling_alg {STOCHASTIC, MAJORITY};
+    
     typedef struct {
         int min_mapq;
         int min_baseq;
-    } cons_params_t;
+    } consensus_params_t;
     
     //const uint8_t nt4_A = 0x0;
     //const uint8_t nt4_C = 0x1;
@@ -206,9 +196,6 @@ namespace ococo {
     
     // Test if a file exists.
     bool file_exists(const string &fn);
-    
-    // Init Boost logging,
-    void boost_logging_init();
     
     
     /********************************
@@ -341,7 +328,7 @@ namespace ococo {
                                         );
     }
     
-    inline void STATS_UPDATE(stats_t &stats,int seqid,int pos,nt16_t nt16) {
+    inline void STATS_INCREMENT(stats_t &stats,int seqid,int pos,nt16_t nt16) {
         assert(stats.seq_len[seqid]>pos);
         //fprintf(stderr,"Going to update stats: chrom %d, pos %d, nucl %d\n", seqid, pos, nt16);
         //fprintf(stderr,"Counter at pos %d: %04x\n", pos, stats.counters[seqid][pos]);
@@ -622,7 +609,7 @@ namespace ococo {
     }
     
     int stats_t::call_consensus_position(int ref, int pos, bool print_vcf) {
-        BOOST_LOG_TRIVIAL(debug) << "Calling consensus for position " << pos;
+        //BOOST_LOG_TRIVIAL(debug) << "Calling consensus for position " << pos;
         
         const int16_t counter_a=_COUNTER_CELL_VAL(counters[ref][pos],seq_nt16_table[(int)'A']);
         const int16_t counter_c=_COUNTER_CELL_VAL(counters[ref][pos],seq_nt16_table[(int)'C']);

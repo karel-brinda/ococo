@@ -1,11 +1,26 @@
 #include "ococo.h"
 
+#define BOOST_LOG_DYN_LINK
+
+#include <boost/format.hpp>
+
+#include <boost/program_options.hpp>
+#include <boost/program_options/options_description.hpp>
+#include <boost/program_options/parsers.hpp>
+#include <boost/program_options/variables_map.hpp>
+
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
+#include <boost/log/expressions.hpp>
+
+namespace logging = boost::log;
 
 void boost_logging_init()
 {
 	logging::core::get()->set_filter
 	(
-		logging::trivial::severity >= logging::trivial::trace
+        logging::trivial::severity >= logging::trivial::warning
+        //logging::trivial::severity >= logging::trivial::trace
 	);
 }
 
@@ -30,7 +45,7 @@ int main(int argc, const char* argv[])
 	 * Default configuration.
 	 */
 
-    ococo::cons_params_t cps = {
+    ococo::consensus_params_t cps = {
 		1, // min_mapq
 		0, // min_baseq
 	};
@@ -193,7 +208,7 @@ int main(int argc, const char* argv[])
                         const int base_pos=read_pos+i;
                         nt16=bam_seqi(seq, i);
                         BOOST_LOG_TRIVIAL(trace) << "Incrementing counter: chrom=" << chrom << ", pos=" << base_pos << ", nucl=" << ococo::nt16_nt256[nt16] << ". New state: refbase='" << stats.get_nucl(chrom, base_pos) << "', counters: " << stats.debug_str_counters(chrom,base_pos);
-                        STATS_UPDATE(stats,chrom,base_pos,nt16);
+                        STATS_INCREMENT(stats,chrom,base_pos,nt16);
                         BOOST_LOG_TRIVIAL(trace) << "           new state: counters: " << stats.debug_str_counters(chrom,base_pos);
                     }
                     break;
