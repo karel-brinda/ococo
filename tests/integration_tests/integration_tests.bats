@@ -14,7 +14,7 @@ export PATH=$PATH:../..
 	run ococo \
 		-i data/alignments_AA_unm.sam \
 		-f data/fasta_NN.fa \
-		-c output/fasta_NN.fa
+		-c  output/fasta_NN.fa
 
 	[ "$status" -eq 0 ]
 

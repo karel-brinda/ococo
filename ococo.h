@@ -166,6 +166,13 @@ namespace ococo {
         const char nucls[] = {'A','C','G','T'};
         
         const int sum=a+c+g+t;
+        
+        //todo: improve
+        if(sum<2){
+            return 'N';
+        }
+        
+        
         const int max_val=max({a,c,g,t});
         const int vec[]={a,c,g,t};
         const int prefsum[]={a,a+c,a+c+g,a+c+g+t};
@@ -360,8 +367,6 @@ namespace ococo {
         for (int s=0;s<n_seqs;s++){
             seq_len[s]=h.target_len[s];
             seq_comprseqlen[s]=(int32_t)ceil(seq_len[s]/4.0);
-            printf("haha %d\n",seq_comprseqlen[s]);
-            printf("len %d\n",h.target_len[s]);
             seq_used[s]=true;
             //fprintf(stderr,"allocating %d chars\n",seq_len[i]);
             const int seq_len_name=strlen(h.target_name[s]);
