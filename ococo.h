@@ -263,8 +263,8 @@ namespace ococo {
         
         int save_fasta(const string &fasta_fn) const;
         
-        void print_vcf_header() const;
-        void print_vcf_substitution(int ref, int pos, unsigned char old_base, unsigned char new_base) const;
+        void print_vcf_header(bool print_counters) const;
+        void print_vcf_substitution(int ref, int pos, unsigned char old_base, unsigned char new_base, counter_t a, counter_t c, counter_t g, counter_t t, bool print_counters) const;
         
         
         /*****************
@@ -625,7 +625,7 @@ namespace ococo {
         
         if(old_base!=new_base){
             if(print_vcf){
-                print_vcf_substitution(ref,pos,old_base,new_base);
+                print_vcf_substitution(ref,pos,old_base,new_base,A,C,G,T,true);
             }
             set_nucl(ref,pos,new_base);
         }
@@ -640,29 +640,43 @@ namespace ococo {
         t=_COUNTER_CELL_VAL(counters[ref][pos],seq_nt16_table[(int)'T']);
     }
     
-    void stats_t::print_vcf_header() const {
+    void stats_t::print_vcf_header(bool print_counters) const {
         assert(check_state());
         
         //todo: date
         printf(
                "##fileformat=VCFv4.3\n"
                "##fileDate=20150000\n"
+               "##source=Ococo"
                //"##reference=%s\n"
-               "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
                );
+        for (int i=0;i<n_seqs;i++){
+            printf("contig=<ID=%s,length=%d>\n",seq_name[i],seq_len[i]);
+        }
+        if(print_counters){
+            printf("##INFO=<ID=C,Number=4,Type=Integer,Description=\"Values of A,C,G,T counters.\">\n");
+        }
+        printf("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n");
         
     }
     
-    void stats_t::print_vcf_substitution(int ref, int pos, unsigned char old_base, unsigned char new_base) const {
+    void stats_t::print_vcf_substitution(int ref, int pos, unsigned char old_base, unsigned char new_base, counter_t a, counter_t c, counter_t g, counter_t t, bool print_counters) const {
         assert(check_state());
         
-        printf(
-               "%s\t%d\t.\t%c\t%c\t100\tPASS\t.\n",
+        printf("%s\t%d\t.\t%c\t%c\t100\tPASS\t",
                seq_name[ref],
+               //ref+1,
                pos+1,
                old_base,
                new_base
                );
+        
+        if (print_counters){
+            printf("C=%d,%d,%d,%d\n",a,c,g,t);
+        }
+        else{
+            printf(".\n");
+        }
         
     }
     

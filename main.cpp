@@ -19,8 +19,8 @@ void boost_logging_init()
 {
     logging::core::get()->set_filter
     (
-     //logging::trivial::severity >= logging::trivial::warning
-     logging::trivial::severity >= logging::trivial::trace
+     logging::trivial::severity >= logging::trivial::warning
+     //logging::trivial::severity >= logging::trivial::trace
      );
 }
 
@@ -81,7 +81,7 @@ int main(int argc, const char* argv[])
         ("min-map-qual,q", po::value<int>(&params.min_mapq), "Minimal mapping quality to increment a counter. [1]")
         ("min-base-qual,b", po::value<int>(&params.min_baseq), "Minimal base quality to increment a counter. [0]")
         //("accept-level,l", po::value<float>(&acceptanceLevel), "Acceptance level [0.60]")
-        ("vcf,v", "Print VCF output.")
+        ("no-vcf,v", "Do not print VCF.")
         ;
         
         po::variables_map vm;
@@ -90,7 +90,7 @@ int main(int argc, const char* argv[])
             po::store(po::command_line_parser(argc, argv).options(vol).positional(pos).run(),vm); // can throw
             po::notify(vm); // throws on error, so do after help in case there are any problems
             
-            params.print_vcf=vm.count("vcf");
+            params.print_vcf=!vm.count("no-vcf");
             
             if (vm.count("strategy")) {
                 if (strategy=="majority"){
@@ -101,6 +101,7 @@ int main(int argc, const char* argv[])
                 }
                 else {
                     fprintf(stderr,"Unknown strategy '%s'. Possible strategies are 'majority' and 'stochastic'\n",strategy.c_str());
+                    return EXIT_FAILURE;
                 }
             }
             
@@ -113,6 +114,7 @@ int main(int argc, const char* argv[])
                 }
                 else {
                     fprintf(stderr,"Unknown mode '%s'. Possible strategies are 'batch' and 'real-time'\n",strategy.c_str());
+                    return EXIT_FAILURE;
                 }
             }
             
@@ -173,6 +175,10 @@ int main(int argc, const char* argv[])
         }
     }
     
+    if(params.print_vcf){
+        stats.print_vcf_header(true);
+    }
+    
     /*
      * Process alignments.
      */
@@ -212,7 +218,7 @@ int main(int argc, const char* argv[])
             continue;
         }
         
-        
+        int32_t ref_pos;
         for (int k=0,i=0; k < n_cigar; k++)
         {
             const int op = bam_cigar_op(cigar[k]);
@@ -224,18 +230,22 @@ int main(int argc, const char* argv[])
                 case BAM_CDIFF:
                 case BAM_CEQUAL:
                     for (ni=i+ol;i<ni;i++){
-                        const int32_t base_pos=read_pos+i;
+                        ref_pos=read_pos+i;
                         const uint8_t &nt16=bam_seqi(seq, i);
                         const uint8_t &bq=qual[i];
                         
                         if (bq<params.min_baseq){
-                            BOOST_LOG_TRIVIAL(trace) << "Omitting base (too low base quality): chrom=" << chrom << ", pos=" << base_pos << ", nucl=" << ococo::nt16_nt256[nt16] << ", quality=" << (int)bq << ".";
+                            BOOST_LOG_TRIVIAL(trace) << "Omitting base (too low base quality): chrom=" << chrom << ", pos=" << ref_pos << ", nucl=" << ococo::nt16_nt256[nt16] << ", quality=" << (int)bq << ".";
                             
                         }
                         else{
-                            BOOST_LOG_TRIVIAL(trace) << "Incrementing counter: chrom=" << chrom << ", pos=" << base_pos << ", nucl=" << ococo::nt16_nt256[nt16] << ", quality=" << (int)bq << ". New state: refbase='" << stats.get_nucl(chrom, base_pos) << "', counters: " << stats.debug_str_counters(chrom,base_pos);
-                            STATS_INCREMENT(stats,chrom,base_pos,nt16);
-                            BOOST_LOG_TRIVIAL(trace) << "           new state: counters: " << stats.debug_str_counters(chrom,base_pos);
+                            BOOST_LOG_TRIVIAL(trace) << "Incrementing counter: chrom=" << chrom << ", pos=" << ref_pos << ", nucl=" << ococo::nt16_nt256[nt16] << ", quality=" << (int)bq << ". New state: refbase='" << stats.get_nucl(chrom, ref_pos) << "', counters: " << stats.debug_str_counters(chrom,ref_pos);
+                            STATS_INCREMENT(stats,chrom,ref_pos,nt16);
+                            BOOST_LOG_TRIVIAL(trace) << "           new state: counters: " << stats.debug_str_counters(chrom,ref_pos);
+
+                            if(params.mode==ococo::mode_t::REALTIME){
+                                stats.call_consensus_position(chrom, ref_pos, params.print_vcf);
+                            }
                         }
                     }
                     break;
@@ -262,6 +272,11 @@ int main(int argc, const char* argv[])
             }
             //printf("%d%c",ol,BAM_CIGAR_STR[op]);
             
+            /*if(params.mode==ococo::mode_t::REALTIME){
+                for(int pos=read_pos;pos<ref_pos;pos++){
+                    stats.call_consensus_position(chrom, pos, params.print_vcf);
+                }
+            }*/
         }
         
         BOOST_LOG_TRIVIAL(debug) << "Alignment incorporated into statistics.";
@@ -270,8 +285,10 @@ int main(int argc, const char* argv[])
     /*
      * Calling final consensus and export stats.
      */
-    BOOST_LOG_TRIVIAL(info) << "Calling consensus for the entire reference sequence.";
-    stats.call_consensus(params.print_vcf);
+    if(params.mode==ococo::mode_t::BATCH){
+        BOOST_LOG_TRIVIAL(info) << "Calling consensus for the entire reference sequence (batch mode).";
+        stats.call_consensus(params.print_vcf);
+    }
     
     if (fasta1_fn.size()>0){
         BOOST_LOG_TRIVIAL(info) << "Saving FASTA: '" << fasta1_fn << "'.";
