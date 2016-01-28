@@ -104,6 +104,7 @@ namespace ococo {
     
     typedef uint8_t nt4_t;
     typedef uint8_t nt16_t;
+    typedef uint8_t nt256_t;
     
     const uint8_t nt256_nt4[] = {
         0, 1, 2, 3,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,
@@ -151,9 +152,9 @@ namespace ococo {
         15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15
     };
     
-    const char nt16_nt256[] = "=ACMGRSVTWYHKDBN";
+    const uint8_t nt16_nt256[] = "=ACMGRSVTWYHKDBN";
     
-    const char nt4_nt256[] = "ACGTN";
+    const uint8_t nt4_nt256[] = "ACGTN";
     
     
     /***************************
@@ -162,8 +163,8 @@ namespace ococo {
     
     
     // Generate randomly nucleotide with respect to given frequencies.
-    inline char rand_nucl(int a, int c, int g, int t){
-        const char nucls[] = {'A','C','G','T'};
+    inline uint8_t rand_nucl(int a, int c, int g, int t){
+        const uint8_t nucls[] = {'A','C','G','T'};
         
         const int sum=a+c+g+t;
         
@@ -179,7 +180,7 @@ namespace ococo {
         
         //int rn=randint(0,sum);
         const int rn=rand() % sum;
-        char nucl;
+        uint8_t nucl;
         int count=0;
         
         //printf("rn %d\n",rn);
@@ -217,8 +218,8 @@ namespace ococo {
         bool      *seq_used;
         int32_t   *seq_len;
         int32_t   *seq_comprseqlen;
-        char      **seq_name;
-        char      **seq_comment;
+        uint8_t   **seq_name;
+        uint8_t   **seq_comment;
         uint8_t   **seq_comprseq;
         counter_t **counters;
         
@@ -271,15 +272,15 @@ namespace ococo {
         int save_fasta(const string &fasta_fn) const;
         
         void print_vcf_header(bool print_counters) const;
-        void print_vcf_substitution(int ref, int pos, unsigned char old_base, unsigned char new_base, counter_t a, counter_t c, counter_t g, counter_t t, bool print_counters) const;
+        void print_vcf_substitution(int ref, int pos, uint8_t old_base, uint8_t new_base, counter_t a, counter_t c, counter_t g, counter_t t, bool print_counters) const;
         
         
         /*****************
          *** Auxiliary ***
          *****************/
         
-        inline char get_nucl(int ref, int pos) const;
-        inline void set_nucl(int ref, int pos, unsigned char nucl);
+        inline uint8_t get_nucl(int ref, int pos) const;
+        inline void set_nucl(int ref, int pos, uint8_t nucl);
         //inline counter_t get_counter_value(int ref, int pos);
         void get_counters_values(int ref, int pos, counter_t &a, counter_t &c, counter_t &g, counter_t &t) const;
         
@@ -358,8 +359,8 @@ namespace ococo {
     seq_used(new bool[n_seqs]()),
     seq_len(new int32_t[n_seqs]()),
     seq_comprseqlen(new int32_t[n_seqs]()),
-    seq_name(new char*[n_seqs]()),
-    seq_comment(new char*[n_seqs]()),
+    seq_name(new uint8_t*[n_seqs]()),
+    seq_comment(new uint8_t*[n_seqs]()),
     seq_comprseq(new uint8_t*[n_seqs]()),
     counters(new counter_t*[n_seqs]()),
     params(params)
@@ -370,7 +371,7 @@ namespace ococo {
             seq_used[s]=true;
             //fprintf(stderr,"allocating %d chars\n",seq_len[i]);
             const int seq_len_name=strlen(h.target_name[s]);
-            seq_name[s]=new char[seq_len_name+1];
+            seq_name[s]=new uint8_t[seq_len_name+1];
             //printf("name: %s\n",h.target_name[i]);
             memcpy(seq_name[s], h.target_name[s],seq_len_name+1);
             
@@ -406,10 +407,10 @@ namespace ococo {
         fp = gzopen(fasta_fn.c_str(), "r");
         seq = kseq_init(fp);
         for(int s=0;(l = kseq_read(seq)) >= 0;s++) {
-            assert(strcmp(seq->name.s,seq_name[s])==0);
+            assert(strcmp((char*)seq->name.s,(char*)seq_name[s])==0);
             assert((int)seq->seq.l == seq_len[s]);
             if (seq->comment.l && seq_comment[s]==NULL){
-                seq_comment[s]=new char[seq->comment.l+1];
+                seq_comment[s]=new uint8_t[seq->comment.l+1];
                 memcpy(seq_comment[s], seq->comment.s,seq->comment.l+1);
             }
             //fprintf(stderr,"seq: %s\n", seq->seq.s);
@@ -438,7 +439,7 @@ namespace ococo {
         FILE *fp;
         fp = fopen(fasta_fn.c_str(), "w+");
         
-        char fasta_buffer[fasta_line_l];
+        uint8_t fasta_buffer[fasta_line_l];
         for(int s=0;s<n_seqs;s++){
             //printf("%s\n",seq_name[s]);
             if(seq_comment[s]){
@@ -478,13 +479,14 @@ namespace ococo {
         return true;
     }
     
-    
+    /*
     bool stats_t::check_headers_fai(const string &fai_fn) const {
         if (!check_state()) return false;
         
         //todo
         return true;
     }
+    */
     
     
     bool stats_t::check_headers_bam_hdr(const bam_hdr_t &h) const {
@@ -494,8 +496,12 @@ namespace ococo {
         //if ((int)seq->seq.l != seq_len[s]) return false;
         
         for(int s=0;s<n_seqs;s++){
-            if(seq_len[s]!=(int)h.target_len[s]) return false;
-            if (strcmp(h.target_name[s],seq_name[s])!=0) return false;
+            if(seq_len[s]!=(int)h.target_len[s]) {
+                return false;
+            }
+            if (strcmp((char*)h.target_name[s],(char*)seq_name[s])!=0) {
+                return false;
+            }
         }
         
         
@@ -513,7 +519,7 @@ namespace ococo {
         
         FILE *fo=fopen(stats_fn.c_str(),"r");
         
-        char delim[stats_delim_l]={};
+        uint8_t delim[stats_delim_l]={};
         int16_t seq_name_l;
         int16_t seq_comment_l;
         
@@ -530,13 +536,13 @@ namespace ococo {
         for(int i=0;i<n_seqs;i++){
             
             /* delimiter */
-            fread(delim,sizeof(char),stats_delim_l,fo);
-            assert(delim[0]=='\255');
-            assert(delim[stats_delim_l-1]=='\255');
+            fread(delim,sizeof(uint8_t),stats_delim_l,fo);
+            assert(delim[0]==255);
+            assert(delim[stats_delim_l-1]==255);
             
             /* lengts */
-            seq_name_l=strlen(seq_name[i]);
-            seq_comment_l=seq_comment[i]==NULL ? 0 : strlen(seq_comment[i]);
+            seq_name_l=strlen((char*)seq_name[i]);
+            seq_comment_l=seq_comment[i]==NULL ? 0 : strlen((char*)seq_comment[i]);
             fread(&seq_used_loaded,sizeof(bool),1,fo);
             assert(seq_used_loaded==seq_used[i]);
             fread(&seq_len_loaded,sizeof(int32_t),1,fo);
@@ -548,10 +554,12 @@ namespace ococo {
             
             /* strings */
             // values of strings are not checked
-            char seq_name_loaded[seq_name_l+1];
-            fread(seq_name_loaded,sizeof(char),seq_name_l+1,fo);
-            char seq_comment_loaded[seq_comment_l+1];
-            fread(seq_comment_loaded,sizeof(char),seq_comment_l+1,fo);
+            uint8_t seq_name_loaded[seq_name_l+1];
+            fread(seq_name_loaded,sizeof(uint8_t),seq_name_l+1,fo);
+            uint8_t seq_comment_loaded[seq_comment_l+1];
+            fread(seq_comment_loaded,sizeof(uint8_t),seq_comment_l+1,fo);
+
+            /* reference sequences*/
             
             /* counters */
             fread(counters[i],sizeof(counter_t),seq_len[i],fo);
@@ -566,7 +574,7 @@ namespace ococo {
         
         FILE *fo=fopen(stats_fn.c_str(),"w+");
         
-        char delim[stats_delim_l]={};
+        uint8_t delim[stats_delim_l]={};
         int16_t seq_name_l;
         int16_t seq_comment_l;
         
@@ -579,11 +587,11 @@ namespace ococo {
         for(int i=0;i<n_seqs;i++){
             
             /* delimiter */
-            fwrite(delim,sizeof(char),stats_delim_l,fo);
+            fwrite(delim,sizeof(uint8_t),stats_delim_l,fo);
             
             /* lengts */
-            seq_name_l=strlen(seq_name[i]);
-            seq_comment_l=seq_comment[i]==NULL ? 0 : strlen(seq_comment[i]);
+            seq_name_l=strlen((char*)seq_name[i]);
+            seq_comment_l=seq_comment[i]==NULL ? 0 : strlen((char*)seq_comment[i]);
             
             fwrite(&seq_used[i],sizeof(bool),1,fo);
             fwrite(&seq_len[i],sizeof(int32_t),1,fo);
@@ -592,10 +600,12 @@ namespace ococo {
             
             /* strings */
             assert(seq_name[i] != NULL);
-            fwrite(seq_name[i],sizeof(char),seq_name_l+1,fo);
+            fwrite(seq_name[i],sizeof(uint8_t),seq_name_l+1,fo);
             if(seq_comment[i] != NULL){
-                fwrite(seq_comment[i],sizeof(char),seq_comment_l+1,fo);
+                fwrite(seq_comment[i],sizeof(uint8_t),seq_comment_l+1,fo);
             }
+            
+            /* reference sequences*/
             
             /* counters */
             assert(counters[i] != NULL);
@@ -625,8 +635,8 @@ namespace ococo {
         counter_t A,C,G,T;
         get_counters_values(ref, pos, A, C, G, T);
         
-        const char new_base=(A+C+G+T<params.min_vote) ? 'N' : rand_nucl(A,C,G,T);
-        const char old_base=get_nucl(ref,pos);
+        const uint8_t new_base=(A+C+G+T<params.min_vote) ? 'N' : rand_nucl(A,C,G,T);
+        const uint8_t old_base=get_nucl(ref,pos);
         
         if(old_base!=new_base){
             if(print_vcf){
@@ -665,7 +675,7 @@ namespace ococo {
         
     }
     
-    void stats_t::print_vcf_substitution(int ref, int pos, unsigned char old_base, unsigned char new_base, counter_t a, counter_t c, counter_t g, counter_t t, bool print_counters) const {
+    void stats_t::print_vcf_substitution(int ref, int pos, uint8_t old_base, uint8_t new_base, counter_t a, counter_t c, counter_t g, counter_t t, bool print_counters) const {
         assert(check_state());
         
         printf("%s\t%d\t.\t%c\t%c\t100\tPASS\t",
@@ -702,7 +712,7 @@ namespace ococo {
         }
     }
     
-    inline char stats_t::get_nucl(int ref, int pos) const {
+    inline uint8_t stats_t::get_nucl(int ref, int pos) const {
         if (counters[ref][pos]==0){
             // empty statistics => unknown nucleotide
             return 'N';
@@ -718,7 +728,7 @@ namespace ococo {
         }
     }
     
-    inline void stats_t::set_nucl(int ref, int pos, unsigned char nucl){
+    inline void stats_t::set_nucl(int ref, int pos, uint8_t nucl){
         const nt4_t nt4=nt256_nt4[(int)nucl] & 0x3;
         
         const uint32_t comprseq_coor_1 = pos >> 2;
