@@ -45,12 +45,15 @@ int main(int argc, const char* argv[])
      * Default configuration.
      */
     
-    ococo::consensus_params_t params;
+    ococo::consensus_params_t tmp_params = ococo::consensus_params_t();
     
     std::string fasta0_fn;
-    std::string fasta1_fn;
     std::string stats_fn;
     std::string sam_fn;
+
+    std::string vcf_fn;
+    std::string fasta_cons_fn;
+    
     
     /*
      * Parse command-line parameters.
@@ -66,22 +69,23 @@ int main(int argc, const char* argv[])
         
         po::options_description vol("Ococo: On-line consensus caller.");
         
-        std::string strategy, mode;
+        std::string strategy;
+        std::string mode;
         
         vol.add_options()
         //("help", "Print help message")
         ("input,i", po::value<std::string>(&sam_fn)->required(), "Input SAM/BAM file (- for standard input).")
         ("fasta-ref,f", po::value<std::string>(&fasta0_fn), "Initial FASTA reference (if not provided, sequence of N's is considered as the reference).")
-        ("fasta-cons,c", po::value<std::string>(&fasta1_fn), "Consensus (up-to-date FASTA reference).")
         ("stats,s", po::value<std::string>(&stats_fn), "File with up-to-date statistics.")
         ("strategy,S", po::value<std::string>(&strategy), "Strategy for updates: majority / randomized. [majority]")
-        ("mode,M", po::value<std::string>(&strategy), "Mode: real-time / batch. [batch]")
+        ("mode,m", po::value<std::string>(&mode), "Mode: real-time / batch. [batch]")
         //("counter-size,s", po::value<int>(&counterSize), "Size of counter per nucleotide in bits [3]")
-        ("min-MQ,q", po::value<int32_t>(&params.min_mapq), "Minimal mapping quality to increment a counter. [1]")
-        ("min-BQ,Q", po::value<int32_t>(&params.min_baseq), "Minimal base quality to increment a counter. [0]")
+        ("min-MQ,q", po::value<int32_t>(&tmp_params.min_mapq), "Minimal mapping quality to increment a counter. [1]")
+        ("min-BQ,Q", po::value<int32_t>(&tmp_params.min_baseq), "Minimal base quality to increment a counter. [0]")
         //("min-coverage,c", po::value<int32_t>(&params.min_coverage), "Minimal coverage to update the reference. [3]")
         //("accept-level,l", po::value<float>(&acceptanceLevel), "Acceptance level [0.60]")
-        ("no-vcf,v", "Do not print VCF.")
+        ("vcf-cons,v", po::value<std::string>(&vcf_fn), "VCF file with updates of consensus.")
+        ("fasta-cons,c", po::value<std::string>(&fasta_cons_fn), "FASTA file with consensus, which is continuously updated (WARNING: will be rewritten).")
         ;
         
         po::variables_map vm;
@@ -90,14 +94,12 @@ int main(int argc, const char* argv[])
             po::store(po::command_line_parser(argc, argv).options(vol).positional(pos).run(),vm); // can throw
             po::notify(vm); // throws on error, so do after help in case there are any problems
             
-            params.print_vcf=!vm.count("no-vcf");
-            
             if (vm.count("strategy")) {
-                if (strategy=="majority"){
-                    params.strategy=ococo::strategy_t::MAJORITY;
+                if (strategy.compare("majority")==0){
+                    tmp_params.strategy=ococo::strategy_t::MAJORITY;
                 }
-                else if (strategy=="stochastic"){
-                    params.strategy=ococo::strategy_t::STOCHASTIC;
+                else if (strategy.compare("stochastic")==0){
+                    tmp_params.strategy=ococo::strategy_t::STOCHASTIC;
                 }
                 else {
                     fprintf(stderr,"Unknown strategy '%s'. Possible strategies are 'majority' and 'stochastic'\n",strategy.c_str());
@@ -106,14 +108,14 @@ int main(int argc, const char* argv[])
             }
             
             if (vm.count("mode")) {
-                if (mode=="batch"){
-                    params.mode=ococo::mode_t::BATCH;
+                if (mode.compare("batch")==0){
+                    tmp_params.mode=ococo::mode_t::BATCH;
                 }
-                else if (strategy=="real-time"){
-                    params.mode=ococo::mode_t::REALTIME;
+                else if (mode.compare("real-time")==0){
+                    tmp_params.mode=ococo::mode_t::REALTIME;
                 }
                 else {
-                    fprintf(stderr,"Unknown mode '%s'. Possible strategies are 'batch' and 'real-time'\n",strategy.c_str());
+                    fprintf(stderr,"Unknown mode '%s'. Possible modes are 'batch' and 'real-time'\n",mode.c_str());
                     return EXIT_FAILURE;
                 }
             }
@@ -157,7 +159,7 @@ int main(int argc, const char* argv[])
         ococo::error_exit("SAM headers are missing or corrupted.\n");
     }
     
-    ococo::stats_t stats(params,*header);
+    ococo::stats_t stats(tmp_params,*header);
     assert(stats.check_state());
     
     /*
@@ -175,9 +177,43 @@ int main(int argc, const char* argv[])
         }
     }
     
-    if(params.print_vcf){
-        stats.print_vcf_header(true);
+    /*
+     * Open VCF file.
+     */
+    if(vcf_fn.size()>0){
+        BOOST_LOG_TRIVIAL(info) << "Open VCF: '" << vcf_fn << "'.";
+        if (vcf_fn==std::string("-")){
+            stats.params.vcf_fo=stdout;
+        }
+        else{
+            stats.params.vcf_fo=fopen(vcf_fn.c_str(),"w+");
+        }
+        
+        if(stats.params.vcf_fo==nullptr){
+            ococo::error_exit("Problem with opening VCF file '%s'", vcf_fn.c_str());
+        }
+        
+        stats.print_vcf_header();
     }
+    else {
+        BOOST_LOG_TRIVIAL(info) << "No VCF file required.";
+    }
+
+    /*
+     * Open consensus FASTA file.
+     */
+    if(fasta_cons_fn.size()>0){
+        BOOST_LOG_TRIVIAL(info) << "Open FASTA for consensus: '" << fasta_cons_fn << "'.";
+        stats.params.fasta_cons_fo=fopen(fasta_cons_fn.c_str(),"w+");
+        
+        if(stats.params.fasta_cons_fo==nullptr){
+            ococo::error_exit("Problem with opening FASTA for consensus: '%s'", fasta_cons_fn.c_str());
+        }
+    }
+    else {
+        BOOST_LOG_TRIVIAL(info) << "No FASTA file for consensus required.";
+    }
+    
     
     /*
      * Process alignments.
@@ -213,7 +249,7 @@ int main(int argc, const char* argv[])
             continue;
         }
         
-        if (mapq<params.min_mapq){
+        if (mapq<stats.params.min_mapq){
             BOOST_LOG_TRIVIAL(debug) << "Discarded: mapping quality is too low.";
             continue;
         }
@@ -234,7 +270,7 @@ int main(int argc, const char* argv[])
                         const uint8_t &nt16=bam_seqi(seq, i);
                         const uint8_t &bq=qual[i];
                         
-                        if (bq<params.min_baseq){
+                        if (bq<stats.params.min_baseq){
                             BOOST_LOG_TRIVIAL(trace) << "Omitting base (too low base quality): chrom=" << chrom << ", pos=" << ref_pos << ", nucl=" << ococo::nt16_nt256[nt16] << ", quality=" << (int32_t)bq << ".";
                             
                         }
@@ -243,8 +279,8 @@ int main(int argc, const char* argv[])
                             STATS_INCREMENT(stats,chrom,ref_pos,nt16);
                             BOOST_LOG_TRIVIAL(trace) << "           new state: counters: " << stats.debug_str_counters(chrom,ref_pos);
 
-                            if(params.mode==ococo::mode_t::REALTIME){
-                                stats.call_consensus_position(chrom, ref_pos, params.print_vcf);
+                            if(stats.params.mode==ococo::mode_t::REALTIME){
+                                stats.call_consensus_position(chrom, ref_pos);
                             }
                         }
                     }
@@ -285,17 +321,16 @@ int main(int argc, const char* argv[])
     /*
      * Calling final consensus and export stats.
      */
-    if(params.mode==ococo::mode_t::BATCH){
+    if(stats.params.mode==ococo::mode_t::BATCH){
         BOOST_LOG_TRIVIAL(info) << "Calling consensus for the entire reference sequence (batch mode).";
-        stats.call_consensus(params.print_vcf);
-    }
-    
-    if (fasta1_fn.size()>0){
-        BOOST_LOG_TRIVIAL(info) << "Saving FASTA: '" << fasta1_fn << "'.";
-        stats.save_fasta(fasta1_fn);
-    }
-    else {
-        BOOST_LOG_TRIVIAL(info) << "FASTA not saved.";
+        stats.call_consensus();
+        if (stats.params.fasta_cons_fo){
+            BOOST_LOG_TRIVIAL(info) << "Saving FASTA: '" << fasta_cons_fn << "'.";
+            stats.save_fasta();
+        }
+        else {
+            BOOST_LOG_TRIVIAL(info) << "FASTA not saved.";
+        }
     }
     
     if (stats_fn.size()>0){
@@ -314,7 +349,17 @@ int main(int argc, const char* argv[])
     hts_itr_destroy(iter);
     bam_destroy1(b);
     bam_hdr_destroy(header);
+    
+    /*
+     * Close files.
+     */
     sam_close(in);
+    if(stats.params.vcf_fo!=nullptr){
+        fclose(stats.params.vcf_fo);
+    }
+    if(stats.params.fasta_cons_fo!=nullptr){
+        fclose(stats.params.fasta_cons_fo);
+    }
     
     BOOST_LOG_TRIVIAL(info) << "Ococo finished. Bye.";
     

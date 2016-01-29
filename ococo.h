@@ -60,7 +60,8 @@ namespace ococo {
 
         int32_t min_vote;
 
-        bool print_vcf;
+        FILE *vcf_fo;
+        FILE *fasta_cons_fo;
 
         consensus_params_t():
             mode(BATCH),
@@ -68,7 +69,8 @@ namespace ococo {
             min_coverage(1),
             min_mapq(1),
             min_baseq(0),
-            print_vcf(true)
+            vcf_fo(nullptr),
+            fasta_cons_fo(nullptr)
         {}
     };
     
@@ -251,13 +253,12 @@ namespace ococo {
         int export_stats(const std::string &stats_fn) const;
         
         // Call consensus probabilistically.
-        int call_consensus(bool print_vcf);
-        int call_consensus_position(int ref, int pos, bool print_vcf);
+        int call_consensus();
+        int call_consensus_position(int ref, int pos);
         
-        int save_fasta(const std::string &fasta_fn) const;
+        int save_fasta() const;
         
-        void print_vcf_header(bool print_counters) const;
-        void print_vcf_substitution(int32_t ref, int32_t pos, uint8_t old_base, uint8_t new_base) const;
+        void print_vcf_header() const;
         void print_vcf_substitution(int32_t ref, int32_t pos, uint8_t old_base, uint8_t new_base, const counters_quadruplet_t &quadruplet) const;
         
         
@@ -281,14 +282,6 @@ namespace ococo {
     /**********************************
      *** Manipulating with counters ***
      **********************************/
-    
-    /*
-     const int nt16_A = 0x1;
-     const int nt16_C = 0x2;
-     const int nt16_G = 0x4;
-     const int nt16_T = 0x8;
-     const int nt16_N = 0xf;
-     */
     
     inline int _CELL_SHIFT(nt16_t nt16) {
         return cell_bits * seq_nt16_int[nt16];
@@ -419,34 +412,31 @@ namespace ococo {
     }
     
     
-    int stats_t::save_fasta(const std::string &fasta_fn) const {
-        assert(check_state());
-        
-        FILE *fp;
-        fp = fopen(fasta_fn.c_str(), "w+");
+    int stats_t::save_fasta() const {
+        assert(check_state());        
+        assert(params.fasta_cons_fo!=nullptr);
         
         uint8_t fasta_buffer[fasta_line_l];
         for(int s=0;s<n_seqs;s++){
             //printf("%s\n",seq_name[s]);
             if(seq_comment[s]){
-                fprintf(fp,">%s %s\n",seq_name[s],seq_comment[s]);
+                fprintf(params.fasta_cons_fo,">%s %s\n",seq_name[s],seq_comment[s]);
             }
             else{
-                fprintf(fp,">%s\n",seq_name[s]);
+                fprintf(params.fasta_cons_fo,">%s\n",seq_name[s]);
             }
             
             for (int i=0,j=0;i<seq_len[s];i++,j++){
                 fasta_buffer[j]=get_nucl(s,i);
                 
                 if(j==fasta_line_l-1 || i==seq_len[s]-1){
-                    fwrite(fasta_buffer,1,j+1,fp);
-                    fwrite("\n",1,1,fp);
+                    fwrite(fasta_buffer,1,j+1,params.fasta_cons_fo);
+                    fwrite("\n",1,1,params.fasta_cons_fo);
                     j=-1;
                 }
             }
         }
         
-        fclose(fp);
         return 0;
     }
     
@@ -601,31 +591,27 @@ namespace ococo {
     }
     
     
-    int stats_t::call_consensus(bool print_vcf) {
+    int stats_t::call_consensus() {
         assert(check_state());
         
         for(int s=0;s<n_seqs;s++){
             for (int i=0;i<seq_len[s];i++){
-                call_consensus_position(s, i, print_vcf);
+                call_consensus_position(s, i);
             }
         }
         
         return 0;
     }
     
-    int stats_t::call_consensus_position(int32_t ref, int32_t pos, bool print_vcf) {
-        //BOOST_LOG_TRIVIAL(debug) << "Calling consensus for position " << pos;
-        
-        //counter_t A,C,G,T;
+    int stats_t::call_consensus_position(int32_t ref, int32_t pos) {
         counters_quadruplet_t quadruplet;
-        
         get_counters_values(ref, pos, quadruplet);
         
-        const uint8_t new_base=(quadruplet.sum<params.min_vote) ? 'N' : rand_nucl(quadruplet);
         const uint8_t old_base=get_nucl(ref,pos);
+        const uint8_t new_base=(quadruplet.sum<params.min_vote) ? 'N' : rand_nucl(quadruplet);
         
         if(old_base!=new_base){
-            if(print_vcf){
+            if(params.vcf_fo!=nullptr){
                 print_vcf_substitution(ref,pos,old_base,new_base,quadruplet);
             }
             set_nucl(ref,pos,new_base);
@@ -642,38 +628,38 @@ namespace ococo {
         quadruplet.sum=quadruplet.a+quadruplet.c+quadruplet.g+quadruplet.t;
     }
     
-    void stats_t::print_vcf_header(bool print_counters) const {
+    void stats_t::print_vcf_header() const {
         assert(check_state());
+        assert(params.vcf_fo!=nullptr);
         
         //todo: date
-        printf(
+        fprintf(params.vcf_fo,
                "##fileformat=VCFv4.3\n"
                "##fileDate=20150000\n"
-               "##source=Ococo"
+               "##source=Ococo\n"
                //"##reference=%s\n"
                );
         for (int i=0;i<n_seqs;i++){
-            printf("contig=<ID=%s,length=%d>\n",seq_name[i],seq_len[i]);
+            fprintf(params.vcf_fo,"##contig=<ID=%s,length=%d>\n",seq_name[i],seq_len[i]);
         }
-        if(print_counters){
-            printf("##INFO=<ID=C,Number=4,Type=Integer,Description=\"Values of A,C,G,T counters.\">\n");
-        }
-        printf("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n");
+        fprintf(params.vcf_fo,"##INFO=<ID=CS,Number=4,Type=Integer,Description=\"Values of A,C,G,T counters.\">\n");
+        fprintf(params.vcf_fo,"##INFO=<ID=SUM,Number=1,Type=Integer,Description=\"Sum of A,C,G,T counters.\">\n");
+        fprintf(params.vcf_fo,"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n");
         
     }
     
     void stats_t::print_vcf_substitution(int32_t ref, int32_t pos, uint8_t old_base, uint8_t new_base, const counters_quadruplet_t &quadruplet) const {
         assert(check_state());
+        assert(params.vcf_fo!=nullptr);
         
-        printf("%s\t%d\t.\t%c\t%c\t100\tPASS\t",
-               seq_name[ref],
-               //ref+1,
-               pos+1,
-               old_base,
-               new_base
-               );
-        
-        printf("C=%d,%d,%d,%d\n",quadruplet.a,quadruplet.c,quadruplet.g,quadruplet.t);
+        fprintf(params.vcf_fo,"%s\t%d\t.\t%c\t%c\t100\tPASS\tCS=%d,%d,%d,%d;SUM=%d\n",
+                seq_name[ref],
+                //ref+1,
+                pos+1,
+                old_base,
+                new_base,
+                quadruplet.a,quadruplet.c,quadruplet.g,quadruplet.t,quadruplet.sum
+            );
     }
     
     std::string stats_t::debug_str_counters(int ref, int pos) const {
