@@ -1,9 +1,12 @@
 #include "ococo.h"
 #include "gtest/gtest.h"
 
-using namespace ococo;
+#include <vector>
 
-vector<int> nucls {
+using namespace ococo;
+using namespace std;
+
+vector<uint32_t> nucls {
     nt256_nt16[(int)'A'],
     nt256_nt16[(int)'C'],
     nt256_nt16[(int)'G'],
@@ -45,7 +48,7 @@ namespace {
 	TEST_F(CounterTest, AllIncrements) {
 		counter_t c1;
 
-		for(int nucl : nucls)
+		for(uint32_t nucl : nucls)
 		{
 			c1 =0;
 			for(int i=1;i<=cell_maxval;i++){
@@ -109,19 +112,26 @@ namespace {
 	TEST_F(NuclGeneratorTest, IndividualNucleotides) {
 		char nucl;
 
-		nucl=rand_nucl(0,0,0,0);
+        counters_quadruplet_t quadruplet;
+        
+        quadruplet={0,0,0,0,0};
+		nucl=rand_nucl(quadruplet);
 		ASSERT_EQ(nucl, 'N');
 
-		nucl=rand_nucl(5,0,0,0);
+        quadruplet={5,0,0,0,5};
+        nucl=rand_nucl(quadruplet);
 		ASSERT_EQ(nucl, 'A');
 
-		nucl=rand_nucl(0,5,0,0);
+        quadruplet={0,5,0,0,5};
+        nucl=rand_nucl(quadruplet);
 		ASSERT_EQ(nucl, 'C');
 
-		nucl=rand_nucl(0,0,5,0);
+        quadruplet={0,0,5,0,5};
+        nucl=rand_nucl(quadruplet);
 		ASSERT_EQ(nucl, 'G');
 
-		nucl=rand_nucl(0,0,0,5);
+        quadruplet={0,0,0,5,5};
+        nucl=rand_nucl(quadruplet);
 		ASSERT_EQ(nucl, 'T');
 
 	}

@@ -47,10 +47,10 @@ int main(int argc, const char* argv[])
     
     ococo::consensus_params_t params;
     
-    string fasta0_fn;
-    string fasta1_fn;
-    string stats_fn;
-    string sam_fn;
+    std::string fasta0_fn;
+    std::string fasta1_fn;
+    std::string stats_fn;
+    std::string sam_fn;
     
     /*
      * Parse command-line parameters.
@@ -66,16 +66,16 @@ int main(int argc, const char* argv[])
         
         po::options_description vol("Ococo: On-line consensus caller.");
         
-        string strategy, mode;
+        std::string strategy, mode;
         
         vol.add_options()
         //("help", "Print help message")
-        ("input,i", po::value<string>(&sam_fn)->required(), "Input SAM/BAM file (- for standard input).")
-        ("fasta-ref,f", po::value<string>(&fasta0_fn), "Initial FASTA reference (if not provided, sequence of N's is considered as the reference).")
-        ("fasta-cons,c", po::value<string>(&fasta1_fn), "Consensus (up-to-date FASTA reference).")
-        ("stats,s", po::value<string>(&stats_fn), "File with up-to-date statistics.")
-        ("strategy,S", po::value<string>(&strategy), "Strategy for updates: majority / randomized. [majority]")
-        ("mode,M", po::value<string>(&strategy), "Mode: real-time / batch. [batch]")
+        ("input,i", po::value<std::string>(&sam_fn)->required(), "Input SAM/BAM file (- for standard input).")
+        ("fasta-ref,f", po::value<std::string>(&fasta0_fn), "Initial FASTA reference (if not provided, sequence of N's is considered as the reference).")
+        ("fasta-cons,c", po::value<std::string>(&fasta1_fn), "Consensus (up-to-date FASTA reference).")
+        ("stats,s", po::value<std::string>(&stats_fn), "File with up-to-date statistics.")
+        ("strategy,S", po::value<std::string>(&strategy), "Strategy for updates: majority / randomized. [majority]")
+        ("mode,M", po::value<std::string>(&strategy), "Mode: real-time / batch. [batch]")
         //("counter-size,s", po::value<int>(&counterSize), "Size of counter per nucleotide in bits [3]")
         ("min-MQ,q", po::value<int32_t>(&params.min_mapq), "Minimal mapping quality to increment a counter. [1]")
         ("min-BQ,Q", po::value<int32_t>(&params.min_baseq), "Minimal base quality to increment a counter. [0]")
@@ -126,7 +126,7 @@ int main(int argc, const char* argv[])
         }
         catch(po::error& e)
         {
-            cout << vol << "\n";
+            std::cout << vol << "\n";
             fprintf(stderr,"Error: %s.\n",e.what());
             return EXIT_FAILURE;
         }

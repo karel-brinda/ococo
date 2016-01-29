@@ -22,8 +22,6 @@
 #include "htslib/khash.h"
 #include "htslib/kseq.h"
 
-using namespace std;
-
 namespace ococo {
     
     KSEQ_INIT(gzFile, gzread);
@@ -37,7 +35,7 @@ namespace ococo {
     }
     
     
-    bool file_exists(const string &fn){
+    bool file_exists(const std::string &fn){
         return access( fn.c_str(), F_OK ) != -1;
     }
     
@@ -96,6 +94,15 @@ namespace ococo {
     | (cell_maxval_shifted<<cell_bits)        \
     | (cell_maxval_shifted<<2*cell_bits)      \
     | (cell_maxval_shifted<<3*cell_bits);
+    
+    struct counters_quadruplet_t {
+        counter_t a;
+        counter_t c;
+        counter_t g;
+        counter_t t;
+        
+        counter_t sum;
+    };
     
     
     /**************************
@@ -163,50 +170,28 @@ namespace ococo {
     
     
     // Generate randomly nucleotide with respect to given frequencies.
-    inline uint8_t rand_nucl(int a, int c, int g, int t){
-        const uint8_t nucls[] = {'A','C','G','T'};
-        
-        const int sum=a+c+g+t;
-        
-        //todo: improve
-        if(sum<2){
+    inline uint8_t rand_nucl(const counters_quadruplet_t &quadruplet){
+        if(quadruplet.sum==0){
             return 'N';
         }
         
+        const int32_t prefsum[]={quadruplet.a,quadruplet.a+quadruplet.c,quadruplet.a+quadruplet.c+quadruplet.g,quadruplet.a+quadruplet.c+quadruplet.g+quadruplet.t};
+        const int32_t rn=rand() % quadruplet.sum;
         
-        const int32_t max_val=max({a,c,g,t});
-        const int32_t vec[]={a,c,g,t};
-        const int32_t prefsum[]={a,a+c,a+c+g,a+c+g+t};
-        
-        //int rn=randint(0,sum);
-        const int32_t rn=rand() % sum;
-        uint8_t nucl;
-        int32_t count=0;
-        
-        //printf("rn %d\n",rn);
-        for(int i=0;i<4;i++){
-            if (prefsum[i] > rn) {
-                nucl=nucls[i];
-                count=vec[i];
-                //printf("selected i %d\n",i);
-                break;
+        for(int8_t i=0;i<4;i++){
+            if (rn < prefsum[i]) {
+                return nt4_nt256[i];
             }
         }
         
-        if(count!=max_val){
-            nucl=tolower(nucl);
-        }
-        
-        //printf("%c ",nucl);
-        
-        return nucl;
+        return 'n';
     }
     
     // Print error message and exit with code -1.
     void error_exit(const char * format, ...);
     
     // Test if a file exists.
-    bool file_exists(const string &fn);
+    bool file_exists(const std::string &fn);
     
     
     /********************************
@@ -235,10 +220,10 @@ namespace ococo {
          ***********************/
         
         // Load headers from a FAI index.
-        int load_headers_fai(const string &fai_fn);
+        int load_headers_fai(const std::string &fai_fn);
         
         // Load header from a FASTA file and initialize statistics (to level).
-        int load_fasta(const string &fasta_fn, uint16_t initial_weight);
+        int load_fasta(const std::string &fasta_fn, uint16_t initial_weight);
         
         // Loader header from a BAM.
         int load_headers_bam_hdr(const bam_hdr_t &h);
@@ -252,7 +237,7 @@ namespace ococo {
         bool check_state() const;
         
         // Check if a FAI header corresponds to the stats.
-        bool check_headers_fai(const string &fai_fn) const;
+        bool check_headers_fai(const std::string &fai_fn) const;
         
         // Check if a BAM header corresponds to the stats.
         bool check_headers_bam_hdr(const bam_hdr_t &h) const;
@@ -262,34 +247,35 @@ namespace ococo {
          *** I/O ***
          ***********/
         
-        int import_stats(const string &stats_fn);
-        int export_stats(const string &stats_fn) const;
+        int import_stats(const std::string &stats_fn);
+        int export_stats(const std::string &stats_fn) const;
         
         // Call consensus probabilistically.
         int call_consensus(bool print_vcf);
         int call_consensus_position(int ref, int pos, bool print_vcf);
         
-        int save_fasta(const string &fasta_fn) const;
+        int save_fasta(const std::string &fasta_fn) const;
         
         void print_vcf_header(bool print_counters) const;
-        void print_vcf_substitution(int ref, int pos, uint8_t old_base, uint8_t new_base, counter_t a, counter_t c, counter_t g, counter_t t, bool print_counters) const;
+        void print_vcf_substitution(int32_t ref, int32_t pos, uint8_t old_base, uint8_t new_base) const;
+        void print_vcf_substitution(int32_t ref, int32_t pos, uint8_t old_base, uint8_t new_base, const counters_quadruplet_t &quadruplet) const;
         
         
         /*****************
          *** Auxiliary ***
          *****************/
         
-        inline uint8_t get_nucl(int ref, int pos) const;
-        inline void set_nucl(int ref, int pos, uint8_t nucl);
+        inline uint8_t get_nucl(int32_t ref, int32_t pos) const;
+        inline void set_nucl(int32_t ref, int32_t pos, uint8_t nucl);
         //inline counter_t get_counter_value(int ref, int pos);
-        void get_counters_values(int ref, int pos, counter_t &a, counter_t &c, counter_t &g, counter_t &t) const;
+        void get_counters_values(int32_t ref, int32_t pos, counters_quadruplet_t &counters) const;
         
         /****************
          *** Debuging ***
          ****************/
         
         void debug_print_counters() const;
-        string debug_str_counters(int ref, int pos) const;
+        std::string debug_str_counters(int32_t ref, int32_t pos) const;
     };
     
     /**********************************
@@ -354,7 +340,7 @@ namespace ococo {
      *** Implementation ***
      **********************/
     
-    stats_t::stats_t(consensus_params_t params,bam_hdr_t &h):
+    stats_t::stats_t(consensus_params_t parameters,bam_hdr_t &h):
     n_seqs(h.n_targets),
     seq_used(new bool[n_seqs]()),
     seq_len(new int32_t[n_seqs]()),
@@ -363,14 +349,14 @@ namespace ococo {
     seq_comment(new uint8_t*[n_seqs]()),
     seq_comprseq(new uint8_t*[n_seqs]()),
     counters(new counter_t*[n_seqs]()),
-    params(params)
+    params(parameters)
     {
         for (int s=0;s<n_seqs;s++){
             seq_len[s]=h.target_len[s];
             seq_comprseqlen[s]=(int32_t)ceil(seq_len[s]/4.0);
             seq_used[s]=true;
             //fprintf(stderr,"allocating %d chars\n",seq_len[i]);
-            const int seq_len_name=strlen(h.target_name[s]);
+            const int32_t seq_len_name=strlen(h.target_name[s]);
             seq_name[s]=new uint8_t[seq_len_name+1];
             //printf("name: %s\n",h.target_name[i]);
             memcpy(seq_name[s], h.target_name[s],seq_len_name+1);
@@ -400,15 +386,15 @@ namespace ococo {
     }
     
     
-    int stats_t::load_fasta(const string &fasta_fn, uint16_t initial_weight) {
+    int stats_t::load_fasta(const std::string &fasta_fn, uint16_t initial_weight) {
         gzFile fp;
         kseq_t *seq;
         int l;
         fp = gzopen(fasta_fn.c_str(), "r");
         seq = kseq_init(fp);
         for(int s=0;(l = kseq_read(seq)) >= 0;s++) {
-            assert(strcmp((char*)seq->name.s,(char*)seq_name[s])==0);
-            assert((int)seq->seq.l == seq_len[s]);
+            assert(strcmp(static_cast<char*>(seq->name.s),reinterpret_cast<char*>(seq_name[s]))==0);
+            assert(static_cast<int32_t>(seq->seq.l) == seq_len[s]);
             if (seq->comment.l && seq_comment[s]==nullptr){
                 seq_comment[s]=new uint8_t[seq->comment.l+1];
                 memcpy(seq_comment[s], seq->comment.s,seq->comment.l+1);
@@ -420,7 +406,7 @@ namespace ococo {
                 
                 char &nucl = seq->seq.s[i];
                 set_nucl(s,i,nucl);
-                const nt16_t nt16=nt256_nt16[(int)nucl];
+                const nt16_t nt16=nt256_nt16[static_cast<int32_t>(nucl)];
                 
                 assert(counters[s][i]==0);
                 counters[s][i]=_COUNTER_CELL_SET(0,nt16,initial_weight);
@@ -433,7 +419,7 @@ namespace ococo {
     }
     
     
-    int stats_t::save_fasta(const string &fasta_fn) const {
+    int stats_t::save_fasta(const std::string &fasta_fn) const {
         assert(check_state());
         
         FILE *fp;
@@ -480,7 +466,7 @@ namespace ococo {
     }
     
     /*
-    bool stats_t::check_headers_fai(const string &fai_fn) const {
+    bool stats_t::check_headers_fai(const std::string &fai_fn) const {
         if (!check_state()) return false;
         
         //todo
@@ -492,29 +478,20 @@ namespace ococo {
     bool stats_t::check_headers_bam_hdr(const bam_hdr_t &h) const {
         if (!check_state()) return false;
         
-        //if (strcmp(seq->name.s,seq_name[s])!=0) return false;
-        //if ((int)seq->seq.l != seq_len[s]) return false;
-        
         for(int s=0;s<n_seqs;s++){
-            if(seq_len[s]!=(int)h.target_len[s]) {
+            if(seq_len[s]!=static_cast<int32_t>(h.target_len[s])) {
                 return false;
             }
-            if (strcmp((char*)h.target_name[s],(char*)seq_name[s])!=0) {
+            if (strcmp(static_cast<char*>(h.target_name[s]),reinterpret_cast<char*>(seq_name[s]))!=0) {
                 return false;
             }
         }
-        
-        
-        /*for(int i=0;i<n_seqs;i++){
-         if (strcmp(seq->name.s,seq_name[s])!=0) return false;
-         if ((int)seq->seq.l != seq_len[s]) return false;
-         }*/
         
         return true;
     }
     
     
-    int stats_t::import_stats(const string &stats_fn){
+    int stats_t::import_stats(const std::string &stats_fn){
         assert(check_state());
         
         FILE *fo=fopen(stats_fn.c_str(),"r");
@@ -542,8 +519,8 @@ namespace ococo {
             assert(delim[stats_delim_l-1]==255);
             
             /* lengts */
-            seq_name_l=strlen((char*)seq_name[i]);
-            seq_comment_l=seq_comment[i]==nullptr ? 0 : strlen((char*)seq_comment[i]);
+            seq_name_l=strlen(reinterpret_cast<char*>(seq_name[i]));
+            seq_comment_l=seq_comment[i]==nullptr ? 0 : strlen(reinterpret_cast<char*>(seq_comment[i]));
             fread(&seq_used_loaded,sizeof(bool),1,fo);
             assert(seq_used_loaded==seq_used[i]);
             fread(&seq_len_loaded,sizeof(int32_t),1,fo);
@@ -573,7 +550,7 @@ namespace ococo {
         return 0;
     }
     
-    int stats_t::export_stats(const string &stats_fn) const {
+    int stats_t::export_stats(const std::string &stats_fn) const {
         assert(check_state());
         
         FILE *fo=fopen(stats_fn.c_str(),"w+");
@@ -594,8 +571,8 @@ namespace ococo {
             fwrite(delim,sizeof(uint8_t),stats_delim_l,fo);
             
             /* lengts */
-            seq_name_l=strlen((char*)seq_name[i]);
-            seq_comment_l=seq_comment[i]==nullptr ? 0 : strlen((char*)seq_comment[i]);
+            seq_name_l=strlen(reinterpret_cast<char*>(seq_name[i]));
+            seq_comment_l=seq_comment[i]==nullptr ? 0 : strlen(reinterpret_cast<char*>(seq_comment[i]));
             
             fwrite(&seq_used[i],sizeof(bool),1,fo);
             fwrite(&seq_len[i],sizeof(int32_t),1,fo);
@@ -636,18 +613,20 @@ namespace ococo {
         return 0;
     }
     
-    int stats_t::call_consensus_position(int ref, int pos, bool print_vcf) {
+    int stats_t::call_consensus_position(int32_t ref, int32_t pos, bool print_vcf) {
         //BOOST_LOG_TRIVIAL(debug) << "Calling consensus for position " << pos;
         
-        counter_t A,C,G,T;
-        get_counters_values(ref, pos, A, C, G, T);
+        //counter_t A,C,G,T;
+        counters_quadruplet_t quadruplet;
         
-        const uint8_t new_base=(A+C+G+T<params.min_vote) ? 'N' : rand_nucl(A,C,G,T);
+        get_counters_values(ref, pos, quadruplet);
+        
+        const uint8_t new_base=(quadruplet.sum<params.min_vote) ? 'N' : rand_nucl(quadruplet);
         const uint8_t old_base=get_nucl(ref,pos);
         
         if(old_base!=new_base){
             if(print_vcf){
-                print_vcf_substitution(ref,pos,old_base,new_base,A,C,G,T,true);
+                print_vcf_substitution(ref,pos,old_base,new_base,quadruplet);
             }
             set_nucl(ref,pos,new_base);
         }
@@ -655,11 +634,12 @@ namespace ococo {
         return 0;
     }
     
-    void stats_t::get_counters_values(int ref, int pos, counter_t &a, counter_t &c, counter_t &g, counter_t &t) const {
-        a=_COUNTER_CELL_VAL(counters[ref][pos],seq_nt16_table[(int)'A']);
-        c=_COUNTER_CELL_VAL(counters[ref][pos],seq_nt16_table[(int)'C']);
-        g=_COUNTER_CELL_VAL(counters[ref][pos],seq_nt16_table[(int)'G']);
-        t=_COUNTER_CELL_VAL(counters[ref][pos],seq_nt16_table[(int)'T']);
+    void stats_t::get_counters_values(int32_t ref, int32_t pos, counters_quadruplet_t &quadruplet) const {
+        quadruplet.a=_COUNTER_CELL_VAL(counters[ref][pos],seq_nt16_table[static_cast<int32_t>('A')]);
+        quadruplet.c=_COUNTER_CELL_VAL(counters[ref][pos],seq_nt16_table[static_cast<int32_t>('C')]);
+        quadruplet.g=_COUNTER_CELL_VAL(counters[ref][pos],seq_nt16_table[static_cast<int32_t>('G')]);
+        quadruplet.t=_COUNTER_CELL_VAL(counters[ref][pos],seq_nt16_table[static_cast<int32_t>('T')]);
+        quadruplet.sum=quadruplet.a+quadruplet.c+quadruplet.g+quadruplet.t;
     }
     
     void stats_t::print_vcf_header(bool print_counters) const {
@@ -682,7 +662,7 @@ namespace ococo {
         
     }
     
-    void stats_t::print_vcf_substitution(int ref, int pos, uint8_t old_base, uint8_t new_base, counter_t a, counter_t c, counter_t g, counter_t t, bool print_counters) const {
+    void stats_t::print_vcf_substitution(int32_t ref, int32_t pos, uint8_t old_base, uint8_t new_base, const counters_quadruplet_t &quadruplet) const {
         assert(check_state());
         
         printf("%s\t%d\t.\t%c\t%c\t100\tPASS\t",
@@ -693,20 +673,14 @@ namespace ococo {
                new_base
                );
         
-        if (print_counters){
-            printf("C=%d,%d,%d,%d\n",a,c,g,t);
-        }
-        else{
-            printf(".\n");
-        }
-        
+        printf("C=%d,%d,%d,%d\n",quadruplet.a,quadruplet.c,quadruplet.g,quadruplet.t);
     }
     
-    string stats_t::debug_str_counters(int ref, int pos) const {
-        counter_t a,c,g,t;
-        get_counters_values(ref, pos, a, c, g, t);
+    std::string stats_t::debug_str_counters(int ref, int pos) const {
+        counters_quadruplet_t quadruplet;
+        get_counters_values(ref, pos, quadruplet);
         std::stringstream ss;
-        ss << "(" << a << "," << c << "," << g << "," << t << ")";
+        ss << "(" << quadruplet.a << "," << quadruplet.c << "," << quadruplet.g << "," << quadruplet.t << ")";
         return ss.str();
     }
     
@@ -735,11 +709,12 @@ namespace ococo {
         }
     }
     
-    inline void stats_t::set_nucl(int ref, int pos, uint8_t nucl){
-        const nt4_t nt4=nt256_nt4[(int)nucl] & 0x3;
+    inline void stats_t::set_nucl(int32_t ref, int32_t pos, uint8_t nucl){
+        const nt4_t nt4=nt256_nt4[static_cast<int32_t>(nucl)] & 0x3;
         
-        const uint32_t comprseq_coor_1 = pos >> 2;
-        const uint32_t comprseq_coor_2 = 3 - (pos & 0x3);
+        const uint32_t up = static_cast<uint32_t>(pos);
+        const uint32_t comprseq_coor_1 = up >> 2;
+        const uint32_t comprseq_coor_2 = 3 - (up & 0x3);
         
         uint8_t &cell=seq_comprseq[ref][comprseq_coor_1];
         cell ^=	cell & (0x3 << comprseq_coor_2);
