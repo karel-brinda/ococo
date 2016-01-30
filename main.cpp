@@ -255,7 +255,7 @@ int main(int argc, const char* argv[])
             continue;
         }
         
-        int32_t ref_pos;
+        int32_t ref_pos=mappping_pos;
         for (int32_t cigar_grp=0,read_pos=0; cigar_grp < n_cigar; cigar_grp++)
         {
             const int32_t op = bam_cigar_op(cigar[cigar_grp]);
@@ -267,12 +267,11 @@ int main(int argc, const char* argv[])
                 case BAM_CDIFF:
                 case BAM_CEQUAL:
                     
-                    for (;read_pos<next_read_pos;read_pos++){
-                        ref_pos=mappping_pos+read_pos;
-                        const uint8_t &nt16 = bam_seqi(seq, read_pos);
-                        const int32_t bq    = qual[read_pos];
+                    for (;read_pos<next_read_pos;read_pos++,ref_pos++){
+                        const uint8_t nt16  = bam_seqi(seq, read_pos);
                         const uint8_t nt4   = ococo::nt16_nt4[nt16];
                         const char    nt256 = ococo::nt16_nt256[nt16];
+                        const int32_t bq    = qual[read_pos];
                         assert(0 <= nt4 && nt4 <= 4);
                         
                         if (bq<stats.params.min_baseq){
@@ -301,13 +300,14 @@ int main(int argc, const char* argv[])
                 case BAM_CDEL:
                 case BAM_CSOFT_CLIP:
                 case BAM_CREF_SKIP:
-                    read_pos+=ol;
+                    ref_pos+=ol;
                     break;
                     
                 case BAM_CBACK:
                     BOOST_LOG_TRIVIAL(warning) << "Backward operation in CIGAR strings is not supported.";
                     break;
                 case BAM_CINS:
+                    read_pos+=ol;
                     break;
                     
                 case BAM_CPAD:
