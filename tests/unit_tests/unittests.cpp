@@ -14,8 +14,23 @@ vector<uint32_t> nucls {
 };
 
 namespace {
-	
-	class CounterTest : public ::testing::Test {
+
+    class BitFunctionsTest : public ::testing::Test {
+    protected:
+        BitFunctionsTest() {
+        }
+        
+        virtual ~BitFunctionsTest() {
+        }
+        
+        virtual void SetUp() {
+        }
+        
+        virtual void TearDown() {
+        }
+    };
+    
+	/*class CounterTest : public ::testing::Test {
 	protected:
 		CounterTest() {
 		}
@@ -28,7 +43,7 @@ namespace {
 		
 		virtual void TearDown() {
 		}
-	};
+	};*/
 	
 	class NuclGeneratorTest : public ::testing::Test {
 	protected:
@@ -44,8 +59,34 @@ namespace {
 		virtual void TearDown() {
 		}
 	};
-	
-	TEST_F(CounterTest, AllIncrements) {
+
+    TEST_F(BitFunctionsTest, Basic) {
+        ASSERT_EQ( 0x00,   (ococo::right_full_mask<uint8_t,0>()) );
+        ASSERT_EQ( 0x01,   (ococo::right_full_mask<uint8_t,1>()) );
+        ASSERT_EQ( 0xff,   (ococo::right_full_mask<uint8_t,8>()) );
+        ASSERT_EQ( 0xffff, (ococo::right_full_mask<uint16_t,16>()) );
+        
+        ASSERT_EQ( 0x00,   (ococo::left_full_mask<uint8_t,0>()) );
+        ASSERT_EQ( 0x80,   (ococo::left_full_mask<uint8_t,1>()) );
+        ASSERT_EQ( 0xff,   (ococo::left_full_mask<uint8_t,8>()) );
+        ASSERT_EQ( 0xffff, (ococo::left_full_mask<uint16_t,16>()) );
+        
+        
+        ASSERT_EQ( 0x01,   (ococo::get_right_bits<uint8_t,1,0>(0xff)) );
+        ASSERT_EQ( 0x01,   (ococo::get_right_bits<uint8_t,1,1>(0xff)) );
+        ASSERT_EQ( 0x03,   (ococo::get_right_bits<uint8_t,2,0>(0xff)) );
+        ASSERT_EQ( 0xff,   (ococo::get_right_bits<uint8_t,8,0>(0xff)) );
+        ASSERT_EQ( 0x08,   (ococo::get_right_bits<uint8_t,4,0>(0xf8)) );
+
+        ASSERT_EQ( 0x01,   (ococo::get_left_bits<uint8_t,1,0>(0xff)) );
+        ASSERT_EQ( 0x01,   (ococo::get_left_bits<uint8_t,1,1>(0xff)) );
+        ASSERT_EQ( 0x03,   (ococo::get_left_bits<uint8_t,2,0>(0xff)) );
+        ASSERT_EQ( 0xff,   (ococo::get_left_bits<uint8_t,8,0>(0xff)) );
+    }
+    
+    
+    
+	/*TEST_F(CounterTest, AllIncrements) {
 		counter_t c1;
 
 		for(uint32_t nucl : nucls)
@@ -107,18 +148,16 @@ namespace {
 
 			ASSERT_EQ(c1, c2);
 		}
-	}
+	}*/
 
 	TEST_F(NuclGeneratorTest, IndividualNucleotides) {
 		char nucl;
 
-        counters_quadruplet_t quadruplet;
-        
-        quadruplet={0,0,0,0,0};
-		nucl=rand_nucl(quadruplet);
+        ococo::pos_stats_uncompr_t psu = {'A',{0,0,0,0},0};
+		nucl=rand_nucl(psu);
 		ASSERT_EQ(nucl, 'N');
 
-        quadruplet={5,0,0,0,5};
+        /*quadruplet={5,0,0,0,5};
         nucl=rand_nucl(quadruplet);
 		ASSERT_EQ(nucl, 'A');
 
@@ -132,7 +171,7 @@ namespace {
 
         quadruplet={0,0,0,5,5};
         nucl=rand_nucl(quadruplet);
-		ASSERT_EQ(nucl, 'T');
+		ASSERT_EQ(nucl, 'T');*/
 
 	}
 	
@@ -144,12 +183,6 @@ namespace {
 int main(int argc, char** argv){
 	cout << endl << "DEBUG INFO" << endl;
 
-	cout << "\tcounter_size " << dec << counter_size << "B" << endl;
-	cout << "\tcell_bits " << dec << cell_bits << endl;
-	cout << "\tcell_maxval 0x" << hex << cell_maxval << endl;
-	cout << "\tcell_maxval_shifted 0x" << hex  << cell_maxval_shifted << endl;
-	cout << "\tcounter_norm_mask 0x" << hex  << counter_norm_mask << endl << endl;
- 
 	::testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();
 }

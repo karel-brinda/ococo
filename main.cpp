@@ -159,7 +159,7 @@ int main(int argc, const char* argv[])
         ococo::error_exit("SAM headers are missing or corrupted.\n");
     }
     
-    ococo::stats_t stats(tmp_params,*header);
+    ococo::stats_t<uint16_t,3,4> stats(tmp_params,*header);
     assert(stats.check_state());
     
     /*
@@ -173,7 +173,7 @@ int main(int argc, const char* argv[])
         BOOST_LOG_TRIVIAL(info) << "No file with statistics provided.";
         if (fasta0_fn.size()>0){
             BOOST_LOG_TRIVIAL(info) << "Loading FASTA: '" << fasta0_fn << "'.";
-            stats.load_fasta(fasta0_fn,2);
+            stats.load_fasta(fasta0_fn);
         }
     }
     
@@ -229,14 +229,14 @@ int main(int argc, const char* argv[])
         const uint32_t *cigar=bam_get_cigar(b);
         const int32_t n_cigar=b->core.n_cigar;
         //+b->core.l_qname
-        const int32_t chrom=b->core.tid;
-        const int32_t read_pos=b->core.pos;
+        const int32_t seqid=b->core.tid;
+        const int64_t read_pos=b->core.pos;
         const int32_t mapq=b->core.qual;
         const int32_t flags=b->core.flag;
         
         //fprintf(stderr,"pos %d, chrom %d, map q %d, flag %d, name %s \n",pos,chrom,mapq, flags, rname);
         
-        BOOST_LOG_TRIVIAL(debug) << "Reading alignment: rname='" << rname << ", chrom=" << chrom << ", pos=" << read_pos <<", mapq="<< mapq << ", flags=" << flags;
+        BOOST_LOG_TRIVIAL(debug) << "Reading alignment: rname='" << rname << ", chrom=" << seqid << ", pos=" << read_pos <<", mapq="<< mapq << ", flags=" << flags;
         
         
         if ((flags & BAM_FUNMAP)!=0){
@@ -244,7 +244,7 @@ int main(int argc, const char* argv[])
             continue;
         }
         
-        if (!stats.seq_used[chrom]){
+        if (!stats.seq_active[seqid]){
             BOOST_LOG_TRIVIAL(debug) << "Discarded: consensus calling is off for this chromosome.";
             continue;
         }
@@ -271,16 +271,16 @@ int main(int argc, const char* argv[])
                         const uint8_t &bq=qual[i];
                         
                         if (bq<stats.params.min_baseq){
-                            BOOST_LOG_TRIVIAL(trace) << "Omitting base (too low base quality): chrom=" << chrom << ", pos=" << ref_pos << ", nucl=" << ococo::nt16_nt256[nt16] << ", quality=" << (int32_t)bq << ".";
+                            BOOST_LOG_TRIVIAL(trace) << "Omitting base (too low base quality): chrom=" << seqid << ", pos=" << ref_pos << ", nucl=" << ococo::nt16_nt256[nt16] << ", quality=" << (int32_t)bq << ".";
                             
                         }
                         else{
-                            BOOST_LOG_TRIVIAL(trace) << "Incrementing counter: chrom=" << chrom << ", pos=" << ref_pos << ", nucl=" << ococo::nt16_nt256[nt16] << ", quality=" << (int32_t)bq << ". New state: refbase='" << stats.get_nucl(chrom, ref_pos) << "', counters: " << stats.debug_str_counters(chrom,ref_pos);
-                            STATS_INCREMENT(stats,chrom,ref_pos,nt16);
-                            BOOST_LOG_TRIVIAL(trace) << "           new state: counters: " << stats.debug_str_counters(chrom,ref_pos);
+                            BOOST_LOG_TRIVIAL(trace) << "Incrementing counter: chrom=" << seqid << ", pos=" << ref_pos << ", nucl=" << ococo::nt16_nt256[nt16] << ", quality=" << (int32_t)bq << ". New state: refbase='" << stats.get_nucl_nt256(seqid, ref_pos) << "', counters: " << stats.debug_str_counters(seqid,ref_pos);
+                            stats.seq_stats[seqid][ref_pos] = stats.increment(stats.seq_stats[seqid][ref_pos],nt16);
+                            BOOST_LOG_TRIVIAL(trace) << "           new state: counters: " << stats.debug_str_counters(seqid,ref_pos);
 
                             if(stats.params.mode==ococo::mode_t::REALTIME){
-                                stats.call_consensus_position(chrom, ref_pos);
+                                stats.call_consensus_position(seqid, ref_pos);
                             }
                         }
                     }
