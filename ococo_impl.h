@@ -51,7 +51,7 @@ int ococo::stats_t<T,counter_size,refbase_size>::load_fasta(const std::string &f
             seq_comment[seqid]=std::string(seq->comment.s);
         }
         
-        for(int64_t pos=0; pos < seq->seq.l; pos++){
+        for(int64_t pos=0; pos < static_cast<int64_t>(seq->seq.l); pos++){
             assert(seq_stats[seqid][pos]==0);
             
             pos_stats_uncompr_t psu = {0,{0,0,0,0},0};
@@ -256,20 +256,37 @@ void ococo::stats_t<T,counter_size,refbase_size>::decompress_position_stats(T ps
 }
 
 template<typename T, int counter_size, int refbase_size>
-void ococo::stats_t<T,counter_size,refbase_size>::print_vcf_header() const {
+void ococo::stats_t<T,counter_size,refbase_size>::print_vcf_header(std::string cmd,std::string fasta) const {
     assert(check_state());
     assert(params.vcf_fo!=nullptr);
     
-    //todo: date
+    std::time_t tt = std::time(nullptr);
+    tm *tm = localtime(&tt);
+
+    
     fprintf(params.vcf_fo,
             "##fileformat=VCFv4.3\n"
-            "##fileDate=20150000\n"
-            "##source=Ococo\n"
-            //"##reference=%s\n"
+            "##fileDate=%04d%02d%02d\n"
+            "##source=Ococo\n",
+            tm->tm_year + 1900,
+            tm->tm_mon + 1,
+            tm->tm_mday
             );
+
+    if(!cmd.empty()){
+        fprintf(params.vcf_fo, "##ococo_command=%s\n", cmd.c_str());
+    }
+    fprintf(params.vcf_fo,"##ococo_stats_datatype_size=%zubits\n",8*sizeof(T));
+    fprintf(params.vcf_fo,"##ococo_counter_size=%dbits\n", counter_size);
+    
+    if(!fasta.empty()){
+        fprintf(params.vcf_fo, "##reference=%s\n", fasta.c_str());
+    }
+    
     for (int seqid=0;seqid<n_seqs;seqid++){
         fprintf(params.vcf_fo,"##contig=<ID=%s,length=%" PRId64 ">\n",seq_name[seqid].c_str(),seq_len[seqid]);
     }
+    
     fprintf(params.vcf_fo,"##INFO=<ID=CS,Number=4,Type=Integer,Description=\"Values of A,C,G,T counters.\">\n");
     fprintf(params.vcf_fo,"##INFO=<ID=SUM,Number=1,Type=Integer,Description=\"Sum of A,C,G,T counters.\">\n");
     fprintf(params.vcf_fo,"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n");

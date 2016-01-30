@@ -13,14 +13,18 @@
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
 
+#include <climits>
+#include <cstdio>
+#include <cstdlib>
+
 namespace logging = boost::log;
 
 void boost_logging_init()
 {
     logging::core::get()->set_filter
     (
-     //logging::trivial::severity >= logging::trivial::warning
-     logging::trivial::severity >= logging::trivial::trace
+     logging::trivial::severity >= logging::trivial::warning
+     //logging::trivial::severity >= logging::trivial::trace
      );
 }
 
@@ -194,7 +198,25 @@ int main(int argc, const char* argv[])
             ococo::error_exit("Problem with opening VCF file '%s'", vcf_fn.c_str());
         }
         
-        stats.print_vcf_header();
+        std::stringstream cmd;
+        for (int32_t i=0; i<argc; i++){
+            cmd << argv[i];
+            if(i!=argc-1){
+                cmd << " ";
+            }
+        }
+        
+        char buf[PATH_MAX + 1];
+        char *res = realpath(fasta0_fn.c_str(), buf);
+        std::string fasta_full_path;
+        if (res) {
+            fasta_full_path=std::string(buf);
+        }
+        else{
+            fasta_full_path=fasta0_fn;
+        }
+
+        stats.print_vcf_header(cmd.str(),fasta_full_path);
     }
     else {
         BOOST_LOG_TRIVIAL(info) << "No VCF file required.";

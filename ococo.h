@@ -17,6 +17,7 @@
 #include <cassert>
 #include <zlib.h>
 #include <cinttypes>
+#include <ctime>
 
 #include "htslib/sam.h"
 #include "htslib/faidx.h"
@@ -196,7 +197,7 @@ namespace ococo {
     
     template<typename T, int counter_size, int refbase_size>
     struct stats_t {
-        static_assert( 8*sizeof(T) >= counter_size + refbase_size, "Too large counter size (does not fit into the main type)." );
+        static_assert( 8*sizeof(T) >= 4*counter_size + refbase_size, "Too large counter size (does not fit into the main type)." );
         
         int32_t      n_seqs;
         bool         *seq_active;
@@ -230,7 +231,7 @@ namespace ococo {
         int save_fasta() const;
         //int load_headers_fai(const std::string &fai_fn);
         
-        void print_vcf_header() const;
+        void print_vcf_header(std::string cmd, std::string fasta) const;
         void print_vcf_substitution(int32_t seqid, int64_t pos, char old_base, char new_base, const pos_stats_uncompr_t &psu) const;
         
         
