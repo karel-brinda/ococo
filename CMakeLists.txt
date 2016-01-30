@@ -18,15 +18,18 @@ include("contrib/googletest.cmake")
 add_subdirectory(tests/unit_tests)
 
 #list( APPEND CMAKE_CXX_FLAGS "-std=gnu++11  -O3 -DNDEBUG ${CMAKE_CXX_FLAGS}")
-list(APPEND CMAKE_CXX_FLAGS "-Wall -std=c++11")
-add_definitions(-Wall -D_FILE_OFFSET_BITS=64 -g)
+#list(APPEND CMAKE_CXX_FLAGS "-Werrror -Wshadow -std=c++11")
+list(APPEND CMAKE_CXX_FLAGS "-Wall -Wextra -pedantic -Wshadow -std=c++11")
+#add_definitions(-D_FILE_OFFSET_BITS=64 -g)
 
-add_library(ococo_lib ococo.cpp)
-target_link_libraries(ococo_lib ${htslib_LIB} ${zlib_LIB} )
+#add_library(ococo_lib ococo.cpp)
+#target_link_libraries(ococo_lib ${htslib_LIB} ${zlib_LIB} )
 
 add_executable(ococo main.cpp)
-add_dependencies(ococo htslib zlib ococo_lib)
-target_link_libraries(ococo ococo_lib ${Boost_LIBRARIES} ${htslib_LIB} ${zlib_LIB})
+#add_dependencies(ococo htslib zlib ococo_lib)
+add_dependencies(ococo htslib zlib)
+#target_link_libraries(ococo ococo_lib ${Boost_LIBRARIES} ${htslib_LIB} ${zlib_LIB})
+target_link_libraries(ococo ${Boost_LIBRARIES} ${htslib_LIB} ${zlib_LIB})
 
 
 ################

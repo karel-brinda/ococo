@@ -2,5 +2,5 @@
 
 set -x trace
 
-./ococo -s test.bam -r test.fa
+./ococo -i test.bam -f test.fa
 

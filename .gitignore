@@ -1,6 +1,9 @@
 ococo
 a.fa
 
+*.xcodeproj
+Debug/
+
 *~
 
 *.anjuta
