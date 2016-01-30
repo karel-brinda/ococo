@@ -19,8 +19,8 @@ void boost_logging_init()
 {
     logging::core::get()->set_filter
     (
-     logging::trivial::severity >= logging::trivial::warning
-     //logging::trivial::severity >= logging::trivial::trace
+     //logging::trivial::severity >= logging::trivial::warning
+     logging::trivial::severity >= logging::trivial::trace
      );
 }
 
@@ -50,7 +50,7 @@ int main(int argc, const char* argv[])
     std::string fasta0_fn;
     std::string stats_fn;
     std::string sam_fn;
-
+    
     std::string vcf_fn;
     std::string fasta_cons_fn;
     
@@ -82,6 +82,7 @@ int main(int argc, const char* argv[])
         //("counter-size,s", po::value<int>(&counterSize), "Size of counter per nucleotide in bits [3]")
         ("min-MQ,q", po::value<int32_t>(&tmp_params.min_mapq), "Minimal mapping quality to increment a counter. [1]")
         ("min-BQ,Q", po::value<int32_t>(&tmp_params.min_baseq), "Minimal base quality to increment a counter. [0]")
+        ("ref-weight,w", po::value<int32_t>(&tmp_params.init_ref_weight), "Initial counter value for nucleotides from reference. [2]")
         //("min-coverage,c", po::value<int32_t>(&params.min_coverage), "Minimal coverage to update the reference. [3]")
         //("accept-level,l", po::value<float>(&acceptanceLevel), "Acceptance level [0.60]")
         ("vcf-cons,v", po::value<std::string>(&vcf_fn), "VCF file with updates of consensus.")
@@ -198,7 +199,7 @@ int main(int argc, const char* argv[])
     else {
         BOOST_LOG_TRIVIAL(info) << "No VCF file required.";
     }
-
+    
     /*
      * Open consensus FASTA file.
      */
@@ -230,13 +231,13 @@ int main(int argc, const char* argv[])
         const int32_t n_cigar=b->core.n_cigar;
         //+b->core.l_qname
         const int32_t seqid=b->core.tid;
-        const int64_t read_pos=b->core.pos;
+        const int64_t mappping_pos=b->core.pos;
         const int32_t mapq=b->core.qual;
         const int32_t flags=b->core.flag;
         
         //fprintf(stderr,"pos %d, chrom %d, map q %d, flag %d, name %s \n",pos,chrom,mapq, flags, rname);
         
-        BOOST_LOG_TRIVIAL(debug) << "Reading alignment: rname='" << rname << ", chrom=" << seqid << ", pos=" << read_pos <<", mapq="<< mapq << ", flags=" << flags;
+        BOOST_LOG_TRIVIAL(debug) << "Reading alignment: rname='" << rname << ", chrom=" << seqid << ", pos=" << mappping_pos <<", mapq="<< mapq << ", flags=" << flags;
         
         
         if ((flags & BAM_FUNMAP)!=0){
@@ -255,46 +256,57 @@ int main(int argc, const char* argv[])
         }
         
         int32_t ref_pos;
-        for (int32_t k=0,i=0; k < n_cigar; k++)
+        for (int32_t cigar_grp=0,read_pos=0; cigar_grp < n_cigar; cigar_grp++)
         {
-            const int32_t op = bam_cigar_op(cigar[k]);
-            const int32_t ol = bam_cigar_oplen(cigar[k]);
-            int ni=0;
+            const int32_t op = bam_cigar_op(cigar[cigar_grp]);
+            const int32_t ol = bam_cigar_oplen(cigar[cigar_grp]);
             
+            const int32_t next_read_pos=read_pos+ol;
             switch (op) {
                 case BAM_CMATCH:
                 case BAM_CDIFF:
                 case BAM_CEQUAL:
-                    for (ni=i+ol;i<ni;i++){
-                        ref_pos=read_pos+i;
-                        const uint8_t &nt16=bam_seqi(seq, i);
-                        const uint8_t &bq=qual[i];
+                    
+                    for (;read_pos<next_read_pos;read_pos++){
+                        ref_pos=mappping_pos+read_pos;
+                        const uint8_t &nt16 = bam_seqi(seq, read_pos);
+                        const int32_t bq    = qual[read_pos];
+                        const uint8_t nt4   = ococo::nt16_nt4[nt16];
+                        const char    nt256 = ococo::nt16_nt256[nt16];
+                        assert(0 <= nt4 && nt4 <= 4);
                         
                         if (bq<stats.params.min_baseq){
-                            BOOST_LOG_TRIVIAL(trace) << "Omitting base (too low base quality): chrom=" << seqid << ", pos=" << ref_pos << ", nucl=" << ococo::nt16_nt256[nt16] << ", quality=" << (int32_t)bq << ".";
-                            
+                            BOOST_LOG_TRIVIAL(trace) << "Omitting base (too low base quality): chrom=" << seqid << ", pos=" << ref_pos << ", nucl=" << nt256 << ", quality=" << bq << ".";
+                            break;
                         }
-                        else{
-                            BOOST_LOG_TRIVIAL(trace) << "Incrementing counter: chrom=" << seqid << ", pos=" << ref_pos << ", nucl=" << ococo::nt16_nt256[nt16] << ", quality=" << (int32_t)bq << ". New state: refbase='" << stats.get_nucl_nt256(seqid, ref_pos) << "', counters: " << stats.debug_str_counters(seqid,ref_pos);
-                            stats.seq_stats[seqid][ref_pos] = stats.increment(stats.seq_stats[seqid][ref_pos],nt16);
-                            BOOST_LOG_TRIVIAL(trace) << "           new state: counters: " << stats.debug_str_counters(seqid,ref_pos);
-
-                            if(stats.params.mode==ococo::mode_t::REALTIME){
-                                stats.call_consensus_position(seqid, ref_pos);
-                            }
+                        
+                        if (nt4==0x4){
+                            BOOST_LOG_TRIVIAL(trace) << "Omitting base (ambiguous nucleotide): chrom=" << seqid << ", pos=" << ref_pos << ", nucl=" << nt256 << ", quality=" << bq << ".";
+                            break;
+                        }
+                        
+                        BOOST_LOG_TRIVIAL(trace) << "Incrementing counter: chrom=" << seqid << ", pos=" << ref_pos << ", nucl=" << nt256 << ", quality=" << bq << ". New state: refbase='" << stats.get_nucl_nt256(seqid, ref_pos) << "', counters: " << stats.debug_str_counters(seqid,ref_pos);
+                        
+                        stats.seq_stats[seqid][ref_pos] = stats.increment(stats.seq_stats[seqid][ref_pos],nt4);
+                        
+                        BOOST_LOG_TRIVIAL(trace) << "           new state: counters: " << stats.debug_str_counters(seqid,ref_pos);
+                        
+                        if(stats.params.mode==ococo::mode_t::REALTIME){
+                            stats.call_consensus_position(seqid, ref_pos);
                         }
                     }
+                    
                     break;
                     
                 case BAM_CDEL:
                 case BAM_CSOFT_CLIP:
                 case BAM_CREF_SKIP:
-                    i+=ol;
+                    read_pos+=ol;
                     break;
                     
                 case BAM_CBACK:
                     BOOST_LOG_TRIVIAL(warning) << "Backward operation in CIGAR strings is not supported.";
-                    continue;
+                    break;
                 case BAM_CINS:
                     break;
                     
@@ -309,13 +321,13 @@ int main(int argc, const char* argv[])
             //printf("%d%c",ol,BAM_CIGAR_STR[op]);
             
             /*if(params.mode==ococo::mode_t::REALTIME){
-                for(int pos=read_pos;pos<ref_pos;pos++){
-                    stats.call_consensus_position(chrom, pos, params.print_vcf);
-                }
-            }*/
+             for(int pos=read_pos;pos<ref_pos;pos++){
+             stats.call_consensus_position(chrom, pos, params.print_vcf);
+             }
+             }*/
         }
         
-        BOOST_LOG_TRIVIAL(debug) << "Alignment incorporated into statistics.";
+        BOOST_LOG_TRIVIAL(debug) << "Alignment of '" << rname << "' incorporated into statistics.";
     }
     
     /*

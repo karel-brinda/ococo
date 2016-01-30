@@ -48,7 +48,6 @@ namespace ococo {
         mode_t mode;
         strategy_t strategy;
 
-        int32_t min_coverage;
         int32_t min_mapq;
         int32_t min_baseq;
 
@@ -60,9 +59,9 @@ namespace ococo {
         consensus_params_t():
             mode(BATCH),
             strategy(MAJORITY),
-            min_coverage(1),
             min_mapq(1),
             min_baseq(0),
+            init_ref_weight(2),
             vcf_fo(nullptr),
             fasta_cons_fo(nullptr)
         {}

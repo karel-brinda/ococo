@@ -323,6 +323,8 @@ inline char ococo::stats_t<T,counter_size,refbase_size>::get_nucl_nt256(int32_t 
 
 template<typename T, int counter_size, int refbase_size>
 T ococo::stats_t<T,counter_size,refbase_size>::increment(T psc, nt4_t nt4){
+    assert(0 <= nt4 && nt4 < 4);
+    
     pos_stats_uncompr_t psu;
     decompress_position_stats(psc, psu);
     
