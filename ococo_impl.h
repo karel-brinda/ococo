@@ -35,7 +35,8 @@ ococo::stats_t<T,counter_size,refbase_size>::~stats_t(){
 
 
 template<typename T, int counter_size, int refbase_size>
-int ococo::stats_t<T,counter_size,refbase_size>::load_fasta(const std::string &fasta_fn) {
+int ococo::stats_t<T,counter_size,refbase_size>::
+load_fasta(const std::string &fasta_fn) {
     gzFile fp;
     kseq_t *seq;
     int l;

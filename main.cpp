@@ -17,6 +17,9 @@
 #include <cstdio>
 #include <cstdlib>
 
+
+typedef ococo::stats_t<uint16_t,3,4> STATS_T;
+
 namespace logging = boost::log;
 
 void boost_logging_init()
@@ -31,6 +34,8 @@ void boost_logging_init()
 
 int main(int argc, const char* argv[])
 {
+    
+    int main_return_code=0;
     
     boost_logging_init();
     
@@ -77,18 +82,14 @@ int main(int argc, const char* argv[])
         std::string mode;
         
         vol.add_options()
-        //("help", "Print help message")
         ("input,i", po::value<std::string>(&sam_fn)->required(), "Input SAM/BAM file (- for standard input).")
         ("fasta-ref,f", po::value<std::string>(&fasta0_fn), "Initial FASTA reference (if not provided, sequence of N's is considered as the reference).")
         ("stats,s", po::value<std::string>(&stats_fn), "File with up-to-date statistics.")
         ("strategy,S", po::value<std::string>(&strategy), "Strategy for updates: majority / randomized. [majority]")
         ("mode,m", po::value<std::string>(&mode), "Mode: real-time / batch. [batch]")
-        //("counter-size,s", po::value<int>(&counterSize), "Size of counter per nucleotide in bits [3]")
         ("min-MQ,q", po::value<int32_t>(&tmp_params.min_mapq), "Minimal mapping quality to increment a counter. [1]")
         ("min-BQ,Q", po::value<int32_t>(&tmp_params.min_baseq), "Minimal base quality to increment a counter. [0]")
         ("ref-weight,w", po::value<int32_t>(&tmp_params.init_ref_weight), "Initial counter value for nucleotides from reference. [2]")
-        //("min-coverage,c", po::value<int32_t>(&params.min_coverage), "Minimal coverage to update the reference. [3]")
-        //("accept-level,l", po::value<float>(&acceptanceLevel), "Acceptance level [0.60]")
         ("vcf-cons,v", po::value<std::string>(&vcf_fn), "VCF file with updates of consensus.")
         ("fasta-cons,c", po::value<std::string>(&fasta_cons_fn), "FASTA file with consensus, which is continuously updated (WARNING: will be rewritten).")
         ;
@@ -107,7 +108,8 @@ int main(int argc, const char* argv[])
                     tmp_params.strategy=ococo::strategy_t::STOCHASTIC;
                 }
                 else {
-                    fprintf(stderr,"Unknown strategy '%s'. Possible strategies are 'majority' and 'stochastic'\n",strategy.c_str());
+                    
+                    ococo::error("Unknown strategy '%s'. Possible strategies are 'majority' and 'stochastic'\n",strategy.c_str());
                     return EXIT_FAILURE;
                 }
             }
@@ -120,28 +122,23 @@ int main(int argc, const char* argv[])
                     tmp_params.mode=ococo::mode_t::REALTIME;
                 }
                 else {
-                    fprintf(stderr,"Unknown mode '%s'. Possible modes are 'batch' and 'real-time'\n",mode.c_str());
+                    ococo::error("Unknown mode '%s'. Possible modes are 'batch' and 'real-time'\n",mode.c_str());
                     return EXIT_FAILURE;
                 }
             }
             
-            
-            /*if (vm.count("help")) {
-             cout << vol << "\n";
-             return EXIT_FAILURE;
-             }*/
         }
         catch(po::error& e)
         {
             std::cout << vol << "\n";
-            fprintf(stderr,"Error: %s.\n",e.what());
+            ococo::error("%s.\n",e.what());
             return EXIT_FAILURE;
         }
         
     }
     catch(std::exception& e)
     {
-        fprintf(stderr,"Unhandled Exception: %s.\n",e.what());
+        ococo::error("Unhandled Exception: %s.\n",e.what());
         return EXIT_FAILURE;
     }
     
@@ -155,30 +152,50 @@ int main(int argc, const char* argv[])
     bam1_t *b = nullptr;
     bam_hdr_t *header = nullptr;
     
+    STATS_T *stats = nullptr;
+    
     BOOST_LOG_TRIVIAL(info) << "SAM/BAM reader initialization: reading '" << sam_fn.c_str() << "'.";
     in = sam_open(sam_fn.c_str(), "r");
     if(in==nullptr) {
-        ococo::error_exit("Problem with opening input ('%s').\n", sam_fn.c_str());
+        ococo::fatal_error("Problem with opening input ('%s').\n", sam_fn.c_str());
+        main_return_code=-1;
+        goto cleaning;
     }
     if ((header = sam_hdr_read(in)) == 0){
-        ococo::error_exit("SAM headers are missing or corrupted.\n");
+        ococo::fatal_error("SAM/BAM headers are missing or corrupted.\n");
+        main_return_code=-1;
+        goto cleaning;
     }
     
-    ococo::stats_t<uint16_t,3,4> stats(tmp_params,*header);
-    assert(stats.check_state());
+    stats = new(std::nothrow) STATS_T (tmp_params,*header);
+    if (stats==nullptr){
+        ococo::fatal_error("Allocation of the main structure failed.\n");
+        goto cleaning;
+    }
+    assert(stats->check_state());
     
     /*
      * Load FASTA and stats.
      */
     if (stats_fn.size()>0 && ococo::file_exists(stats_fn)){
         BOOST_LOG_TRIVIAL(info) << "Importing statistics: '" << stats_fn << "'.";
-        stats.import_stats(stats_fn);
+        int error_code=stats->import_stats(stats_fn);
+        if(error_code!=0){
+            ococo::fatal_error("Import of statistics failed (file '%s').",stats_fn.c_str());
+            main_return_code=-1;
+            goto cleaning;
+        }
     }
     else{
         BOOST_LOG_TRIVIAL(info) << "No file with statistics provided.";
         if (fasta0_fn.size()>0){
             BOOST_LOG_TRIVIAL(info) << "Loading FASTA: '" << fasta0_fn << "'.";
-            stats.load_fasta(fasta0_fn);
+            int error_code=stats->load_fasta(fasta0_fn);
+            if(error_code!=0){
+                ococo::fatal_error("Loading of FASTA failed (file '%s').",fasta0_fn.c_str());
+                main_return_code=-1;
+                goto cleaning;
+            }
         }
     }
     
@@ -188,15 +205,17 @@ int main(int argc, const char* argv[])
     if(vcf_fn.size()>0){
         BOOST_LOG_TRIVIAL(info) << "Open VCF: '" << vcf_fn << "'.";
         if (vcf_fn==std::string("-")){
-            stats.params.vcf_fo=stdout;
+            stats->params.vcf_fo=stdout;
         }
         else{
-            stats.params.vcf_fo=fopen(vcf_fn.c_str(),"w+");
+            stats->params.vcf_fo=fopen(vcf_fn.c_str(),"w+");
+            if(stats->params.vcf_fo==nullptr){
+                ococo::fatal_error("Problem with opening VCF file '%s'", vcf_fn.c_str());
+                main_return_code=-1;
+                goto cleaning;
+            }
         }
         
-        if(stats.params.vcf_fo==nullptr){
-            ococo::error_exit("Problem with opening VCF file '%s'", vcf_fn.c_str());
-        }
         
         std::stringstream cmd;
         for (int32_t i=0; i<argc; i++){
@@ -216,7 +235,7 @@ int main(int argc, const char* argv[])
             fasta_full_path=fasta0_fn;
         }
 
-        stats.print_vcf_header(cmd.str(),fasta_full_path);
+        stats->print_vcf_header(cmd.str(),fasta_full_path);
     }
     else {
         BOOST_LOG_TRIVIAL(info) << "No VCF file required.";
@@ -227,10 +246,12 @@ int main(int argc, const char* argv[])
      */
     if(fasta_cons_fn.size()>0){
         BOOST_LOG_TRIVIAL(info) << "Open FASTA for consensus: '" << fasta_cons_fn << "'.";
-        stats.params.fasta_cons_fo=fopen(fasta_cons_fn.c_str(),"w+");
+        stats->params.fasta_cons_fo=fopen(fasta_cons_fn.c_str(),"w+");
         
-        if(stats.params.fasta_cons_fo==nullptr){
-            ococo::error_exit("Problem with opening FASTA for consensus: '%s'", fasta_cons_fn.c_str());
+        if(stats->params.fasta_cons_fo==nullptr){
+            ococo::fatal_error("Problem with opening FASTA for consensus: '%s'", fasta_cons_fn.c_str());
+            main_return_code=-1;
+            goto cleaning;
         }
     }
     else {
@@ -257,8 +278,6 @@ int main(int argc, const char* argv[])
         const int32_t mapq=b->core.qual;
         const int32_t flags=b->core.flag;
         
-        //fprintf(stderr,"pos %d, chrom %d, map q %d, flag %d, name %s \n",pos,chrom,mapq, flags, rname);
-        
         BOOST_LOG_TRIVIAL(debug) << "Reading alignment: rname='" << rname << ", chrom=" << seqid << ", pos=" << mappping_pos <<", mapq="<< mapq << ", flags=" << flags;
         
         
@@ -267,12 +286,12 @@ int main(int argc, const char* argv[])
             continue;
         }
         
-        if (!stats.seq_active[seqid]){
+        if (!stats->seq_active[seqid]){
             BOOST_LOG_TRIVIAL(debug) << "Discarded: consensus calling is off for this chromosome.";
             continue;
         }
         
-        if (mapq<stats.params.min_mapq){
+        if (mapq<stats->params.min_mapq){
             BOOST_LOG_TRIVIAL(debug) << "Discarded: mapping quality is too low.";
             continue;
         }
@@ -296,7 +315,7 @@ int main(int argc, const char* argv[])
                         const int32_t bq    = qual[read_pos];
                         assert(0 <= nt4 && nt4 <= 4);
                         
-                        if (bq<stats.params.min_baseq){
+                        if (bq<stats->params.min_baseq){
                             BOOST_LOG_TRIVIAL(trace) << "Omitting base (too low base quality): chrom=" << seqid << ", pos=" << ref_pos << ", nucl=" << nt256 << ", quality=" << bq << ".";
                             break;
                         }
@@ -306,14 +325,14 @@ int main(int argc, const char* argv[])
                             break;
                         }
                         
-                        BOOST_LOG_TRIVIAL(trace) << "Incrementing counter: chrom=" << seqid << ", pos=" << ref_pos << ", nucl=" << nt256 << ", quality=" << bq << ". New state: refbase='" << stats.get_nucl_nt256(seqid, ref_pos) << "', counters: " << stats.debug_str_counters(seqid,ref_pos);
+                        BOOST_LOG_TRIVIAL(trace) << "Incrementing counter: chrom=" << seqid << ", pos=" << ref_pos << ", nucl=" << nt256 << ", quality=" << bq << ". New state: refbase='" << stats->get_nucl_nt256(seqid, ref_pos) << "', counters: " << stats->debug_str_counters(seqid,ref_pos);
                         
-                        stats.seq_stats[seqid][ref_pos] = stats.increment(stats.seq_stats[seqid][ref_pos],nt4);
+                        stats->seq_stats[seqid][ref_pos] = stats->increment(stats->seq_stats[seqid][ref_pos],nt4);
                         
-                        BOOST_LOG_TRIVIAL(trace) << "           new state: counters: " << stats.debug_str_counters(seqid,ref_pos);
+                        BOOST_LOG_TRIVIAL(trace) << "           new state: counters: " << stats->debug_str_counters(seqid,ref_pos);
                         
-                        if(stats.params.mode==ococo::mode_t::REALTIME){
-                            stats.call_consensus_position(seqid, ref_pos);
+                        if(stats->params.mode==ococo::mode_t::REALTIME){
+                            stats->call_consensus_position(seqid, ref_pos);
                         }
                     }
                     
@@ -336,17 +355,8 @@ int main(int argc, const char* argv[])
                 case BAM_CHARD_CLIP:
                     break;
                     
-                    //update stats
-                    //skip ref
-                    
             }
-            //printf("%d%c",ol,BAM_CIGAR_STR[op]);
-            
-            /*if(params.mode==ococo::mode_t::REALTIME){
-             for(int pos=read_pos;pos<ref_pos;pos++){
-             stats.call_consensus_position(chrom, pos, params.print_vcf);
-             }
-             }*/
+
         }
         
         BOOST_LOG_TRIVIAL(debug) << "Alignment of '" << rname << "' incorporated into statistics.";
@@ -355,12 +365,16 @@ int main(int argc, const char* argv[])
     /*
      * Calling final consensus and export stats.
      */
-    if(stats.params.mode==ococo::mode_t::BATCH){
+    if(stats->params.mode==ococo::mode_t::BATCH){
         BOOST_LOG_TRIVIAL(info) << "Calling consensus for the entire reference sequence (batch mode).";
-        stats.call_consensus();
-        if (stats.params.fasta_cons_fo){
+        stats->call_consensus();
+        if (stats->params.fasta_cons_fo){
             BOOST_LOG_TRIVIAL(info) << "Saving FASTA: '" << fasta_cons_fn << "'.";
-            stats.save_fasta();
+            int error_code=stats->save_fasta();
+            if(error_code!=0){
+                ococo::error("FASTA '%s' could not be saved.",fasta_cons_fn.c_str());
+                main_return_code=-1;
+            }
         }
         else {
             BOOST_LOG_TRIVIAL(info) << "FASTA not saved.";
@@ -369,13 +383,18 @@ int main(int argc, const char* argv[])
     
     if (stats_fn.size()>0){
         BOOST_LOG_TRIVIAL(info) << "Saving statistics: '" << stats_fn << "'.";
-        stats.export_stats(stats_fn);
+        int error_code=stats->export_stats(stats_fn);
+        if(error_code!=0){
+            ococo::error("Statistics could not be saved ('%s').",stats_fn.c_str());
+            main_return_code=-1;
+        }
     }
     else {
         BOOST_LOG_TRIVIAL(info) << "Statistics not saved.";
     }
     
     
+cleaning:
     /*
      * Free memory.
      */
@@ -387,15 +406,37 @@ int main(int argc, const char* argv[])
     /*
      * Close files.
      */
-    sam_close(in);
-    if(stats.params.vcf_fo!=nullptr){
-        fclose(stats.params.vcf_fo);
-    }
-    if(stats.params.fasta_cons_fo!=nullptr){
-        fclose(stats.params.fasta_cons_fo);
+    
+    if(in!=nullptr){
+        int error_code = sam_close(in);
+        if(error_code!=0){
+            ococo::error("SAM file could not be successfully closed.");
+            main_return_code=-1;
+        }
     }
     
-    BOOST_LOG_TRIVIAL(info) << "Ococo finished. Bye.";
+    if(stats!=nullptr && stats->params.vcf_fo!=nullptr){
+        int error_code = fclose(stats->params.vcf_fo);
+        if(error_code!=0){
+            ococo::error("VCF file could not be successfully closed.");
+            main_return_code=-1;
+        }
+    }
+
+    if(stats!=nullptr && stats->params.fasta_cons_fo!=nullptr){
+        int error_code = fclose(stats->params.fasta_cons_fo);
+        if(error_code!=0){
+            ococo::error("FASTA consensus file could not be successfully closed.");
+            main_return_code=-1;
+        }
+    }
     
-    return 0;
+    if(stats!=nullptr){
+        delete stats;
+    }
+    
+    ococo::info("Ococo finished. Bye.\n");
+    BOOST_LOG_TRIVIAL(info) << "Ococo finished.";
+    
+    return main_return_code;
 }

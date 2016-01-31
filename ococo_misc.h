@@ -11,12 +11,36 @@
 
 namespace ococo {
 
-    void error_exit(const char * format, ...){
+    void fatal_error(const char * format, ...){
         va_list args;
         va_start (args, format);
+        fprintf(stderr,"[ococo:fatal-error]: ");
         vfprintf (stderr, format, args);
         va_end (args);
-        exit(-1);
+    }
+    
+    void error(const char * format, ...){
+        va_list args;
+        va_start (args, format);
+        fprintf(stderr,"[ococo:error]: ");
+        vfprintf (stderr, format, args);
+        va_end (args);
+    }
+    
+    void warning(const char * format, ...){
+        va_list args;
+        va_start (args, format);
+        fprintf(stderr,"[ococo:warning]: ");
+        vfprintf (stderr, format, args);
+        va_end (args);
+    }
+
+    void info(const char * format, ...){
+        va_list args;
+        va_start (args, format);
+        fprintf(stderr,"[ococo]: ");
+        vfprintf (stderr, format, args);
+        va_end (args);
     }
     
     bool file_exists(const std::string &fn){

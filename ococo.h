@@ -25,9 +25,10 @@
 #include "htslib/khash.h"
 #include "htslib/kseq.h"
 
+KSEQ_INIT(gzFile, gzread);
+
 namespace ococo {
     
-    KSEQ_INIT(gzFile, gzread);
     
     /*********************
      *** Configuration ***
