@@ -1,6 +1,26 @@
-/**********************
- *** Implementation ***
- **********************/
+#ifndef _OCOCO_IMPL_H_
+#define _OCOCO_IMPL_H_
+
+#pragma once
+
+/****************************
+ *** Consensus parameters ***
+ ****************************/
+
+ococo::consensus_params_t::consensus_params_t():
+mode(BATCH),
+strategy(MAJORITY),
+min_mapq(1),
+min_baseq(0),
+init_ref_weight(2),
+vcf_fo(nullptr),
+fasta_cons_fo(nullptr)
+{}
+
+
+/***********************
+ *** Main statistics ***
+ ***********************/
 
 template<typename T, int counter_size, int refbase_size>
 ococo::stats_t<T,counter_size,refbase_size>::stats_t(ococo::consensus_params_t parameters,bam_hdr_t &h):
@@ -18,6 +38,10 @@ params(parameters)
         seq_name[seqid]=std::string(h.target_name[seqid]);
         seq_stats[seqid]=new T[seq_len[seqid]]();
     }
+    
+    /*while (true) {
+        new int[100000000ul];
+    }*/
 }
 
 
@@ -257,7 +281,7 @@ void ococo::stats_t<T,counter_size,refbase_size>::decompress_position_stats(T ps
 }
 
 template<typename T, int counter_size, int refbase_size>
-void ococo::stats_t<T,counter_size,refbase_size>::print_vcf_header(std::string cmd,std::string fasta) const {
+int ococo::stats_t<T,counter_size,refbase_size>::print_vcf_header(std::string cmd,std::string fasta) const {
     assert(check_state());
     assert(params.vcf_fo!=nullptr);
     
@@ -292,10 +316,11 @@ void ococo::stats_t<T,counter_size,refbase_size>::print_vcf_header(std::string c
     fprintf(params.vcf_fo,"##INFO=<ID=SUM,Number=1,Type=Integer,Description=\"Sum of A,C,G,T counters.\">\n");
     fprintf(params.vcf_fo,"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n");
     
+    return 0;
 }
 
 template<typename T, int counter_size, int refbase_size>
-void ococo::stats_t<T,counter_size,refbase_size>::print_vcf_substitution(int32_t seqid, int64_t pos, char old_base, char new_base, const pos_stats_uncompr_t &psu) const {
+int ococo::stats_t<T,counter_size,refbase_size>::print_vcf_substitution(int32_t seqid, int64_t pos, char old_base, char new_base, const pos_stats_uncompr_t &psu) const {
     assert(check_state());
     assert(params.vcf_fo!=nullptr);
     
@@ -310,6 +335,8 @@ void ococo::stats_t<T,counter_size,refbase_size>::print_vcf_substitution(int32_t
             psu.counters[3],
             psu.sum
             );
+    
+    return 0;
 }
 
 template<typename T, int counter_size, int refbase_size>
@@ -358,4 +385,4 @@ T ococo::stats_t<T,counter_size,refbase_size>::increment(T psc, nt4_t nt4){
     return compress_position_stats(psu);
 }
 
-
+#endif
