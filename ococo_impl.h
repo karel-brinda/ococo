@@ -45,8 +45,10 @@ params(parameters)
 
 template<typename T, int counter_size, int refbase_size>
 ococo::stats_t<T,counter_size,refbase_size>::~stats_t(){
-    for (int32_t seqid=0;seqid<n_seqs;seqid++){
-        delete[] seq_stats[seqid];
+    if(seq_stats!=nullptr){
+        for (int32_t seqid=0;seqid<n_seqs;seqid++){
+            delete[] seq_stats[seqid];
+        }
     }
     delete[] seq_active;
     delete[] seq_len;
