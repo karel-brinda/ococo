@@ -90,7 +90,12 @@ min_baseq(0),
 init_ref_weight(2),
 vcf_fo(nullptr),
 fasta_cons_fo(nullptr)
-{}
+{
+    cons_alg[strategy_t::STOCHASTIC]=&cons_call_stoch;
+    cons_alg[strategy_t::STOCHASTIC_AMB]=&cons_call_stoch_amb;
+    cons_alg[strategy_t::MAJORITY]=&cons_call_maj;
+    cons_alg[strategy_t::MAJORITY_AMB]=&cons_call_maj_amb;
+}
 
 
 /***********************
@@ -311,7 +316,7 @@ int ococo::stats_t<T,counter_size,refbase_size>::call_consensus_position(int32_t
     
     char old_base_nt256;
     get_nucl_nt256(seqid,pos,old_base_nt256);
-    const char new_base_nt256=cons_call_stoch(psu);
+    const char new_base_nt256=(params.cons_alg[params.strategy])(psu);
     
     if(old_base_nt256!=new_base_nt256){
         if(params.vcf_fo!=nullptr){

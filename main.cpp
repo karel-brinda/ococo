@@ -90,6 +90,7 @@ int main(int argc, const char* argv[])
         ("mode,m", po::value<std::string>(&mode), "Mode: real-time / batch. [batch]")
         ("min-MQ,q", po::value<int32_t>(&tmp_params.min_mapq), "Minimal mapping quality to increment a counter. [1]")
         ("min-BQ,Q", po::value<int32_t>(&tmp_params.min_baseq), "Minimal base quality to increment a counter. [0]")
+        ("allow-amb,a", "Ambiguous nucleotides can be called.")
         ("ref-weight,w", po::value<int32_t>(&tmp_params.init_ref_weight), "Initial counter value for nucleotides from reference. [2]")
         ("vcf-cons,v", po::value<std::string>(&vcf_fn), "VCF file with updates of consensus.")
         ("fasta-cons,c", po::value<std::string>(&fasta_cons_fn), "FASTA file with consensus, which is continuously updated (WARNING: will be rewritten).")
@@ -103,10 +104,20 @@ int main(int argc, const char* argv[])
             
             if (vm.count("strategy")) {
                 if (strategy.compare("majority")==0){
-                    tmp_params.strategy=ococo::strategy_t::MAJORITY;
+                    if(vm.count("allow-amb")==0){
+                        tmp_params.strategy=ococo::strategy_t::MAJORITY;
+                    }
+                    else{
+                        tmp_params.strategy=ococo::strategy_t::MAJORITY_AMB;
+                    }
                 }
                 else if (strategy.compare("stochastic")==0){
-                    tmp_params.strategy=ococo::strategy_t::STOCHASTIC;
+                    if(vm.count("allow-amb")==0){
+                        tmp_params.strategy=ococo::strategy_t::STOCHASTIC;
+                    }
+                    else{
+                        tmp_params.strategy=ococo::strategy_t::STOCHASTIC_AMB;
+                    }
                 }
                 else {
                     

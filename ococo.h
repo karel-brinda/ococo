@@ -42,7 +42,10 @@ namespace ococo {
     };
     enum strategy_t {
         STOCHASTIC,
-        MAJORITY
+        STOCHASTIC_AMB,
+        MAJORITY,
+        MAJORITY_AMB,
+        count
     };
     
     typedef uint8_t nt4_t;
@@ -155,6 +158,8 @@ namespace ococo {
         FILE *vcf_fo;
         FILE *fasta_cons_fo;
         
+        char (*cons_alg[strategy_t::count])(const pos_stats_uncompr_t &psu);
+
         consensus_params_t();
     };
     
