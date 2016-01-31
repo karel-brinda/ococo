@@ -49,6 +49,7 @@ int main(int argc, const char* argv[])
      */
     
     BOOST_LOG_TRIVIAL(info) << "Ococo starting.";
+    ococo::info("Ococo started.\n");
     
     /*
      * Default configuration.
@@ -109,7 +110,7 @@ int main(int argc, const char* argv[])
                 }
                 else {
                     
-                    ococo::error("Unknown strategy '%s'. Possible strategies are 'majority' and 'stochastic'\n",strategy.c_str());
+                    ococo::error("Unknown strategy '%s'. Possible strategies are 'majority' and 'stochastic'.\n",strategy.c_str());
                     return EXIT_FAILURE;
                 }
             }
@@ -122,7 +123,7 @@ int main(int argc, const char* argv[])
                     tmp_params.mode=ococo::mode_t::REALTIME;
                 }
                 else {
-                    ococo::error("Unknown mode '%s'. Possible modes are 'batch' and 'real-time'\n",mode.c_str());
+                    ococo::error("Unknown mode '%s'. Possible modes are 'batch' and 'real-time'.\n",mode.c_str());
                     return EXIT_FAILURE;
                 }
             }
@@ -146,6 +147,8 @@ int main(int argc, const char* argv[])
     /*
      * Read SAM headers.
      */
+    ococo::info("Initialing SAM/BAM reader.\n");
+
     hts_itr_t *iter = nullptr;
     
     samFile *in = nullptr;
@@ -177,22 +180,27 @@ int main(int argc, const char* argv[])
     /*
      * Load FASTA and stats.
      */
+
+    ococo::info("Loading reference and statistics.\n");
+
     if (stats_fn.size()>0 && ococo::file_exists(stats_fn)){
+        ococo::info("Statistics found ('%s').\n",stats_fn.c_str());
         BOOST_LOG_TRIVIAL(info) << "Importing statistics: '" << stats_fn << "'.";
         int error_code=stats->import_stats(stats_fn);
         if(error_code!=0){
-            ococo::fatal_error("Import of statistics failed (file '%s').",stats_fn.c_str());
+            ococo::fatal_error("Import of statistics failed (file '%s').\n",stats_fn.c_str());
             main_return_code=-1;
             goto cleaning;
         }
     }
     else{
+        ococo::info("Reference found ('%s').\n",fasta0_fn.c_str());
         BOOST_LOG_TRIVIAL(info) << "No file with statistics provided.";
         if (fasta0_fn.size()>0){
             BOOST_LOG_TRIVIAL(info) << "Loading FASTA: '" << fasta0_fn << "'.";
             int error_code=stats->load_fasta(fasta0_fn);
             if(error_code!=0){
-                ococo::fatal_error("Loading of FASTA failed (file '%s').",fasta0_fn.c_str());
+                ococo::fatal_error("Loading of FASTA failed (file '%s').\n",fasta0_fn.c_str());
                 main_return_code=-1;
                 goto cleaning;
             }
@@ -203,6 +211,8 @@ int main(int argc, const char* argv[])
      * Open VCF file.
      */
     if(vcf_fn.size()>0){
+        ococo::info("Opening VCF stream ('%s').\n",vcf_fn.c_str());
+
         BOOST_LOG_TRIVIAL(info) << "Open VCF: '" << vcf_fn << "'.";
         if (vcf_fn==std::string("-")){
             stats->params.vcf_fo=stdout;
@@ -210,7 +220,7 @@ int main(int argc, const char* argv[])
         else{
             stats->params.vcf_fo=fopen(vcf_fn.c_str(),"w+");
             if(stats->params.vcf_fo==nullptr){
-                ococo::fatal_error("Problem with opening VCF file '%s'", vcf_fn.c_str());
+                ococo::fatal_error("Problem with opening VCF file '%s'.\n", vcf_fn.c_str());
                 main_return_code=-1;
                 goto cleaning;
             }
@@ -245,11 +255,12 @@ int main(int argc, const char* argv[])
      * Open consensus FASTA file.
      */
     if(fasta_cons_fn.size()>0){
+        ococo::info("Opening consensus file ('%s').\n",fasta_cons_fn.c_str());
         BOOST_LOG_TRIVIAL(info) << "Open FASTA for consensus: '" << fasta_cons_fn << "'.";
         stats->params.fasta_cons_fo=fopen(fasta_cons_fn.c_str(),"w+");
         
         if(stats->params.fasta_cons_fo==nullptr){
-            ococo::fatal_error("Problem with opening FASTA for consensus: '%s'", fasta_cons_fn.c_str());
+            ococo::fatal_error("Problem with opening FASTA for consensus: '%s'.\n", fasta_cons_fn.c_str());
             main_return_code=-1;
             goto cleaning;
         }
@@ -262,6 +273,7 @@ int main(int argc, const char* argv[])
     /*
      * Process alignments.
      */
+    ococo::info("Starting the main loop.\n");
     BOOST_LOG_TRIVIAL(info) << "Starting the main loop.";
     
     int32_t r;
@@ -372,7 +384,7 @@ int main(int argc, const char* argv[])
             BOOST_LOG_TRIVIAL(info) << "Saving FASTA: '" << fasta_cons_fn << "'.";
             int error_code=stats->save_fasta();
             if(error_code!=0){
-                ococo::error("FASTA '%s' could not be saved.",fasta_cons_fn.c_str());
+                ococo::error("FASTA '%s' could not be saved.\n",fasta_cons_fn.c_str());
                 main_return_code=-1;
             }
         }
@@ -385,7 +397,7 @@ int main(int argc, const char* argv[])
         BOOST_LOG_TRIVIAL(info) << "Saving statistics: '" << stats_fn << "'.";
         int error_code=stats->export_stats(stats_fn);
         if(error_code!=0){
-            ococo::error("Statistics could not be saved ('%s').",stats_fn.c_str());
+            ococo::error("Statistics could not be saved ('%s').\n",stats_fn.c_str());
             main_return_code=-1;
         }
     }
@@ -410,7 +422,7 @@ cleaning:
     if(in!=nullptr){
         int error_code = sam_close(in);
         if(error_code!=0){
-            ococo::error("SAM file could not be successfully closed.");
+            ococo::error("SAM file could not be successfully closed.\n");
             main_return_code=-1;
         }
     }
@@ -418,7 +430,7 @@ cleaning:
     if(stats!=nullptr && stats->params.vcf_fo!=nullptr){
         int error_code = fclose(stats->params.vcf_fo);
         if(error_code!=0){
-            ococo::error("VCF file could not be successfully closed.");
+            ococo::error("VCF file could not be successfully closed.\n");
             main_return_code=-1;
         }
     }
@@ -426,7 +438,7 @@ cleaning:
     if(stats!=nullptr && stats->params.fasta_cons_fo!=nullptr){
         int error_code = fclose(stats->params.fasta_cons_fo);
         if(error_code!=0){
-            ococo::error("FASTA consensus file could not be successfully closed.");
+            ococo::error("FASTA consensus file could not be successfully closed.\n");
             main_return_code=-1;
         }
     }
