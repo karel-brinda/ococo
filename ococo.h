@@ -204,7 +204,9 @@ namespace ococo {
          * Statistics & counters *
          *************************/
         
-        inline char get_nucl_nt256(int32_t seqid, int64_t pos) const;
+        inline int set_nucl_nt256(int32_t seqid, int64_t pos, const char &nt256);
+        inline int get_nucl_nt256(int32_t seqid, int64_t pos, char &nt256) const;
+
         static T compress_position_stats(const pos_stats_uncompr_t &psu);
         static void decompress_position_stats(T psc, pos_stats_uncompr_t &psu);
         static T increment(T psc, nt4_t nt4);
@@ -214,7 +216,7 @@ namespace ococo {
          ***********************/
         
         // Check if everything was initialized.
-        bool check_state() const;
+        bool check_allocation() const;
         
         // Check if a BAM header corresponds to the stats.
         bool check_headers_bam_hdr(const bam_hdr_t &h) const;

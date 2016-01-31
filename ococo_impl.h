@@ -39,9 +39,6 @@ params(parameters)
         seq_stats[seqid]=new T[seq_len[seqid]]();
     }
     
-    /*while (true) {
-        new int[100000000ul];
-    }*/
 }
 
 
@@ -102,7 +99,7 @@ load_fasta(const std::string &fasta_fn) {
 
 template<typename T, int counter_size, int refbase_size>
 int ococo::stats_t<T,counter_size,refbase_size>::save_fasta() const {
-    assert(check_state());
+    assert(check_allocation());
     assert(params.fasta_cons_fo!=nullptr);
     
     char fasta_buffer[fasta_line_l];
@@ -116,7 +113,7 @@ int ococo::stats_t<T,counter_size,refbase_size>::save_fasta() const {
         }
         
         for (int64_t i=0,j=0;i<seq_len[s];i++,j++){
-            fasta_buffer[j]=get_nucl_nt256(s,i);
+            get_nucl_nt256(s,i,fasta_buffer[j]);
             
             if(j==fasta_line_l-1 || i==seq_len[s]-1){
                 fwrite(fasta_buffer,1,j+1,params.fasta_cons_fo);
@@ -131,8 +128,8 @@ int ococo::stats_t<T,counter_size,refbase_size>::save_fasta() const {
 
 
 template<typename T, int counter_size, int refbase_size>
-bool ococo::stats_t<T,counter_size,refbase_size>::check_state() const {
-    if(n_seqs==0) return false;
+bool ococo::stats_t<T,counter_size,refbase_size>::check_allocation() const {
+
     if(seq_active==nullptr || seq_len==nullptr || seq_stats==nullptr || seq_name==nullptr || seq_comment==nullptr){
         return false;
     }
@@ -149,7 +146,7 @@ bool ococo::stats_t<T,counter_size,refbase_size>::check_state() const {
 
 template<typename T, int counter_size, int refbase_size>
 bool ococo::stats_t<T,counter_size,refbase_size>::check_headers_bam_hdr(const bam_hdr_t &h) const {
-    if (!check_state()) return false;
+    if (!check_allocation()) return false;
     
     for(int32_t seqid=0;seqid<n_seqs;seqid++){
         if(seq_len[seqid]!=static_cast<int64_t>(h.target_len[seqid])) {
@@ -166,7 +163,7 @@ bool ococo::stats_t<T,counter_size,refbase_size>::check_headers_bam_hdr(const ba
 
 template<typename T, int counter_size, int refbase_size>
 int ococo::stats_t<T,counter_size,refbase_size>::import_stats(const std::string &stats_fn){
-    assert(check_state());
+    assert(check_allocation());
     
     FILE *fo=fopen(stats_fn.c_str(),"r");
     
@@ -193,7 +190,7 @@ int ococo::stats_t<T,counter_size,refbase_size>::import_stats(const std::string 
 
 template<typename T, int counter_size, int refbase_size>
 int ococo::stats_t<T,counter_size,refbase_size>::export_stats(const std::string &stats_fn) const {
-    assert(check_state());
+    assert(check_allocation());
     
     FILE *fo=fopen(stats_fn.c_str(),"w+");
     
@@ -218,7 +215,7 @@ int ococo::stats_t<T,counter_size,refbase_size>::export_stats(const std::string 
 
 template<typename T, int counter_size, int refbase_size>
 int ococo::stats_t<T,counter_size,refbase_size>::call_consensus() {
-    assert(check_state());
+    assert(check_allocation());
     
     for(int32_t seqid=0;seqid<n_seqs;seqid++){
         for (int64_t pos=0;pos<seq_len[seqid];pos++){
@@ -234,16 +231,16 @@ int ococo::stats_t<T,counter_size,refbase_size>::call_consensus_position(int32_t
     pos_stats_uncompr_t psu;
     decompress_position_stats(seq_stats[seqid][pos], psu);
     
-    const char old_base=get_nucl_nt256(seqid,pos);
-    const uint8_t new_base=rand_nucl(psu);
+    char old_base_nt256;
+    get_nucl_nt256(seqid,pos,old_base_nt256);
+    const char new_base_nt256=rand_nucl(psu);
     
-    if(old_base!=new_base){
+    if(old_base_nt256!=new_base_nt256){
         if(params.vcf_fo!=nullptr){
-            print_vcf_substitution(seqid,pos,old_base,new_base,psu);
+            print_vcf_substitution(seqid,pos,old_base_nt256,new_base_nt256,psu);
         }
         
-        //TODO: fix
-        //set_nucl(seqid,pos,new_base);
+        set_nucl_nt256(seqid,pos,new_base_nt256);
     }
     
     return 0;
@@ -252,9 +249,9 @@ int ococo::stats_t<T,counter_size,refbase_size>::call_consensus_position(int32_t
 
 template<typename T, int counter_size, int refbase_size>
 T ococo::stats_t<T,counter_size,refbase_size>::compress_position_stats(const pos_stats_uncompr_t &psu) {
-
+    
     T psc=0;
-
+    
     for(int32_t i=0;i<4;i++){
         psc <<= counter_size;
         psc |= psu.counters[i] & right_full_mask<T,counter_size>();
@@ -265,7 +262,6 @@ T ococo::stats_t<T,counter_size,refbase_size>::compress_position_stats(const pos
     
     return psc;
 }
-
 
 
 template<typename T, int counter_size, int refbase_size>
@@ -284,12 +280,12 @@ void ococo::stats_t<T,counter_size,refbase_size>::decompress_position_stats(T ps
 
 template<typename T, int counter_size, int refbase_size>
 int ococo::stats_t<T,counter_size,refbase_size>::print_vcf_header(std::string cmd,std::string fasta) const {
-    assert(check_state());
+    assert(check_allocation());
     assert(params.vcf_fo!=nullptr);
     
     std::time_t tt = std::time(nullptr);
     tm *tm = localtime(&tt);
-
+    
     
     fprintf(params.vcf_fo,
             "##fileformat=VCFv4.3\n"
@@ -299,7 +295,7 @@ int ococo::stats_t<T,counter_size,refbase_size>::print_vcf_header(std::string cm
             tm->tm_mon + 1,
             tm->tm_mday
             );
-
+    
     if(!cmd.empty()){
         fprintf(params.vcf_fo, "##ococo_command=%s\n", cmd.c_str());
     }
@@ -323,7 +319,7 @@ int ococo::stats_t<T,counter_size,refbase_size>::print_vcf_header(std::string cm
 
 template<typename T, int counter_size, int refbase_size>
 int ococo::stats_t<T,counter_size,refbase_size>::print_vcf_substitution(int32_t seqid, int64_t pos, char old_base, char new_base, const pos_stats_uncompr_t &psu) const {
-    assert(check_state());
+    assert(check_allocation());
     assert(params.vcf_fo!=nullptr);
     
     fprintf(params.vcf_fo,"%s\t%" PRId64 "\t.\t%c\t%c\t100\tPASS\tCS=%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ";SUM=%" PRId32 "\n",
@@ -361,11 +357,22 @@ void ococo::stats_t<T,counter_size,refbase_size>::debug_print_counters() const {
 }
 
 template<typename T, int counter_size, int refbase_size>
-inline char ococo::stats_t<T,counter_size,refbase_size>::get_nucl_nt256(int32_t seqid, int64_t pos) const {
-    return nt16_nt256[
-                      seq_stats[seqid][pos] & right_full_mask<T,refbase_size>()
-                      ];
-    
+inline int ococo::stats_t<T,counter_size,refbase_size>::set_nucl_nt256(int32_t seqid, int64_t pos, const char &nt256) {
+    nt16_t nt16 =nt256_nt16[static_cast<int>(nt256)];
+    T n_psc=seq_stats[seqid][pos];
+    n_psc>>=refbase_size;
+    n_psc<<=refbase_size;
+    n_psc |= nt16 & right_full_mask<T,refbase_size>();
+    seq_stats[seqid][pos]=n_psc;
+    return 0;
+}
+
+template<typename T, int counter_size, int refbase_size>
+inline int ococo::stats_t<T,counter_size,refbase_size>::get_nucl_nt256(int32_t seqid, int64_t pos, char &nt256) const {
+    nt256=nt16_nt256[
+                     seq_stats[seqid][pos] & right_full_mask<T,refbase_size>()
+                     ];
+    return 0;
 }
 
 template<typename T, int counter_size, int refbase_size>

@@ -172,7 +172,7 @@ int main(int argc, const char* argv[])
         ococo::fatal_error("Allocation of the main structure failed.\n");
         goto cleaning;
     }
-    assert(stats->check_state());
+    assert(stats->check_allocation());
     
     /*
      * Load FASTA and stats.
@@ -325,7 +325,7 @@ int main(int argc, const char* argv[])
                             break;
                         }
                         
-                        BOOST_LOG_TRIVIAL(trace) << "Incrementing counter: chrom=" << seqid << ", pos=" << ref_pos << ", nucl=" << nt256 << ", quality=" << bq << ". New state: refbase='" << stats->get_nucl_nt256(seqid, ref_pos) << "', counters: " << stats->debug_str_counters(seqid,ref_pos);
+                        BOOST_LOG_TRIVIAL(trace) << "Incrementing counter: chrom=" << seqid << ", pos=" << ref_pos << ", nucl=" << nt256 << ", quality=" << bq << ". New state: counters: " << stats->debug_str_counters(seqid,ref_pos);
                         
                         stats->seq_stats[seqid][ref_pos] = stats->increment(stats->seq_stats[seqid][ref_pos],nt4);
                         
