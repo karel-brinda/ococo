@@ -25,18 +25,19 @@ fasta_cons_fo(nullptr)
 template<typename T, int counter_size, int refbase_size>
 ococo::stats_t<T,counter_size,refbase_size>::stats_t(ococo::consensus_params_t parameters,bam_hdr_t &h):
 n_seqs(h.n_targets),
-seq_active(new bool[n_seqs]()),
-seq_len(new int64_t[n_seqs]()),
-seq_name(new std::string[n_seqs]()),
-seq_comment(new std::string[n_seqs]()),
-seq_stats(new T*[n_seqs]()),
+seq_active(new (std::nothrow) bool[n_seqs]()),
+seq_len(new (std::nothrow) int64_t[n_seqs]()),
+seq_name(new (std::nothrow) std::string[n_seqs]()),
+seq_comment(new (std::nothrow) std::string[n_seqs]()),
+seq_stats(new (std::nothrow) T*[n_seqs]()),
 params(parameters)
 {
     for (int seqid=0;seqid<n_seqs;seqid++){
         seq_len[seqid]=h.target_len[seqid];
         seq_active[seqid]=true;
         seq_name[seqid]=std::string(h.target_name[seqid]);
-        seq_stats[seqid]=new T[seq_len[seqid]]();
+
+        seq_stats[seqid]=new (std::nothrow) T[seq_len[seqid]]();
     }
     
 }

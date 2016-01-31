@@ -168,7 +168,7 @@ int main(int argc, const char* argv[])
     }
     
     stats = new(std::nothrow) STATS_T (tmp_params,*header);
-    if (stats==nullptr){
+    if (stats==nullptr || !stats->check_allocation()){
         ococo::fatal_error("Allocation of the main structure failed.\n");
         goto cleaning;
     }
