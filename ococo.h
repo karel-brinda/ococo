@@ -102,6 +102,8 @@ namespace ococo {
     static const uint8_t nt16_nt256[] = "=ACMGRSVTWYHKDBN";
     
     static const uint8_t nt4_nt256[] = "ACGTN";
+    
+    static const uint8_t nt4_nt16[] = {1,2,4,8,15};
 
     
     
@@ -234,28 +236,10 @@ namespace ococo {
      *                                 *
      ***********************************/
     
-    // Generate randomly nucleotide with respect to given frequencies.
-    inline uint8_t rand_nucl(const pos_stats_uncompr_t &psu){
-        if(psu.sum==0){
-            return 'N';
-        }
-        
-        const int32_t prefsum[]={
-            psu.counters[0],
-            psu.counters[0]+psu.counters[1],
-            psu.counters[0]+psu.counters[1]+psu.counters[2],
-            psu.counters[0]+psu.counters[1]+psu.counters[2]+psu.counters[3]};
-        assert(prefsum[3]==psu.sum);
-        
-        const int32_t rn=rand() % psu.sum;
-        for(int32_t i=0;i<4;i++){
-            if (rn < prefsum[i]) {
-                return nt4_nt256[i];
-            }
-        }
-        
-        return 'n';
-    }
+    char cons_call_stoch(const pos_stats_uncompr_t &psu);
+    char cons_call_stoch_amb(const pos_stats_uncompr_t &psu);
+    char cons_call_maj(const pos_stats_uncompr_t &psu);
+    char cons_call_maj_amb(const pos_stats_uncompr_t &psu);
 };
     
 #include "ococo_impl.h"

@@ -154,9 +154,9 @@ namespace {
 		char nucl;
 
         ococo::pos_stats_uncompr_t psu = {'A',{0,0,0,0},0};
-		nucl=rand_nucl(psu);
-		ASSERT_EQ(nucl, 'N');
-
+        nucl=cons_call_stoch(psu);
+        ASSERT_EQ(nucl, 'N');
+        
         /*quadruplet={5,0,0,0,5};
         nucl=rand_nucl(quadruplet);
 		ASSERT_EQ(nucl, 'A');
