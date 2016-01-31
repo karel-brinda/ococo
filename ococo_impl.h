@@ -67,6 +67,8 @@ load_fasta(const std::string &fasta_fn) {
     fp = gzopen(fasta_fn.c_str(), "r");
     seq = kseq_init(fp);
     
+    constexpr int32_t max_counter_value = ococo::right_full_mask<T, counter_size>();
+    
     for(int seqid=0;(l = kseq_read(seq)) >= 0;seqid++) {
         
         assert(seq_name[seqid].compare(seq->name.s)==0);
@@ -84,7 +86,7 @@ load_fasta(const std::string &fasta_fn) {
             
             if (psu.nt16!=nt256_nt16[static_cast<int32_t>('N')]){
                 for(int32_t i=0;i<4;i++){
-                    psu.counters[i]= ( (0x1<<i) & psu.nt16) ? params.init_ref_weight : 0;
+                    psu.counters[i]= ( (0x1<<i) & psu.nt16) ? std::min(params.init_ref_weight,max_counter_value) : 0;
                 }
             }
             
