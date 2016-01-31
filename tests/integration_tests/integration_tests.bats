@@ -3,7 +3,8 @@
 export PATH=$PATH:../..
 
 @test "Test of ococo without parameters" {
-	run ococo
+
+	run ./test_no_parameters
 
 	[ "$status" -ne 0 ]
 
@@ -11,39 +12,24 @@ export PATH=$PATH:../..
 
 @test "Test of unaligned reads" {
 	rm -f output/*.fa
-	run ococo \
-		-m batch \
-		-i data/alignments_AA_unm.sam \
-		-f data/fasta_NN.fa \
-		-c output/fasta_NN.fa
+
+	run ./test_unaligned_reads.sh
 
 	[ "$status" -eq 0 ]
-
-	diff output/fasta_NN.fa data/fasta_NN.fa
 }
 
 @test "Test aligned reads of length 1" {
 	rm -f output/*.fa
-	run ococo \
-		-m batch \
-		-i data/alignments_A_2.sam \
-		-f data/fasta_NN.fa \
-		-c output/fasta_NA.fa
+
+	run ./test_aligned_reads_len1.sh
 
 	[ "$status" -eq 0 ]
-
-	diff output/fasta_NA.fa data/fasta_NA.fa
 }
 
 @test "Test aligned reads of length 2" {
 	rm -f output/*.fa
-	run ococo \
-		-m batch \
-		-i data/alignments_AA_1.sam \
-		-f data/fasta_NN.fa \
-		-c output/fasta_AA.fa
+
+	run ./test_aligned_reads_len2.sh
 
 	[ "$status" -eq 0 ]
-
-	diff output/fasta_AA.fa data/fasta_AA.fa
 }
