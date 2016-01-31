@@ -33,3 +33,11 @@ export PATH=$PATH:../..
 
 	[ "$status" -eq 0 ]
 }
+
+@test "Test of import/export" {
+	rm -f output/*.fa
+
+	run ./test_stats_import_export.sh
+
+	[ "$status" -eq 0 ]
+}
