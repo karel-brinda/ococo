@@ -35,7 +35,7 @@ namespace ococo {
     
     const int  fasta_line_l = 50;
     const int stats_delim_l = 10;
-
+    
     enum mode_t {
         BATCH,
         REALTIME
@@ -107,7 +107,7 @@ namespace ococo {
     static const uint8_t nt4_nt256[] = "ACGTN";
     
     static const uint8_t nt4_nt16[] = {1,2,4,8,15};
-
+    
     
     
     
@@ -121,7 +121,7 @@ namespace ococo {
     /*****************
      *** Auxiliary ***
      *****************/
-
+    
     struct single_seq_serial_t {
         bool    seq_active;
         int64_t seq_len;
@@ -159,7 +159,7 @@ namespace ococo {
         FILE *fasta_cons_fo;
         
         char (*cons_alg[strategy_t::count])(const pos_stats_uncompr_t &psu);
-
+        
         consensus_params_t();
     };
     
@@ -213,7 +213,7 @@ namespace ococo {
         
         inline int set_nucl_nt256(int32_t seqid, int64_t pos, const char &nt256);
         inline int get_nucl_nt256(int32_t seqid, int64_t pos, char &nt256) const;
-
+        
         static T compress_position_stats(const pos_stats_uncompr_t &psu);
         static void decompress_position_stats(T psc, pos_stats_uncompr_t &psu);
         static T increment(T psc, nt4_t nt4);
@@ -229,7 +229,7 @@ namespace ococo {
         bool check_headers_bam_hdr(const bam_hdr_t &h) const;
         
         void debug_print_counters() const;
-
+        
         std::string debug_str_counters(int32_t seqid, int64_t pos) const;
     };
     
@@ -246,7 +246,7 @@ namespace ococo {
     char cons_call_maj(const pos_stats_uncompr_t &psu);
     char cons_call_maj_amb(const pos_stats_uncompr_t &psu);
 };
-    
+
 #include "ococo_impl.h"
-    
+
 #endif

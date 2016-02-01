@@ -4,7 +4,6 @@
 #pragma once
 
 
-
 /*************************
  *** Consensus calling ***
  *************************/
@@ -18,7 +17,9 @@ char ococo::cons_call_stoch(const pos_stats_uncompr_t &psu){
         psu.counters[0],
         psu.counters[0]+psu.counters[1],
         psu.counters[0]+psu.counters[1]+psu.counters[2],
-        psu.counters[0]+psu.counters[1]+psu.counters[2]+psu.counters[3]};
+        psu.counters[0]+psu.counters[1]+psu.counters[2]+psu.counters[3]
+    };
+    
     assert(prefsum[3]==psu.sum);
     
     const int32_t rn=rand() % psu.sum;
@@ -35,7 +36,7 @@ char ococo::cons_call_stoch_amb(const pos_stats_uncompr_t &psu){
     if(psu.sum==0){
         return 'N';
     }
-
+    
     nt16_t nucl_nt16=0;
     
     for(int32_t i=0;i<4;i++){
@@ -116,7 +117,7 @@ params(parameters)
         seq_len[seqid]=h.target_len[seqid];
         seq_active[seqid]=true;
         seq_name[seqid]=std::string(h.target_name[seqid]);
-
+        
         seq_stats[seqid]=new (std::nothrow) T[seq_len[seqid]]();
     }
     
@@ -151,8 +152,15 @@ load_fasta(const std::string &fasta_fn) {
     
     for(int seqid=0;(l = kseq_read(seq)) >= 0;seqid++) {
         
-        assert(seq_name[seqid].compare(seq->name.s)==0);
-        assert(static_cast<int64_t>(seq->seq.l) == seq_len[seqid]);
+        if(seq_name[seqid].compare(seq->name.s)!=0){
+            error("Sequence names in FASTA and in BAM/SAM do not correspond.");
+            return -1;
+        }
+        
+        if(static_cast<int64_t>(seq->seq.l) != seq_len[seqid]){
+            error("Sequence lengths in FASTA and in BAM/SAM do not correspond.");
+            return -1;
+        }
         
         if (seq->comment.l && seq_comment[seqid].empty()){
             seq_comment[seqid]=std::string(seq->comment.s);
@@ -212,7 +220,7 @@ int ococo::stats_t<T,counter_size,refbase_size>::save_fasta() const {
 
 template<typename T, int counter_size, int refbase_size>
 bool ococo::stats_t<T,counter_size,refbase_size>::check_allocation() const {
-
+    
     if(seq_active==nullptr || seq_len==nullptr || seq_stats==nullptr || seq_name==nullptr || seq_comment==nullptr){
         return false;
     }
@@ -253,16 +261,32 @@ int ococo::stats_t<T,counter_size,refbase_size>::import_stats(const std::string 
     /* number of seqs */
     int32_t n_seqs_loaded;
     fread(&n_seqs_loaded,sizeof(int32_t),1,fo);
-    assert(n_seqs_loaded = n_seqs);
+    
+    if(n_seqs_loaded != n_seqs){
+        error("Numbers of sequences in stats and SAM/BAM do not correspond.");
+        return -1;
+    }
     
     for(int seqid=0;seqid<n_seqs;seqid++){
         /* sequence */
         
         single_seq_serial_t seq_ser;
         fread(&seq_ser,sizeof(single_seq_serial_t),1,fo);
-        assert(seq_ser.seq_active == seq_active[seqid]);
-        assert(seq_ser.seq_len == seq_len[seqid]);
-        assert(seq_name[seqid].compare(seq_ser.seq_name)==0);
+        
+        if(seq_ser.seq_active != seq_active[seqid]){
+            error("Active sequences in stats and SAM/BAM do not correspond.");
+            return -1;
+        }
+        
+        if(seq_ser.seq_len != seq_len[seqid]){
+            error("Sequence lengths in stats and SAM/BAM do not correspond.");
+            return -1;
+        }
+        
+        if(seq_name[seqid].compare(seq_ser.seq_name)==0){
+            error("Sequence names in stats and SAM/BAM do not correspond.");
+            return -1;
+        }
         
         fread(seq_stats[seqid],sizeof(T),seq_len[seqid],fo);
     }
@@ -316,6 +340,7 @@ int ococo::stats_t<T,counter_size,refbase_size>::call_consensus_position(int32_t
     
     char old_base_nt256;
     get_nucl_nt256(seqid,pos,old_base_nt256);
+    //const char new_base_nt256=cons_call_maj(psu);
     const char new_base_nt256=(params.cons_alg[params.strategy])(psu);
     
     if(old_base_nt256!=new_base_nt256){

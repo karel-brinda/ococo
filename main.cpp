@@ -2,23 +2,27 @@
 
 #define BOOST_LOG_DYN_LINK
 
-#include <boost/format.hpp>
+//#include <boost/format.hpp>
 
 #include <boost/program_options.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
 #include <boost/program_options/variables_map.hpp>
 
-#include <boost/log/core.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/log/expressions.hpp>
 
 #include <climits>
 #include <cstdio>
 #include <cstdlib>
 
+#ifdef DEBUGGING_MODE
 
-typedef ococo::stats_t<uint16_t,3,4> STATS_T;
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
+#include <boost/log/expressions.hpp>
+
+#ifndef DEBUGGING_SEVERITY
+#define DEBUGGING_SEVERITY trace
+#endif
 
 namespace logging = boost::log;
 
@@ -26,17 +30,24 @@ void boost_logging_init()
 {
     logging::core::get()->set_filter
     (
-     logging::trivial::severity >= logging::trivial::warning
+     logging::trivial::severity >= logging::trivial::DEBUGGING_SEVERITY
+     //logging::trivial::severity >= logging::trivial::warning
      //logging::trivial::severity >= logging::trivial::trace
      );
 }
 
+#endif
+
+
+typedef ococo::stats_t<uint16_t,3,4> STATS_T;
+
 
 int main(int argc, const char* argv[])
 {
-    
+
     int main_return_code=0;
     
+#ifdef DEBUGGING_MODE
     boost_logging_init();
     
     /*
@@ -49,6 +60,8 @@ int main(int argc, const char* argv[])
      */
     
     BOOST_LOG_TRIVIAL(info) << "Ococo starting.";
+#endif
+    
     ococo::info("Ococo started.\n");
     
     /*
@@ -69,7 +82,10 @@ int main(int argc, const char* argv[])
      * Parse command-line parameters.
      */
     
+#ifdef DEBUGGING_MODE
     BOOST_LOG_TRIVIAL(info) << "Parsing command-line parameters.";
+#endif
+    
     try
     {
         namespace po = boost::program_options;
@@ -159,7 +175,7 @@ int main(int argc, const char* argv[])
      * Read SAM headers.
      */
     ococo::info("Initialing SAM/BAM reader.\n");
-
+    
     hts_itr_t *iter = nullptr;
     
     samFile *in = nullptr;
@@ -168,7 +184,10 @@ int main(int argc, const char* argv[])
     
     STATS_T *stats = nullptr;
     
+#ifdef DEBUGGING_MODE
     BOOST_LOG_TRIVIAL(info) << "SAM/BAM reader initialization: reading '" << sam_fn.c_str() << "'.";
+#endif
+    
     in = sam_open(sam_fn.c_str(), "r");
     if(in==nullptr) {
         ococo::fatal_error("Problem with opening input ('%s').\n", sam_fn.c_str());
@@ -186,17 +205,18 @@ int main(int argc, const char* argv[])
         ococo::fatal_error("Allocation of the main structure failed.\n");
         goto cleaning;
     }
-    assert(stats->check_allocation());
     
     /*
      * Load FASTA and stats.
      */
-
+    
     ococo::info("Loading reference and statistics.\n");
-
+    
     if (stats_fn.size()>0 && ococo::file_exists(stats_fn)){
         ococo::info("Statistics found ('%s').\n",stats_fn.c_str());
+#ifdef DEBUGGING_MODE
         BOOST_LOG_TRIVIAL(info) << "Importing statistics: '" << stats_fn << "'.";
+#endif
         int error_code=stats->import_stats(stats_fn);
         if(error_code!=0){
             ococo::fatal_error("Import of statistics failed (file '%s').\n",stats_fn.c_str());
@@ -206,9 +226,17 @@ int main(int argc, const char* argv[])
     }
     else{
         ococo::info("Reference found ('%s').\n",fasta0_fn.c_str());
+        
+#ifdef DEBUGGING_MODE
         BOOST_LOG_TRIVIAL(info) << "No file with statistics provided.";
+#endif
+        
         if (fasta0_fn.size()>0){
+            
+#ifdef DEBUGGING_MODE
             BOOST_LOG_TRIVIAL(info) << "Loading FASTA: '" << fasta0_fn << "'.";
+#endif
+            
             int error_code=stats->load_fasta(fasta0_fn);
             if(error_code!=0){
                 ococo::fatal_error("Loading of FASTA failed (file '%s').\n",fasta0_fn.c_str());
@@ -223,8 +251,11 @@ int main(int argc, const char* argv[])
      */
     if(vcf_fn.size()>0){
         ococo::info("Opening VCF stream ('%s').\n",vcf_fn.c_str());
-
+        
+#ifdef DEBUGGING_MODE
         BOOST_LOG_TRIVIAL(info) << "Open VCF: '" << vcf_fn << "'.";
+#endif
+        
         if (vcf_fn==std::string("-")){
             stats->params.vcf_fo=stdout;
         }
@@ -255,11 +286,15 @@ int main(int argc, const char* argv[])
         else{
             fasta_full_path=fasta0_fn;
         }
-
+        
         stats->print_vcf_header(cmd.str(),fasta_full_path);
     }
     else {
+        
+#ifdef DEBUGGING_MODE
         BOOST_LOG_TRIVIAL(info) << "No VCF file required.";
+#endif
+        
     }
     
     /*
@@ -267,7 +302,11 @@ int main(int argc, const char* argv[])
      */
     if(fasta_cons_fn.size()>0){
         ococo::info("Opening consensus file ('%s').\n",fasta_cons_fn.c_str());
+        
+#ifdef DEBUGGING_MODE
         BOOST_LOG_TRIVIAL(info) << "Open FASTA for consensus: '" << fasta_cons_fn << "'.";
+#endif
+        
         stats->params.fasta_cons_fo=fopen(fasta_cons_fn.c_str(),"w+");
         
         if(stats->params.fasta_cons_fo==nullptr){
@@ -277,7 +316,11 @@ int main(int argc, const char* argv[])
         }
     }
     else {
+        
+#ifdef DEBUGGING_MODE
         BOOST_LOG_TRIVIAL(info) << "No FASTA file for consensus required.";
+#endif
+        
     }
     
     
@@ -285,7 +328,11 @@ int main(int argc, const char* argv[])
      * Process alignments.
      */
     ococo::info("Starting the main loop.\n");
+    
+    
+#ifdef DEBUGGING_MODE
     BOOST_LOG_TRIVIAL(info) << "Starting the main loop.";
+#endif
     
     int32_t r;
     b = bam_init1();
@@ -301,21 +348,29 @@ int main(int argc, const char* argv[])
         const int32_t mapq=b->core.qual;
         const int32_t flags=b->core.flag;
         
+#ifdef DEBUGGING_MODE
         BOOST_LOG_TRIVIAL(debug) << "Reading alignment: rname='" << rname << ", chrom=" << seqid << ", pos=" << mappping_pos <<", mapq="<< mapq << ", flags=" << flags;
+#endif
         
         
         if ((flags & BAM_FUNMAP)!=0){
+#ifdef DEBUGGING_MODE
             BOOST_LOG_TRIVIAL(debug) << "Discarded: read is not aligned.";
+#endif
             continue;
         }
         
         if (!stats->seq_active[seqid]){
+#ifdef DEBUGGING_MODE
             BOOST_LOG_TRIVIAL(debug) << "Discarded: consensus calling is off for this chromosome.";
+#endif
             continue;
         }
         
         if (mapq<stats->params.min_mapq){
+#ifdef DEBUGGING_MODE
             BOOST_LOG_TRIVIAL(debug) << "Discarded: mapping quality is too low.";
+#endif
             continue;
         }
         
@@ -339,20 +394,28 @@ int main(int argc, const char* argv[])
                         assert(0 <= nt4 && nt4 <= 4);
                         
                         if (bq<stats->params.min_baseq){
+#ifdef DEBUGGING_MODE
                             BOOST_LOG_TRIVIAL(trace) << "Omitting base (too low base quality): chrom=" << seqid << ", pos=" << ref_pos << ", nucl=" << nt256 << ", quality=" << bq << ".";
+#endif
                             break;
                         }
                         
                         if (nt4==0x4){
+#ifdef DEBUGGING_MODE
                             BOOST_LOG_TRIVIAL(trace) << "Omitting base (ambiguous nucleotide): chrom=" << seqid << ", pos=" << ref_pos << ", nucl=" << nt256 << ", quality=" << bq << ".";
+#endif
                             break;
                         }
                         
+#ifdef DEBUGGING_MODE
                         BOOST_LOG_TRIVIAL(trace) << "Incrementing counter: chrom=" << seqid << ", pos=" << ref_pos << ", nucl=" << nt256 << ", quality=" << bq << ". New state: counters: " << stats->debug_str_counters(seqid,ref_pos);
+#endif
                         
                         stats->seq_stats[seqid][ref_pos] = stats->increment(stats->seq_stats[seqid][ref_pos],nt4);
                         
+#ifdef DEBUGGING_MODE
                         BOOST_LOG_TRIVIAL(trace) << "           new state: counters: " << stats->debug_str_counters(seqid,ref_pos);
+#endif
                         
                         if(stats->params.mode==ococo::mode_t::REALTIME){
                             stats->call_consensus_position(seqid, ref_pos);
@@ -368,7 +431,9 @@ int main(int argc, const char* argv[])
                     break;
                     
                 case BAM_CBACK:
+#ifdef DEBUGGING_MODE
                     BOOST_LOG_TRIVIAL(warning) << "Backward operation in CIGAR strings is not supported.";
+#endif
                     break;
                 case BAM_CINS:
                     read_pos+=ol;
@@ -379,20 +444,26 @@ int main(int argc, const char* argv[])
                     break;
                     
             }
-
+            
         }
         
+#ifdef DEBUGGING_MODE
         BOOST_LOG_TRIVIAL(debug) << "Alignment of '" << rname << "' incorporated into statistics.";
+#endif
     }
     
     /*
      * Calling final consensus and export stats.
      */
     if(stats->params.mode==ococo::mode_t::BATCH){
+#ifdef DEBUGGING_MODE
         BOOST_LOG_TRIVIAL(info) << "Calling consensus for the entire reference sequence (batch mode).";
+#endif
         stats->call_consensus();
         if (stats->params.fasta_cons_fo){
+#ifdef DEBUGGING_MODE
             BOOST_LOG_TRIVIAL(info) << "Saving FASTA: '" << fasta_cons_fn << "'.";
+#endif
             int error_code=stats->save_fasta();
             if(error_code!=0){
                 ococo::error("FASTA '%s' could not be saved.\n",fasta_cons_fn.c_str());
@@ -400,12 +471,16 @@ int main(int argc, const char* argv[])
             }
         }
         else {
+#ifdef DEBUGGING_MODE
             BOOST_LOG_TRIVIAL(info) << "FASTA not saved.";
+#endif
         }
     }
     
     if (stats_fn.size()>0){
+#ifdef DEBUGGING_MODE
         BOOST_LOG_TRIVIAL(info) << "Saving statistics: '" << stats_fn << "'.";
+#endif
         int error_code=stats->export_stats(stats_fn);
         if(error_code!=0){
             ococo::error("Statistics could not be saved ('%s').\n",stats_fn.c_str());
@@ -413,7 +488,9 @@ int main(int argc, const char* argv[])
         }
     }
     else {
+#ifdef DEBUGGING_MODE
         BOOST_LOG_TRIVIAL(info) << "Statistics not saved.";
+#endif
     }
     
     
@@ -421,7 +498,9 @@ cleaning:
     /*
      * Free memory.
      */
+#ifdef DEBUGGING_MODE
     BOOST_LOG_TRIVIAL(info) << "Freeing memory.";
+#endif
     hts_itr_destroy(iter);
     bam_destroy1(b);
     bam_hdr_destroy(header);
@@ -445,7 +524,7 @@ cleaning:
             main_return_code=-1;
         }
     }
-
+    
     if(stats!=nullptr && stats->params.fasta_cons_fo!=nullptr){
         int error_code = fclose(stats->params.fasta_cons_fo);
         if(error_code!=0){
@@ -459,7 +538,10 @@ cleaning:
     }
     
     ococo::info("Ococo finished. Bye.\n");
+    
+#ifdef DEBUGGING_MODE
     BOOST_LOG_TRIVIAL(info) << "Ococo finished.";
+#endif
     
     return main_return_code;
 }

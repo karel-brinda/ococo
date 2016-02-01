@@ -10,7 +10,7 @@
 
 
 namespace ococo {
-
+    
     void fatal_error(const char * format, ...){
         va_list args;
         va_start (args, format);
@@ -34,7 +34,7 @@ namespace ococo {
         vfprintf (stderr, format, args);
         va_end (args);
     }
-
+    
     void info(const char * format, ...){
         va_list args;
         va_start (args, format);
@@ -46,8 +46,8 @@ namespace ococo {
     bool file_exists(const std::string &fn){
         return access( fn.c_str(), F_OK ) != -1;
     }
-
-
+    
+    
     /*
      * Get a right full mask (right n bits set to 1)
      *
