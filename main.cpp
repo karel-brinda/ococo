@@ -44,7 +44,7 @@ typedef ococo::stats_t<uint16_t,3,4> STATS_T;
 
 int main(int argc, const char* argv[])
 {
-
+    
     int main_return_code=0;
 
     FILE *vcf_file=nullptr;
@@ -102,6 +102,15 @@ int main(int argc, const char* argv[])
         std::string strategy;
         std::string mode;
         
+        std::stringstream min_mq_message;
+        min_mq_message << "Minimal mapping quality to increment a counter. [" << tmp_params.min_mapq << "]";
+        
+        std::stringstream min_bq_message;
+        min_bq_message << "Minimal base quality to increment a counter. [" << tmp_params.min_baseq << "]";
+        
+        std::stringstream ref_weight_message;
+        ref_weight_message << "Initial counter value for nucleotides from the reference. [" << tmp_params.init_ref_weight << "]";
+        
         vol.add_options()
         ("input,i", po::value<std::string>(&sam_fn)->required(), "Input SAM/BAM file (- for standard input).")
         ("fasta-ref,f", po::value<std::string>(&fasta_in_fn), "Initial FASTA reference (if not provided, sequence of N's is considered as the reference).")
@@ -110,11 +119,11 @@ int main(int argc, const char* argv[])
         ("stats-out,S", po::value<std::string>(&stats_out_fn), "Outputs statistics.")
         ("vcf-cons,v", po::value<std::string>(&vcf_fn), "VCF file with updates of consensus.")
         ("mode,m", po::value<std::string>(&mode), "Mode: real-time / batch. [batch]")
-        ("strategy,t", po::value<std::string>(&strategy), "Strategy for updates: majority / randomized. [majority]")
+        ("strategy,t", po::value<std::string>(&strategy), "Strategy for updates: majority / stochastic. [stochastic]")
         ("allow-amb,a", "Allow updates to ambiguous nucleotides.")
-        ("min-MQ,q", po::value<int32_t>(&tmp_params.min_mapq), "Minimal mapping quality to increment a counter. [1]")
-        ("min-BQ,Q", po::value<int32_t>(&tmp_params.min_baseq), "Minimal base quality to increment a counter. [0]")
-        ("ref-weight,w", po::value<int32_t>(&tmp_params.init_ref_weight), "Initial counter value for nucleotides from the reference. [2]")
+        ("min-MQ,q", po::value<int32_t>(&tmp_params.min_mapq), min_mq_message.str().c_str())
+        ("min-BQ,Q", po::value<int32_t>(&tmp_params.min_baseq), min_bq_message.str().c_str())
+        ("ref-weight,w", po::value<int32_t>(&tmp_params.init_ref_weight), ref_weight_message.str().c_str())
         ;
         
         po::variables_map vm;

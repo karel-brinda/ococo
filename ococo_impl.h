@@ -85,7 +85,7 @@ char ococo::cons_call_maj_amb(const pos_stats_uncompr_t &psu){
 
 ococo::consensus_params_t::consensus_params_t():
 mode(BATCH),
-strategy(MAJORITY),
+strategy(STOCHASTIC),
 min_mapq(1),
 min_baseq(0),
 init_ref_weight(2)
