@@ -10,9 +10,10 @@ rm -f output/stats.ococo
 	-m batch \
 	-i data/alignment_C_2.sam \
 	-f data/fasta_NN.fa \
-	-c output/fasta_NA.fa \
+	-F output/fasta_NA.fa \
 	-s output/stats.ococo \
-	-S majority \
+	-S output/stats.ococo \
+	-t majority \
 	-v - \
 
 diff output/fasta_NA.fa data/fasta_NC.fa
@@ -25,9 +26,10 @@ echo
 	-m batch \
 	-i data/alignment_A_2.sam \
 	-f data/fasta_NN.fa \
-	-c output/fasta_NA.fa \
+	-F output/fasta_NA.fa \
 	-s output/stats.ococo \
-	-S majority \
+	-S output/stats.ococo \
+	-t majority \
 	-v - \
 
 echo
@@ -38,9 +40,10 @@ echo
 	-m batch \
 	-i data/alignment_A_2.sam \
 	-f data/fasta_NN.fa \
-	-c output/fasta_NA.fa \
+	-F output/fasta_NA.fa \
 	-s output/stats.ococo \
-	-S majority \
+	-S output/stats.ococo \
+	-t majority \
 	-v - \
 
 echo

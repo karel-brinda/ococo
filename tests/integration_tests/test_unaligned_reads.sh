@@ -10,8 +10,8 @@ do
 		-m batch \
 		-i data/alignment_AA_unm.sam \
 		-f data/fasta_NN.fa \
-		-c output/fasta_NN.fa \
-		-S $strat \
+		-F output/fasta_NN.fa \
+		-t $strat \
 		-v - \
 
 	diff output/fasta_NN.fa data/fasta_NN.fa

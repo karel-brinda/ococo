@@ -18,7 +18,7 @@ Booost detailed logging and asserts.
 
 .. code-block:: bash
 
-	cmake -DDEBUGGING_MODE=OFF .
+	cmake -DDEBUGGING_MODE=ON .
 	make
 
 
@@ -43,19 +43,21 @@ Parameters
 
 .. code-block::
 
-	Ococo: On-line consensus caller.:
+	./ococo
+	Ococo: On-line consensus caller:
 	  -i [ --input ] arg      Input SAM/BAM file (- for standard input).
 	  -f [ --fasta-ref ] arg  Initial FASTA reference (if not provided, sequence of
 	                          N's is considered as the reference).
-	  -s [ --stats ] arg      File with up-to-date statistics.
-	  -S [ --strategy ] arg   Strategy for updates: majority / randomized. 
-	                          [majority]
+	  -F [ --fasta-cons ] arg FASTA file with consensus, which is continuously 
+	                          updated.
+	  -s [ --stats-in ] arg   Input statistics.
+	  -S [ --stats-out ] arg  Outputs statistics.
+	  -v [ --vcf-cons ] arg   VCF file with updates of consensus.
 	  -m [ --mode ] arg       Mode: real-time / batch. [batch]
+	  -t [ --strategy ] arg   Strategy for updates: majority / randomized. 
+	                          [majority]
+	  -a [ --allow-amb ]      Allow updates to ambiguous nucleotides.
 	  -q [ --min-MQ ] arg     Minimal mapping quality to increment a counter. [1]
 	  -Q [ --min-BQ ] arg     Minimal base quality to increment a counter. [0]
-	  -a [ --allow-amb ]      Ambiguous nucleotides can be called.
-	  -w [ --ref-weight ] arg Initial counter value for nucleotides from reference.
-	                          [2]
-	  -v [ --vcf-cons ] arg   VCF file with updates of consensus.
-	  -c [ --fasta-cons ] arg FASTA file with consensus, which is continuously 
-	                          updated (WARNING: will be rewritten).
+	  -w [ --ref-weight ] arg Initial counter value for nucleotides from the 
+	                          reference. [2]

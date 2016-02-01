@@ -155,9 +155,6 @@ namespace ococo {
         
         int32_t init_ref_weight;
         
-        FILE *vcf_fo;
-        FILE *fasta_cons_fo;
-        
         char (*cons_alg[strategy_t::count])(const pos_stats_uncompr_t &psu);
         
         consensus_params_t();
@@ -194,17 +191,17 @@ namespace ococo {
         int export_stats(const std::string &stats_fn) const;
         
         // Call consensus probabilistically.
-        int call_consensus();
-        int call_consensus_position(int32_t seqid, int64_t pos);
+        int call_consensus(FILE *vcf_file);
+        int call_consensus_position(FILE *vcf_file, int32_t seqid, int64_t pos);
         
         // Loader header from a BAM.
         int load_headers_bam_hdr(const bam_hdr_t &h);
         // Load header and data from a FASTA file and initialize statistics.
         int load_fasta(const std::string &fasta_fn);
-        int save_fasta() const;
+        int save_fasta(const std::string &fasta_fn) const;
         
-        int print_vcf_header(std::string cmd, std::string fasta) const;
-        int print_vcf_substitution(int32_t seqid, int64_t pos, char old_base, char new_base, const pos_stats_uncompr_t &psu) const;
+        int print_vcf_header(FILE *vcf_file, std::string cmd, std::string fasta) const;
+        int print_vcf_substitution(FILE *vcf_file, int32_t seqid, int64_t pos, char old_base, char new_base, const pos_stats_uncompr_t &psu) const;
         
         
         /*************************
