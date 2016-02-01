@@ -537,7 +537,9 @@ cleaning:
         delete stats;
     }
     
-    ococo::info("Ococo finished. Bye.\n");
+    if(main_return_code==0){
+        ococo::info("Ococo successfully finished. Bye.\n");
+    }
     
 #ifdef DEBUGGING_MODE
     BOOST_LOG_TRIVIAL(info) << "Ococo finished.";

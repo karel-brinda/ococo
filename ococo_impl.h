@@ -153,12 +153,12 @@ load_fasta(const std::string &fasta_fn) {
     for(int seqid=0;(l = kseq_read(seq)) >= 0;seqid++) {
         
         if(seq_name[seqid].compare(seq->name.s)!=0){
-            error("Sequence names in FASTA and in BAM/SAM do not correspond.");
+            error("Sequence names in BAM/SAM and in FASTA do not correspond ('%s'!='%s').\n",seq_name[seqid].c_str(),seq->name.s);
             return -1;
         }
         
-        if(static_cast<int64_t>(seq->seq.l) != seq_len[seqid]){
-            error("Sequence lengths in FASTA and in BAM/SAM do not correspond.");
+        if(seq_len[seqid] != static_cast<int64_t>(seq->seq.l)){
+            error("Sequence lengths in BAM/SAM and in FASTA do not correspond (%" PRId64 "!=%" PRId64 ").\n",static_cast<int64_t>(seq->seq.l), static_cast<int64_t>(seq_len[seqid]));
             return -1;
         }
         
@@ -263,7 +263,7 @@ int ococo::stats_t<T,counter_size,refbase_size>::import_stats(const std::string 
     fread(&n_seqs_loaded,sizeof(int32_t),1,fo);
     
     if(n_seqs_loaded != n_seqs){
-        error("Numbers of sequences in stats and SAM/BAM do not correspond.");
+        error("Numbers of sequences in stats and SAM/BAM do not correspond %" PRId32 "!=%" PRId32 ").\n",n_seqs_loaded, n_seqs);
         return -1;
     }
     
@@ -274,17 +274,17 @@ int ococo::stats_t<T,counter_size,refbase_size>::import_stats(const std::string 
         fread(&seq_ser,sizeof(single_seq_serial_t),1,fo);
         
         if(seq_ser.seq_active != seq_active[seqid]){
-            error("Active sequences in stats and SAM/BAM do not correspond.");
+            error("Active sequences in stats and SAM/BAM do not correspond (seqid %" PRId32 ").\n", seqid);
             return -1;
         }
         
         if(seq_ser.seq_len != seq_len[seqid]){
-            error("Sequence lengths in stats and SAM/BAM do not correspond.");
+            error("Sequence lengths in stats and SAM/BAM do not correspond (seqid %" PRId32 ", %" PRId64 "!=%" PRId64 ").\n",seqid,seq_ser.seq_len,seq_len[seqid]);
             return -1;
         }
         
-        if(seq_name[seqid].compare(seq_ser.seq_name)==0){
-            error("Sequence names in stats and SAM/BAM do not correspond.");
+        if(seq_name[seqid].compare(seq_ser.seq_name)!=0){
+            error("Sequence names in stats and SAM/BAM do not correspond (seqid %" PRId32 ", '%s'!='%s').\n", seqid, seq_ser.seq_name,seq_name[seqid].c_str());
             return -1;
         }
         
