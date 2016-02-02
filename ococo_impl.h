@@ -8,7 +8,7 @@
  *** Consensus calling ***
  *************************/
 
-char ococo::cons_call_stoch(const pos_stats_uncompr_t &psu){
+char ococo::cons_call_stoch(const pos_stats_uncompr_t &psu, const consensus_params_t &params){
     if(psu.sum==0){
         return 'N';
     }
@@ -32,7 +32,7 @@ char ococo::cons_call_stoch(const pos_stats_uncompr_t &psu){
     return 'n';
 }
 
-char ococo::cons_call_stoch_amb(const pos_stats_uncompr_t &psu){
+char ococo::cons_call_stoch_amb(const pos_stats_uncompr_t &psu, const consensus_params_t &params){
     if(psu.sum==0){
         return 'N';
     }
@@ -50,7 +50,7 @@ char ococo::cons_call_stoch_amb(const pos_stats_uncompr_t &psu){
     return 0;
 }
 
-char ococo::cons_call_maj(const pos_stats_uncompr_t &psu){
+char ococo::cons_call_maj(const pos_stats_uncompr_t &psu, const consensus_params_t &params){
     char nucl_nt256='N';
     int32_t max=0;
     for(int32_t i=0;i<4;i++){
@@ -62,7 +62,7 @@ char ococo::cons_call_maj(const pos_stats_uncompr_t &psu){
     return nucl_nt256;
 }
 
-char ococo::cons_call_maj_amb(const pos_stats_uncompr_t &psu){
+char ococo::cons_call_maj_amb(const pos_stats_uncompr_t &psu, const consensus_params_t &params){
     nt16_t nucl_nt16=0;
     int32_t max=0;
     for(int32_t i=0;i<4;i++){
@@ -343,7 +343,7 @@ int ococo::stats_t<T,counter_size,refbase_size>::call_consensus_position(FILE *v
     char old_base_nt256;
     get_nucl_nt256(seqid,pos,old_base_nt256);
     //const char new_base_nt256=cons_call_maj(psu);
-    const char new_base_nt256=(params.cons_alg[params.strategy])(psu);
+    const char new_base_nt256=(params.cons_alg[params.strategy])(psu,params);
     
     if(old_base_nt256!=new_base_nt256){
         if(vcf_file!=nullptr){

@@ -155,7 +155,7 @@ namespace ococo {
         
         int32_t init_ref_weight;
         
-        char (*cons_alg[strategy_t::count])(const pos_stats_uncompr_t &psu);
+        char (*cons_alg[strategy_t::count])(const pos_stats_uncompr_t &psu, const consensus_params_t &params);
         
         consensus_params_t();
     };
@@ -238,10 +238,10 @@ namespace ococo {
      *                                 *
      ***********************************/
     
-    char cons_call_stoch(const pos_stats_uncompr_t &psu);
-    char cons_call_stoch_amb(const pos_stats_uncompr_t &psu);
-    char cons_call_maj(const pos_stats_uncompr_t &psu);
-    char cons_call_maj_amb(const pos_stats_uncompr_t &psu);
+    char cons_call_stoch(const pos_stats_uncompr_t &psu, const consensus_params_t &params);
+    char cons_call_stoch_amb(const pos_stats_uncompr_t &psu, const consensus_params_t &params);
+    char cons_call_maj(const pos_stats_uncompr_t &psu, const consensus_params_t &params);
+    char cons_call_maj_amb(const pos_stats_uncompr_t &psu, const consensus_params_t &params);
 };
 
 #include "ococo_impl.h"
