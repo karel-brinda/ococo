@@ -150,11 +150,22 @@ namespace ococo {
         mode_t mode;
         strategy_t strategy;
         
+        /* minimum mapping quality for update */
         int32_t min_mapq;
+
+        /* minimum base quality for update */
         int32_t min_baseq;
         
+        /* initial values for counters corresponding to ref */
         int32_t init_ref_weight;
+
+        /* minimum coverage for update (does not include init_ref_weight */
+        int32_t min_coverage;
+
+        /* threshold for having majority */
+        double majority_threshold;
         
+        /* array consensus calling functions */
         char (*cons_alg[strategy_t::count])(const pos_stats_uncompr_t &psu, const consensus_params_t &params);
         
         consensus_params_t();
