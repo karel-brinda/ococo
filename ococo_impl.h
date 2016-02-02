@@ -9,10 +9,16 @@
  *************************/
 
 char ococo::cons_call_stoch(const pos_stats_uncompr_t &psu, const consensus_params_t &params){
-    if(psu.sum<params.min_coverage+params.init_ref_weight || psu.sum==0){
+    if (psu.sum==0){
         return nt16_nt256[psu.nt16];
     }
-    
+
+    if(psu.nt16!=nt256_nt16['N']){
+        if(psu.sum<params.min_coverage+params.init_ref_weight){
+            return nt16_nt256[psu.nt16];
+        }
+    }
+
     const int32_t prefsum[]={
         psu.counters[0],
         psu.counters[0]+psu.counters[1],
@@ -33,8 +39,14 @@ char ococo::cons_call_stoch(const pos_stats_uncompr_t &psu, const consensus_para
 }
 
 char ococo::cons_call_stoch_amb(const pos_stats_uncompr_t &psu, const consensus_params_t &params){
-    if(psu.sum<params.min_coverage+params.init_ref_weight || psu.sum==0){
+    if (psu.sum==0){
         return nt16_nt256[psu.nt16];
+    }
+
+    if(psu.nt16!=nt256_nt16['N']){
+        if(psu.sum<params.min_coverage+params.init_ref_weight){
+            return nt16_nt256[psu.nt16];
+        }
     }
     
     nt16_t nucl_nt16=nt256_nt16['N'];
@@ -54,8 +66,14 @@ char ococo::cons_call_stoch_amb(const pos_stats_uncompr_t &psu, const consensus_
 }
 
 char ococo::cons_call_maj(const pos_stats_uncompr_t &psu, const consensus_params_t &params){
-    if(psu.sum<params.min_coverage+params.init_ref_weight || psu.sum==0){
+    if (psu.sum==0){
         return nt16_nt256[psu.nt16];
+    }
+
+    if(psu.nt16!=nt256_nt16['N']){
+        if(psu.sum<params.min_coverage+params.init_ref_weight){
+            return nt16_nt256[psu.nt16];
+        }
     }
     
     char nucl_nt256=nt16_nt256[psu.nt16];
@@ -75,8 +93,14 @@ char ococo::cons_call_maj(const pos_stats_uncompr_t &psu, const consensus_params
 }
 
 char ococo::cons_call_maj_amb(const pos_stats_uncompr_t &psu, const consensus_params_t &params){
-    if(psu.sum<params.min_coverage+params.init_ref_weight || psu.sum==0){
+    if (psu.sum==0){
         return nt16_nt256[psu.nt16];
+    }
+
+    if(psu.nt16!=nt256_nt16['N']){
+        if(psu.sum<params.min_coverage+params.init_ref_weight){
+            return nt16_nt256[psu.nt16];
+        }
     }
     
     char nucl_nt16=psu.nt16;
@@ -108,7 +132,7 @@ ococo::consensus_params_t::consensus_params_t():
 mode(BATCH),
 strategy(STOCHASTIC),
 min_mapq(1),
-min_baseq(0),
+min_baseq(13),
 init_ref_weight(2),
 min_coverage(2),
 majority_threshold(0.60)
