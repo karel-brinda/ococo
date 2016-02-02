@@ -31,15 +31,25 @@ void boost_logging_init()
     logging::core::get()->set_filter
     (
      logging::trivial::severity >= logging::trivial::DEBUGGING_SEVERITY
-     //logging::trivial::severity >= logging::trivial::warning
-     //logging::trivial::severity >= logging::trivial::trace
      );
 }
 
 #endif
 
+/*
+    CONFIGURATION - STATISTICS
+    --------------------------
+*/
 
-typedef ococo::stats_t<uint16_t,3,4> STATS_T;
+#ifdef OCOCO32
+    typedef ococo::stats_t<uint32_t,7,4> STATS_T;
+#else
+    typedef ococo::stats_t<uint16_t,3,4> STATS_T;
+#endif    
+
+/*
+    --------------------------
+*/
 
 
 int main(int argc, const char* argv[])
@@ -487,6 +497,7 @@ int main(int argc, const char* argv[])
         BOOST_LOG_TRIVIAL(info) << "Calling consensus for the entire reference sequence (batch mode).";
 #endif
         stats->call_consensus(vcf_file);
+        
         if (fasta_out_fn.size()>0){
 #ifdef DEBUGGING_MODE
             BOOST_LOG_TRIVIAL(info) << "Saving FASTA: '" << fasta_out_fn << "'.";

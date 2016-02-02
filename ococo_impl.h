@@ -78,7 +78,7 @@ char ococo::cons_call_maj(const pos_stats_uncompr_t &psu, const consensus_params
     
     char nucl_nt256=nt16_nt256[psu.nt16];
 
-    int32_t required_min=static_cast<int32_t>(round(params.majority_threshold*psu.sum));
+    int32_t required_min=static_cast<int32_t>(ceil(params.majority_threshold*psu.sum));
     int32_t max=0;
     for(int32_t i=0;i<4;i++){
         if(psu.counters[i]>= required_min){
@@ -399,7 +399,15 @@ int ococo::stats_t<T,counter_size,refbase_size>::call_consensus_position(FILE *v
         
         set_nucl_nt256(seqid,pos,new_base_nt256);
     }
-    
+
+    #ifdef VERBOSE_VCF
+        if(old_base_nt256==new_base_nt256){
+            if(vcf_file!=nullptr){
+                print_vcf_substitution(vcf_file,seqid,pos,old_base_nt256,new_base_nt256,psu);
+            }
+        }
+    #endif
+
     return 0;
 }
 
