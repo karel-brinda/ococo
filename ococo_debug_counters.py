@@ -26,7 +26,7 @@ def next_vcf_rec(vcf_fo):
 		vcf_line=vcf_fo.readline()
 		#print(vcf_line)
 		if len(vcf_line)==0:
-			return [None,None,(None,None,None,None)]
+			return None
 
 	parts=vcf_line.split("\t")
 	ref=parts[0]
