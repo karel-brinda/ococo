@@ -31,15 +31,25 @@ void boost_logging_init()
     logging::core::get()->set_filter
     (
      logging::trivial::severity >= logging::trivial::DEBUGGING_SEVERITY
-     //logging::trivial::severity >= logging::trivial::warning
-     //logging::trivial::severity >= logging::trivial::trace
      );
 }
 
 #endif
 
+/*
+    CONFIGURATION - STATISTICS
+    --------------------------
+*/
 
-typedef ococo::stats_t<uint16_t,3,4> STATS_T;
+#ifdef OCOCO32
+    typedef ococo::stats_t<uint32_t,7,4> STATS_T;
+#else
+    typedef ococo::stats_t<uint16_t,3,4> STATS_T;
+#endif    
+
+/*
+    --------------------------
+*/
 
 
 int main(int argc, const char* argv[])
@@ -111,6 +121,12 @@ int main(int argc, const char* argv[])
         std::stringstream ref_weight_message;
         ref_weight_message << "Initial counter value for nucleotides from the reference. [" << tmp_params.init_ref_weight << "]";
         
+        std::stringstream min_coverage_message;
+        min_coverage_message << "Minimum coverage required for update. [" << tmp_params.min_coverage << "]";
+        
+        std::stringstream majority_threshold_message;
+        majority_threshold_message << "Majority threshold. [" << tmp_params.majority_threshold << "]";
+        
         vol.add_options()
         ("input,i", po::value<std::string>(&sam_fn)->required(), "Input SAM/BAM file (- for standard input).")
         ("fasta-ref,f", po::value<std::string>(&fasta_in_fn), "Initial FASTA reference (if not provided, sequence of N's is considered as the reference).")
@@ -124,6 +140,8 @@ int main(int argc, const char* argv[])
         ("min-MQ,q", po::value<int32_t>(&tmp_params.min_mapq), min_mq_message.str().c_str())
         ("min-BQ,Q", po::value<int32_t>(&tmp_params.min_baseq), min_bq_message.str().c_str())
         ("ref-weight,w", po::value<int32_t>(&tmp_params.init_ref_weight), ref_weight_message.str().c_str())
+        ("min-coverage,M", po::value<int32_t>(&tmp_params.min_coverage), min_coverage_message.str().c_str())
+        ("majority-threshold", po::value<double>(&tmp_params.majority_threshold), majority_threshold_message.str().c_str())
         ;
         
         po::variables_map vm;
@@ -479,6 +497,7 @@ int main(int argc, const char* argv[])
         BOOST_LOG_TRIVIAL(info) << "Calling consensus for the entire reference sequence (batch mode).";
 #endif
         stats->call_consensus(vcf_file);
+        
         if (fasta_out_fn.size()>0){
 #ifdef DEBUGGING_MODE
             BOOST_LOG_TRIVIAL(info) << "Saving FASTA: '" << fasta_out_fn << "'.";

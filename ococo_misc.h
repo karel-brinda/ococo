@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <cstdarg>
 #include <cstdio>
+#include <fstream>
 
 
 namespace ococo {
@@ -44,7 +45,8 @@ namespace ococo {
     }
     
     bool file_exists(const std::string &fn){
-        return access( fn.c_str(), F_OK ) != -1;
+        std::ifstream ifile(fn.c_str());
+        return ifile;
     }
     
     

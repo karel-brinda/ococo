@@ -153,9 +153,19 @@ namespace {
 	TEST_F(NuclGeneratorTest, IndividualNucleotides) {
 		char nucl;
 
-        ococo::pos_stats_uncompr_t psu = {'A',{0,0,0,0},0};
-        nucl=cons_call_stoch(psu);
-        ASSERT_EQ(nucl, 'N');
+		consensus_params_t params={};
+
+		{
+	        ococo::pos_stats_uncompr_t psu = {nt256_nt16['A'],{0,0,0,0},0};
+	        nucl=cons_call_stoch(psu, params);
+	        ASSERT_EQ('A',nucl);
+	    }
+
+	    {
+	        ococo::pos_stats_uncompr_t psu = {nt256_nt16['N'],{0,0,0,0},0};
+	        nucl=cons_call_stoch(psu, params);
+	        ASSERT_EQ('N',nucl);
+	    }
         
         /*quadruplet={5,0,0,0,5};
         nucl=rand_nucl(quadruplet);

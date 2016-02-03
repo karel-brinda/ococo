@@ -8,11 +8,17 @@
  *** Consensus calling ***
  *************************/
 
-char ococo::cons_call_stoch(const pos_stats_uncompr_t &psu){
-    if(psu.sum==0){
-        return 'N';
+char ococo::cons_call_stoch(const pos_stats_uncompr_t &psu, const consensus_params_t &params){
+    if (psu.sum==0){
+        return nt16_nt256[psu.nt16];
     }
-    
+
+    if(psu.nt16!=nt256_nt16['N']){
+        if(psu.sum<params.min_coverage+params.init_ref_weight){
+            return nt16_nt256[psu.nt16];
+        }
+    }
+
     const int32_t prefsum[]={
         psu.counters[0],
         psu.counters[0]+psu.counters[1],
@@ -32,49 +38,88 @@ char ococo::cons_call_stoch(const pos_stats_uncompr_t &psu){
     return 'n';
 }
 
-char ococo::cons_call_stoch_amb(const pos_stats_uncompr_t &psu){
-    if(psu.sum==0){
-        return 'N';
+char ococo::cons_call_stoch_amb(const pos_stats_uncompr_t &psu, const consensus_params_t &params){
+    if (psu.sum==0){
+        return nt16_nt256[psu.nt16];
     }
-    
-    nt16_t nucl_nt16=0;
-    
-    for(int32_t i=0;i<4;i++){
-        const int32_t rn=rand() % psu.sum;
-        
-        if(rn < psu.counters[i]){
-            nucl_nt16|=nt4_nt16[i];
+
+    if(psu.nt16!=nt256_nt16['N']){
+        if(psu.sum<params.min_coverage+params.init_ref_weight){
+            return nt16_nt256[psu.nt16];
         }
-        
     }
-    return 0;
+    
+    nt16_t nucl_nt16=nt256_nt16['N'];
+    
+    while(nucl_nt16==nt256_nt16['N']){
+        nucl_nt16=0;
+        for(int32_t i=0;i<4;i++){
+            const int32_t rn=rand() % psu.sum;
+            
+            if(rn < psu.counters[i]){
+                nucl_nt16|=nt4_nt16[i];
+            }
+        }
+    }
+
+    return nt16_nt256[nucl_nt16];
 }
 
-char ococo::cons_call_maj(const pos_stats_uncompr_t &psu){
-    char nucl_nt256='N';
-    int32_t max=0;
-    for(int32_t i=0;i<4;i++){
-        if (psu.counters[i]>max){
-            max=psu.counters[i];
-            nucl_nt256=nt4_nt256[i];
+char ococo::cons_call_maj(const pos_stats_uncompr_t &psu, const consensus_params_t &params){
+    if (psu.sum==0){
+        return nt16_nt256[psu.nt16];
+    }
+
+    if(psu.nt16!=nt256_nt16['N']){
+        if(psu.sum<params.min_coverage+params.init_ref_weight){
+            return nt16_nt256[psu.nt16];
         }
     }
+    
+    char nucl_nt256=nt16_nt256[psu.nt16];
+
+    int32_t required_min=static_cast<int32_t>(ceil(params.majority_threshold*psu.sum));
+    int32_t max=0;
+    for(int32_t i=0;i<4;i++){
+        if(psu.counters[i]>= required_min){
+            if (psu.counters[i]>max){
+                max=psu.counters[i];
+                nucl_nt256=nt4_nt256[i];
+            }
+        }
+    }
+
     return nucl_nt256;
 }
 
-char ococo::cons_call_maj_amb(const pos_stats_uncompr_t &psu){
-    nt16_t nucl_nt16=0;
-    int32_t max=0;
-    for(int32_t i=0;i<4;i++){
-        if (psu.counters[i]>max){
-            max=psu.counters[i];
-            nucl_nt16=nt4_nt16[i];
-        }
-        else if(psu.counters[i]>max){
-            nucl_nt16|=nt4_nt16[i];
+char ococo::cons_call_maj_amb(const pos_stats_uncompr_t &psu, const consensus_params_t &params){
+    if (psu.sum==0){
+        return nt16_nt256[psu.nt16];
+    }
+
+    if(psu.nt16!=nt256_nt16['N']){
+        if(psu.sum<params.min_coverage+params.init_ref_weight){
+            return nt16_nt256[psu.nt16];
         }
     }
-    return nt16_nt256[nucl_nt16];
+    
+    char nucl_nt16=psu.nt16;
+
+    int32_t required_min=static_cast<int32_t>(round(params.majority_threshold*psu.sum));
+    int32_t max=0;
+    for(int32_t i=0;i<4;i++){
+        if(psu.counters[i]>= required_min){
+            if (psu.counters[i]>max){
+                max=psu.counters[i];
+                nucl_nt16=nt4_nt16[i];
+            }
+            else if(psu.counters[i]>=max){
+                nucl_nt16|=nt4_nt16[i];
+            }
+        }
+    }
+
+    return nt16_nt256[static_cast<int32_t>(nucl_nt16)];
 }
 
 
@@ -87,8 +132,10 @@ ococo::consensus_params_t::consensus_params_t():
 mode(BATCH),
 strategy(STOCHASTIC),
 min_mapq(1),
-min_baseq(0),
-init_ref_weight(2)
+min_baseq(13),
+init_ref_weight(2),
+min_coverage(2),
+majority_threshold(0.60)
 {
     cons_alg[strategy_t::STOCHASTIC]=&cons_call_stoch;
     cons_alg[strategy_t::STOCHASTIC_AMB]=&cons_call_stoch_amb;
@@ -343,7 +390,7 @@ int ococo::stats_t<T,counter_size,refbase_size>::call_consensus_position(FILE *v
     char old_base_nt256;
     get_nucl_nt256(seqid,pos,old_base_nt256);
     //const char new_base_nt256=cons_call_maj(psu);
-    const char new_base_nt256=(params.cons_alg[params.strategy])(psu);
+    const char new_base_nt256=(params.cons_alg[params.strategy])(psu,params);
     
     if(old_base_nt256!=new_base_nt256){
         if(vcf_file!=nullptr){
@@ -352,7 +399,15 @@ int ococo::stats_t<T,counter_size,refbase_size>::call_consensus_position(FILE *v
         
         set_nucl_nt256(seqid,pos,new_base_nt256);
     }
-    
+
+    #ifdef VERBOSE_VCF
+        if(old_base_nt256==new_base_nt256){
+            if(vcf_file!=nullptr){
+                print_vcf_substitution(vcf_file,seqid,pos,old_base_nt256,new_base_nt256,psu);
+            }
+        }
+    #endif
+
     return 0;
 }
 
@@ -421,7 +476,8 @@ int ococo::stats_t<T,counter_size,refbase_size>::print_vcf_header(FILE *vcf_file
     }
     
     fprintf(vcf_file,"##INFO=<ID=CS,Number=4,Type=Integer,Description=\"Values of A,C,G,T counters.\">\n");
-    fprintf(vcf_file,"##INFO=<ID=SUM,Number=1,Type=Integer,Description=\"Sum of A,C,G,T counters.\">\n");
+    fprintf(vcf_file,"##INFO=<ID=SUM,Number=1,Type=Integer,Description=\"Sum of all counters.\">\n");
+    fprintf(vcf_file,"##INFO=<ID=COV,Number=1,Type=Integer,Description=\"Coverage (correct if no shift has been performed and reference nucleotide was unambiguous).\">\n");
     fprintf(vcf_file,"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n");
     
     return 0;
@@ -432,7 +488,7 @@ int ococo::stats_t<T,counter_size,refbase_size>::print_vcf_substitution(FILE *vc
     assert(check_allocation());
     assert(vcf_file!=nullptr);
     
-    fprintf(vcf_file,"%s\t%" PRId64 "\t.\t%c\t%c\t100\tPASS\tCS=%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ";SUM=%" PRId32 "\n",
+    fprintf(vcf_file,"%s\t%" PRId64 "\t.\t%c\t%c\t100\tPASS\tCS=%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ";SUM=%" PRId32 ";COV=%" PRId32 "\n",
             seq_name[seqid].c_str(),
             pos+1,
             old_base,
@@ -441,7 +497,8 @@ int ococo::stats_t<T,counter_size,refbase_size>::print_vcf_substitution(FILE *vc
             psu.counters[1],
             psu.counters[2],
             psu.counters[3],
-            psu.sum
+            psu.sum,
+            psu.sum-params.init_ref_weight
             );
     
     return 0;

@@ -18,8 +18,13 @@ Booost detailed logging and asserts.
 
 .. code-block:: bash
 
-	cmake -DDEBUGGING_MODE=ON .
+	cmake -DDEBUG=ON .
 	make
+
+Other options:
+
+* ``VERBOSE_VCF`` - verbose mode for VCF (unchanged bases also reported)
+* ``OCOCO32`` - bigger stats (32bits / per position)
 
 
 Installation

@@ -1,24 +1,42 @@
 cmake_minimum_required (VERSION 2.6)
 project (ococo)
 
-include(ExternalProject)
 
-option(DEBUGGING_MODE "Build in the debugging mode" OFF)
-set(DEBUGGING_SEVERITY "trace" CACHE STRING  "Verbosity of debugging mode")
-#
+###################
+# MODES SWITCHERS #
+###################
+
+option(DEBUG "Build in the debugging mode" OFF)
+option(OCOCO32 "Increase size of stats per position from 16b to 32b." OFF)
+option(VERBOSE_VCF "Print also VCF records without updates.." OFF)
+
 # FIX!!!
-#
+# (seems not to work correctly)
+set(DEBUGGING_SEVERITY "trace" CACHE STRING  "Verbosity of debugging mode")
 
-###############
-# COMPILATION #
-###############
-
-if(DEBUGGING_MODE)
+if(DEBUG)
 	find_package( Boost 1.46 COMPONENTS program_options system log log_setup thread REQUIRED )
 	add_definitions(-DDEBUGGING_MODE)
-else(DEBUGGING_MODE)
+	#list(APPEND CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -pedantic -Wshadow")	
+else(DEBUG)
 	find_package( Boost 1.46 COMPONENTS program_options REQUIRED )
-endif(DEBUGGING_MODE)
+	#list(APPEND CMAKE_CXX_FLAGS "-std=c++11 -DNDEBUG -march=native -O3")
+endif(DEBUG)
+
+if(OCOCO32)
+	add_definitions(-DOCOCO32)
+endif(OCOCO32)
+
+if(VERBOSE_VCF)
+	add_definitions(-DVERBOSE_VCF)
+endif(VERBOSE_VCF)
+
+
+######################
+# EXTERNAL LIBRARIES #
+######################
+
+include(ExternalProject)
 
 include_directories( ${Boost_INCLUDE_DIR} )
 
@@ -26,22 +44,18 @@ include("contrib/htslib.cmake")
 include("contrib/zlib.cmake")
 include("contrib/googletest.cmake")
 
+
+################
+# MAIN PROGRAM #
+################
+
 add_subdirectory(tests/unit_tests)
 
-#list(APPEND CMAKE_CXX_FLAGS "-std=c++11")
-
-
-#list( APPEND CMAKE_CXX_FLAGS "-std=gnu++11  -O3 -DNDEBUG ${CMAKE_CXX_FLAGS}")
-#list(APPEND CMAKE_CXX_FLAGS "-Werrror -Wshadow -std=c++11")
-#add_definitions(-D_FILE_OFFSET_BITS=64 -g)
-
-
-if(DEBUGGING_MODE)
-	list(APPEND CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -pedantic -Wshadow")	
-else(DEBUGGING_MODE)
-	list(APPEND CMAKE_CXX_FLAGS "-std=c++11 -DNDEBUG -march=native -O3")
-endif(DEBUGGING_MODE)
-
+if(DEBUG)
+	list( APPEND CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -pedantic -Wshadow" )
+else(DEBUG)
+	list( APPEND CMAKE_CXX_FLAGS "-std=c++11 -DNDEBUG -march=native -O3" )
+endif(DEBUG)
 
 add_executable(ococo main.cpp)
 add_dependencies(ococo htslib zlib)
