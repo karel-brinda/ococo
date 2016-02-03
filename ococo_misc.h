@@ -45,8 +45,16 @@ namespace ococo {
     }
     
     bool file_exists(const std::string &fn){
-        std::ifstream ifile(fn.c_str());
-        return ifile;
+        FILE *file;
+
+        file = fopen(fn.c_str(), "r");
+        if (file)
+        {
+            fclose(file);
+            return true;
+        }
+        return false;
+
     }
     
     
