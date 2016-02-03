@@ -462,12 +462,16 @@ int main(int argc, const char* argv[])
                     break;
                     
                 case BAM_CDEL:
-                case BAM_CSOFT_CLIP:
                 case BAM_CREF_SKIP:
                     ref_pos+=ol;
                     break;
+
+                case BAM_CSOFT_CLIP:
+                    read_pos+=ol;
+                    break;
                     
                 case BAM_CBACK:
+                    ococo::warning("Backward operation in CIGAR strings is not supported.");
 #ifdef DEBUGGING_MODE
                     BOOST_LOG_TRIVIAL(warning) << "Backward operation in CIGAR strings is not supported.";
 #endif
