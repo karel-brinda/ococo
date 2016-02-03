@@ -18,9 +18,9 @@ Compilation options
 All options:
 
 * ``DEBUG`` - Booost detailed logging and asserts.
-* ``VERBOSE_VCF`` - verbose mode for VCF (unchanged bases also reported)
-* ``OCOCO32`` - bigger stats (32bits / per position)
-* ``INSTALL_DEBUG_SCRIPTS`` - bigger stats (32bits / per position)
+* ``VERBOSE_VCF`` - Verbose mode for VCF (unchanged bases also reported).
+* ``OCOCO32`` - More accurate statistics (32bits / per position instead of 16bits).
+* ``INSTALL_DEBUG_SCRIPTS`` - Install also auxiliary debugging scripts by ``make install``.
 
 Example:
 

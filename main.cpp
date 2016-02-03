@@ -1,6 +1,10 @@
 #include "ococo.h"
 
+const char* OCOCO_VERSION = "0.1.0";
+
+#ifdef DEBUGGING_MODE
 #define BOOST_LOG_DYN_LINK
+#endif
 
 //#include <boost/format.hpp>
 
@@ -42,10 +46,13 @@ void boost_logging_init()
 */
 
 #ifdef OCOCO32
-    typedef ococo::stats_t<uint32_t,7,4> STATS_T;
+    typedef uint32_t OCOCO_BASIC_TYPE;
 #else
-    typedef ococo::stats_t<uint16_t,3,4> STATS_T;
+    typedef uint16_t OCOCO_BASIC_TYPE;
 #endif    
+
+constexpr uint32_t BITS_PER_COUNTER=(sizeof(OCOCO_BASIC_TYPE)*8-4)/4;
+typedef ococo::stats_t<OCOCO_BASIC_TYPE,BITS_PER_COUNTER,4> STATS_T;
 
 /*
     --------------------------
@@ -72,7 +79,7 @@ int main(int argc, const char* argv[])
      BOOST_LOG_TRIVIAL(fatal) << "A fatal severity message";
      */
     
-    BOOST_LOG_TRIVIAL(info) << "Ococo starting.";
+    BOOST_LOG_TRIVIAL(info) << "Ococo started.";
 #endif
     
     
@@ -90,7 +97,22 @@ int main(int argc, const char* argv[])
     std::string stats_in_fn;
     std::string stats_out_fn;
     
-    
+
+    std::stringstream welcome_message;
+    welcome_message << "\nProgram: Ococo (online consensus caller, http://github.com/karel-brinda/ococo).\n" <<
+    "Version: "<< OCOCO_VERSION <<" (" << 8*sizeof(OCOCO_BASIC_TYPE) << "bit variant"
+    <<", counter size " <<  BITS_PER_COUNTER << "bits";
+
+    #ifdef DEBUGGING_MODE
+    welcome_message << ", debugging mode";
+    #endif
+
+    #ifdef VERBOSE_VCF
+    welcome_message << ", verbose VCF";
+    #endif
+
+    welcome_message << "). \n\n";
+    printf("%s",welcome_message.str().c_str());
     
     /*
      * Parse command-line parameters.
@@ -107,7 +129,7 @@ int main(int argc, const char* argv[])
         po::positional_options_description pos;
         pos.add("input-file", -1);
         
-        po::options_description vol("Ococo: On-line consensus caller");
+        po::options_description vol("Command-line parameters");
         
         std::string strategy;
         std::string mode;
@@ -201,9 +223,7 @@ int main(int argc, const char* argv[])
         ococo::error("Unhandled Exception: %s.\n",e.what());
         return EXIT_FAILURE;
     }
-    
-    ococo::info("Ococo started.\n");
-    
+        
     /*
      * Read SAM headers.
      */
