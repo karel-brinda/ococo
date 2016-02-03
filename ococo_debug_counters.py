@@ -47,12 +47,48 @@ def next_pileup_rec(pileup_fo):
 	pos=int(parts[1])
 	bases=parts[4]
 	
-	a=bases.count("a")+bases.count("A")
-	c=bases.count("c")+bases.count("C")
-	g=bases.count("g")+bases.count("G")
-	t=bases.count("t")+bases.count("T")
+	#a=bases.count("a")+bases.count("A")
+	#c=bases.count("c")+bases.count("C")
+	#g=bases.count("g")+bases.count("G")
+	#t=bases.count("t")+bases.count("T")
 
-	return [ref,pos,(a,c,g,t)]
+	dict_freq= {
+		"a": 0,
+		"c": 0,
+		"g": 0,
+		"t": 0,
+		"n": 0,
+	}
+
+	number=0
+	number_string=None
+
+	circ=False
+	for x in bases:
+		if circ==True:
+			circ=False
+			continue
+		if x=="^":
+			circ=True
+		elif x in "+-":
+			number_string=""
+			assert number==0
+		elif x in "0123456789":
+			assert number_string is not None, "'{}'".format(pileup_line.strip())
+			number_string+=x
+		elif x in "ACGTNacgtn":
+			if number_string is not None:
+				number=int(number_string)
+
+			if number==0:
+				dict_freq[x.lower()]+=1
+			else:
+				number-=1
+				number_string=None
+
+	assert number==0, "'{}'".format(pileup_line.strip())
+
+	return [ref,pos,(dict_freq["a"],dict_freq["c"],dict_freq["g"],dict_freq["t"])]
 
 
 with open(vcf_fn) as vcf_fo:
@@ -81,14 +117,14 @@ with open(vcf_fn) as vcf_fo:
 			# print record
 			eq=None
 
-			if pos==vcf_rec[1]:
+			if vcf_rec is not None and pos==vcf_rec[1]:
 				vcf_info="({},{},{},{})".format(vcf_rec[2][0],vcf_rec[2][1],vcf_rec[2][2],vcf_rec[2][3])
 				vcf_rec=None
 			else:
 				vcf_info="( , , , )"
 				eq="?"
 
-			if pos==pileup_rec[1]:
+			if pileup_rec is not None and pos==pileup_rec[1]:
 				pileup_info="({},{},{},{})".format(pileup_rec[2][0],pileup_rec[2][1],pileup_rec[2][2],pileup_rec[2][3])
 				pileup_rec=None
 			else:
@@ -100,4 +136,3 @@ with open(vcf_fn) as vcf_fo:
 
 			print("\t".join([seq_name,str(pos),eq,pileup_info,vcf_info]))
 			pos+=1
-
