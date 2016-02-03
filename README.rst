@@ -11,20 +11,24 @@ Compilation
 	cmake .
 	make
 
-Compilation for debugging mode
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Booost detailed logging and asserts.
+Compilation options
+~~~~~~~~~~~~~~~~~~~
+
+All options:
+
+* ``DEBUG`` - Booost detailed logging and asserts.
+* ``VERBOSE_VCF`` - verbose mode for VCF (unchanged bases also reported)
+* ``OCOCO32`` - bigger stats (32bits / per position)
+* ``INSTALL_DEBUG_SCRIPTS`` - bigger stats (32bits / per position)
+
+Example:
 
 .. code-block:: bash
 
 	cmake -DDEBUG=ON .
 	make
 
-Other options:
-
-* ``VERBOSE_VCF`` - verbose mode for VCF (unchanged bases also reported)
-* ``OCOCO32`` - bigger stats (32bits / per position)
 
 
 Installation

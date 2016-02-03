@@ -7,7 +7,7 @@ set -o pipefail
 
 if [ $# -ne 3 ]; then
 	echo
-	echo "illegal number of parameters, 3 are expected:"
+	echo "illegal number of parameters, 3 are expected ($# are provided):"
 	echo
 	echo "	- BAM file (possibly unsorted)"
 	echo "	- minimum mapping quality"
@@ -16,7 +16,8 @@ if [ $# -ne 3 ]; then
 	exit 1
 fi
 
-tmp_dir="tmp"
+script_dir=`dirname "$0"`
+tmp_dir=$script_dir/"tmp"
 unsorted_bam=$1
 sorted_bam=$tmp_dir/bam.bam
 min_mq=$2
@@ -41,7 +42,4 @@ samtools mpileup --min-BQ $min_bq --min-MQ $min_mq $sorted_bam > $pileup
 ococo -i $sorted_bam -v $vcf --min-BQ $min_bq --min-MQ $min_mq
 
 # compare 'ococo output' vs. 'samtools mpileup output'
-./ococo_debug_counters.py $vcf $pileup
-
-
-
+$script_dir/_ococo_debug_compare_vcf_pileup.py $vcf $pileup

@@ -8,7 +8,8 @@ project (ococo)
 
 option(DEBUG "Build in the debugging mode" OFF)
 option(OCOCO32 "Increase size of stats per position from 16b to 32b." OFF)
-option(VERBOSE_VCF "Print also VCF records without updates.." OFF)
+option(VERBOSE_VCF "Print also VCF records without updates." OFF)
+option(INSTALL_DEBUG_SCRIPTS "Install debugging scripts." OFF)
 
 # FIX!!!
 # (seems not to work correctly)
@@ -67,6 +68,11 @@ target_link_libraries(ococo ${Boost_LIBRARIES} ${htslib_LIB} ${zlib_LIB})
 ################
 
 install(TARGETS ococo DESTINATION bin)
+
+if(INSTALL_DEBUG_SCRIPTS)
+	install(PROGRAMS misc/ococo_test_bam.sh DESTINATION bin)
+	install(PROGRAMS misc/ococo_test_bam.sh DESTINATION bin)
+endif(INSTALL_DEBUG_SCRIPTS)
 
 
 #########
