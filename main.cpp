@@ -135,10 +135,10 @@ int main(int argc, const char* argv[])
         std::string mode;
         
         std::stringstream min_mq_message;
-        min_mq_message << "Minimal mapping quality to increment a counter. [" << tmp_params.min_mapq << "]";
+        min_mq_message << "Skip alignments with mapping quality smaller than INT. [" << tmp_params.min_mapq << "]";
         
         std::stringstream min_bq_message;
-        min_bq_message << "Minimal base quality to increment a counter. [" << tmp_params.min_baseq << "]";
+        min_bq_message << "Skip bases with base quality smaller than INT. [" << tmp_params.min_baseq << "]";
         
         std::stringstream ref_weight_message;
         ref_weight_message << "Initial counter value for nucleotides from the reference. [" << tmp_params.init_ref_weight << "]";
@@ -162,8 +162,8 @@ int main(int argc, const char* argv[])
         ("min-MQ,q", po::value<int32_t>(&tmp_params.min_mapq), min_mq_message.str().c_str())
         ("min-BQ,Q", po::value<int32_t>(&tmp_params.min_baseq), min_bq_message.str().c_str())
         ("ref-weight,w", po::value<int32_t>(&tmp_params.init_ref_weight), ref_weight_message.str().c_str())
-        ("min-coverage,M", po::value<int32_t>(&tmp_params.min_coverage), min_coverage_message.str().c_str())
-        ("majority-threshold", po::value<double>(&tmp_params.majority_threshold), majority_threshold_message.str().c_str())
+        ("min-coverage,c", po::value<int32_t>(&tmp_params.min_coverage), min_coverage_message.str().c_str())
+        ("majority-threshold,M", po::value<double>(&tmp_params.majority_threshold), majority_threshold_message.str().c_str())
         ;
         
         po::variables_map vm;

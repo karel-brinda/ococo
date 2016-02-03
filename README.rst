@@ -52,21 +52,25 @@ Parameters
 
 .. code-block::
 
-	./ococo
-	Ococo: On-line consensus caller:
-	  -i [ --input ] arg      Input SAM/BAM file (- for standard input).
-	  -f [ --fasta-ref ] arg  Initial FASTA reference (if not provided, sequence of
-	                          N's is considered as the reference).
-	  -F [ --fasta-cons ] arg FASTA file with consensus, which is continuously 
-	                          updated.
-	  -s [ --stats-in ] arg   Input statistics.
-	  -S [ --stats-out ] arg  Outputs statistics.
-	  -v [ --vcf-cons ] arg   VCF file with updates of consensus.
-	  -m [ --mode ] arg       Mode: real-time / batch. [batch]
-	  -t [ --strategy ] arg   Strategy for updates: majority / randomized. 
-	                          [majority]
-	  -a [ --allow-amb ]      Allow updates to ambiguous nucleotides.
-	  -q [ --min-MQ ] arg     Minimal mapping quality to increment a counter. [1]
-	  -Q [ --min-BQ ] arg     Minimal base quality to increment a counter. [0]
-	  -w [ --ref-weight ] arg Initial counter value for nucleotides from the 
-	                          reference. [2]
+	Command-line parameters:
+	  -i [ --input ] arg              Input SAM/BAM file (- for standard input).
+	  -f [ --fasta-ref ] arg          Initial FASTA reference (if not provided, 
+	                                  sequence of N's is considered as the 
+	                                  reference).
+	  -F [ --fasta-cons ] arg         FASTA file with consensus, which is 
+	                                  continuously updated.
+	  -s [ --stats-in ] arg           Input statistics.
+	  -S [ --stats-out ] arg          Outputs statistics.
+	  -v [ --vcf-cons ] arg           VCF file with updates of consensus.
+	  -m [ --mode ] arg               Mode: real-time / batch. [batch]
+	  -t [ --strategy ] arg           Strategy for updates: majority / stochastic. 
+	                                  [stochastic]
+	  -a [ --allow-amb ]              Allow updates to ambiguous nucleotides.
+	  -q [ --min-MQ ] arg             Skip alignments with mapping quality smaller 
+	                                  than INT. [1]
+	  -Q [ --min-BQ ] arg             Skip bases with base quality smaller than 
+	                                  INT. [13]
+	  -w [ --ref-weight ] arg         Initial counter value for nucleotides from 
+	                                  the reference. [2]
+	  -c [ --min-coverage ] arg       Minimum coverage required for update. [2]
+	  -M [ --majority-threshold ] arg Majority threshold. [0.6]
