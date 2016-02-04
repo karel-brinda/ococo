@@ -465,30 +465,30 @@ int main(int argc, const char* argv[])
 #ifdef DEBUGGING_MODE
                             BOOST_LOG_TRIVIAL(trace) << "Omitting base (too low base quality): chrom=" << seqid << ", pos=" << ref_pos << ", nucl=" << nt256 << ", quality=" << bq << ".";
 #endif
-                            break;
+                            continue;
                         }
                         
                         if (nt4==0x4){
 #ifdef DEBUGGING_MODE
                             BOOST_LOG_TRIVIAL(trace) << "Omitting base (ambiguous nucleotide): chrom=" << seqid << ", pos=" << ref_pos << ", nucl=" << nt256 << ", quality=" << bq << ".";
 #endif
-                            break;
+                            continue;
                         }
                         
 #ifdef DEBUGGING_MODE
-                        BOOST_LOG_TRIVIAL(trace) << "Incrementing counter: chrom=" << seqid << ", pos=" << ref_pos << ", nucl=" << nt256 << ", quality=" << bq << ". Old state: " << stats->debug_str_counters(seqid,ref_pos);
+                        BOOST_LOG_TRIVIAL(trace) << "Incrementing counter: chrom=" << seqid << ", pos=" << ref_pos << ", nucl=" << nt256 << ", quality=" << bq << ". Old state: " << stats->debug_str_counters(seqid,ref_pos) << ",";
 #endif
                         
                         stats->seq_stats[seqid][ref_pos] = stats->increment(stats->seq_stats[seqid][ref_pos],nt4);
                         
 #ifdef DEBUGGING_MODE
-                        BOOST_LOG_TRIVIAL(trace) << "           ...new state: " << stats->debug_str_counters(seqid,ref_pos);
+                        BOOST_LOG_TRIVIAL(trace) << "           ...new state: " << stats->debug_str_counters(seqid,ref_pos) << ".";
 #endif
                         
                         if(stats->params.mode==ococo::mode_t::REALTIME){
                             stats->call_consensus_position(vcf_file, seqid, ref_pos);
 #ifdef DEBUGGING_MODE
-                            BOOST_LOG_TRIVIAL(trace) << "Consensus called. New state: " << stats->debug_str_counters(seqid,ref_pos);
+                            BOOST_LOG_TRIVIAL(trace) << "Consensus called. New state: " << stats->debug_str_counters(seqid,ref_pos) << ".";
 #endif
                         }
                     }
