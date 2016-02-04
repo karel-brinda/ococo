@@ -2,27 +2,41 @@ cmake_minimum_required (VERSION 2.6)
 project (ococo)
 
 
-###################
-# MODES SWITCHERS #
-###################
+##############################
+# COMPILATION MODE SWITCHERS #
+##############################
 
-option(DEBUG "Build in the debugging mode" OFF)
+if(NOT CMAKE_BUILD_TYPE)
+    message(STATUS "Setting build type to 'DEBUG' as none was specified.")
+    set(CMAKE_BUILD_TYPE DEBUG CACHE STRING "Choose the type of build." FORCE)
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "DEBUG" "RELEASE" "RELWITHDEBINFO")
+endif()
+
+if(CMAKE_BUILD_TYPE MATCHES DEBUG)
+    message("DEBUG mode")
+endif(CMAKE_BUILD_TYPE MATCHES DEBUG)
+
+if(CMAKE_BUILD_TYPE MATCHES RELEASE)
+    message("RELEASE mode")
+endif(CMAKE_BUILD_TYPE MATCHES RELEASE)
+
+if(CMAKE_BUILD_TYPE MATCHES RELWITHDEBINFO)
+    message("RELWITHDEBINFO mode")
+endif(CMAKE_BUILD_TYPE MATCHES RELWITHDEBINFO)
+
+#option(DEBUG "Build in the debugging mode" OFF)
 option(OCOCO32 "Increase size of stats per position from 16b to 32b." OFF)
 option(VERBOSE_VCF "Print also VCF records without updates." OFF)
 option(INSTALL_DEBUG_SCRIPTS "Install debugging scripts." OFF)
+set(DEBUGGING_SEVERITY "trace" CACHE STRING  "Verbosity of debugging mode.")
 
-# FIX!!!
-# (seems not to work correctly)
-set(DEBUGGING_SEVERITY "trace" CACHE STRING  "Verbosity of debugging mode")
-
-if(DEBUG)
+if(CMAKE_BUILD_TYPE MATCHES DEBUG)
 	find_package( Boost 1.46 COMPONENTS program_options system log log_setup thread REQUIRED )
 	add_definitions(-DDEBUGGING_MODE)
-	#list(APPEND CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -pedantic -Wshadow")	
-else(DEBUG)
+    add_definitions(-DDEBUGGING_SEVERITY=${DEBUGGING_SEVERITY})
+else(CMAKE_BUILD_TYPE MATCHES DEBUG)
 	find_package( Boost 1.46 COMPONENTS program_options REQUIRED )
-	#list(APPEND CMAKE_CXX_FLAGS "-std=c++11 -DNDEBUG -march=native -O3")
-endif(DEBUG)
+endif(CMAKE_BUILD_TYPE MATCHES DEBUG)
 
 if(OCOCO32)
 	add_definitions(-DOCOCO32)
@@ -52,11 +66,10 @@ include("contrib/googletest.cmake")
 
 add_subdirectory(tests/unit_tests)
 
-if(DEBUG)
-	list( APPEND CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -pedantic -Wshadow" )
-else(DEBUG)
-	list( APPEND CMAKE_CXX_FLAGS "-std=c++11 -DNDEBUG -march=native -O3" )
-endif(DEBUG)
+set(CMAKE_CXX_FLAGS "-std=c++11")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -DNDEBUG")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -march=native -DNDEBUG -g")
+set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -Wall -Wextra -pedantic -Wshadow")
 
 add_executable(ococo main.cpp)
 add_dependencies(ococo htslib zlib)
@@ -70,7 +83,7 @@ target_link_libraries(ococo ${Boost_LIBRARIES} ${htslib_LIB} ${zlib_LIB})
 install(TARGETS ococo DESTINATION bin)
 
 if(INSTALL_DEBUG_SCRIPTS)
-	install(PROGRAMS misc/_ococo_debug_compare_vcf_pileup.py DESTINATION bin)
+	install(PROGRAMS misc/ococo_test_bam.sh DESTINATION bin)
 	install(PROGRAMS misc/ococo_test_bam.sh DESTINATION bin)
 endif(INSTALL_DEBUG_SCRIPTS)
 

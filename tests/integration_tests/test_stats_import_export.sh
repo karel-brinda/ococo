@@ -11,7 +11,6 @@ rm -f output/stats.ococo
 	-i data/alignment_C_2.sam \
 	-f data/fasta_NN.fa \
 	-F output/fasta_NA.fa \
-	-s output/stats.ococo \
 	-S output/stats.ococo \
 	-t majority \
 	-v - \

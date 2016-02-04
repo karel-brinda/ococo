@@ -304,8 +304,14 @@ bool ococo::stats_t<T,counter_size,refbase_size>::check_headers_bam_hdr(const ba
 template<typename T, int counter_size, int refbase_size>
 int ococo::stats_t<T,counter_size,refbase_size>::import_stats(const std::string &stats_fn){
     assert(check_allocation());
-    
+
+    int error_code=0;
+
     FILE *fo=fopen(stats_fn.c_str(),"r");
+    if (fo==nullptr){
+        ococo::error("File with statistics could not be opened ('%s').\n",stats_fn.c_str());
+        return -1;
+    }
     
     /* number of seqs */
     int32_t n_seqs_loaded;
@@ -339,8 +345,13 @@ int ococo::stats_t<T,counter_size,refbase_size>::import_stats(const std::string 
         
         fread(seq_stats[seqid],sizeof(T),seq_len[seqid],fo);
     }
+        
+    error_code = fclose(fo);
+    if(error_code!=0){
+        ococo::error("File with statistics could not be closed ('%s').\n",stats_fn.c_str());
+        return -1;
+    }
     
-    fclose(fo);
     return 0;
 }
 
@@ -348,7 +359,13 @@ template<typename T, int counter_size, int refbase_size>
 int ococo::stats_t<T,counter_size,refbase_size>::export_stats(const std::string &stats_fn) const {
     assert(check_allocation());
     
+    int error_code=0;
+    
     FILE *fo=fopen(stats_fn.c_str(),"w+");
+    if (fo==nullptr){
+        ococo::error("File with statistics could not be opened ('%s').\n",stats_fn.c_str());
+        return -1;
+    }
     
     /* number of seqs */
     fwrite(&n_seqs,sizeof(int32_t),1,fo);
@@ -360,11 +377,21 @@ int ococo::stats_t<T,counter_size,refbase_size>::export_stats(const std::string 
         seq_ser.seq_len=seq_len[seqid];
         strncpy(seq_ser.seq_name,seq_name[seqid].c_str(),999);
         strncpy(seq_ser.seq_name,seq_name[seqid].c_str(),999);
-        fwrite(&seq_ser,sizeof(single_seq_serial_t),1,fo);
-        fwrite(seq_stats[seqid],sizeof(T),seq_len[seqid],fo);
+        uint64_t written=0;
+        written+=fwrite(&seq_ser,sizeof(single_seq_serial_t),1,fo);
+        written+=fwrite(seq_stats[seqid],sizeof(T),seq_len[seqid],fo);
+        if (written!=1+static_cast<uint64_t>(seq_len[seqid])){
+            ococo::error("Problem with writting to the file with statistics ('%s').\n",stats_fn.c_str());
+            return -1;
+        }
     }
     
-    fclose(fo);
+    
+    error_code = fclose(fo);
+    if(error_code!=0){
+        ococo::error("File with statistics could not be closed ('%s').\n",stats_fn.c_str());
+        return -1;
+    }
     return 0;
 }
 
@@ -509,7 +536,7 @@ std::string ococo::stats_t<T,counter_size,refbase_size>::debug_str_counters(int3
     pos_stats_uncompr_t psu;
     decompress_position_stats(seq_stats[seqid][pos], psu);
     std::stringstream ss;
-    ss << "(" << psu.counters[0] << "," << psu.counters[1] << "," << psu.counters[2] << "," << psu.counters[3] << ")";
+    ss << "[" << nt16_nt256[psu.nt16] << "]" << "(" << psu.counters[0] << "," << psu.counters[1] << "," << psu.counters[2] << "," << psu.counters[3] << ")";
     return ss.str();
 }
 

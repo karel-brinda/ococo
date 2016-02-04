@@ -156,13 +156,13 @@ namespace {
 		consensus_params_t params={};
 
 		{
-	        ococo::pos_stats_uncompr_t psu = {nt256_nt16['A'],{0,0,0,0},0};
+	        ococo::pos_stats_uncompr_t psu = {nt256_nt16[(int)'A'],{0,0,0,0},0};
 	        nucl=cons_call_stoch(psu, params);
 	        ASSERT_EQ('A',nucl);
 	    }
 
 	    {
-	        ococo::pos_stats_uncompr_t psu = {nt256_nt16['N'],{0,0,0,0},0};
+	        ococo::pos_stats_uncompr_t psu = {nt256_nt16[(int)'N'],{0,0,0,0},0};
 	        nucl=cons_call_stoch(psu, params);
 	        ASSERT_EQ('N',nucl);
 	    }

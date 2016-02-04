@@ -9,26 +9,34 @@ Compilation
 	git clone https://github.com/karel-brinda/ococo
 	cd ococo
 	cmake .
-	make
+	make -j
 
 
 Compilation options
 ~~~~~~~~~~~~~~~~~~~
 
-All options:
-
-* ``DEBUG`` - Booost detailed logging and asserts.
-* ``VERBOSE_VCF`` - Verbose mode for VCF (unchanged bases also reported).
-* ``OCOCO32`` - More accurate statistics (32bits / per position instead of 16bits).
-* ``INSTALL_DEBUG_SCRIPTS`` - Install also auxiliary debugging scripts by ``make install``.
-
-Example:
+Compilation modes: ``RELEASE``, ``RELWITHDEBINFO``, ``DEBUG``. To use it run, e.g,
 
 .. code-block:: bash
 
-	cmake -DDEBUG=ON .
-	make
+    cmake . -DCMAKE_BUILD_TYPE=DEBUG
+    make -j
 
+
+Other compilation options:
+
+* ``VERBOSE_VCF`` - Verbose mode for VCF (include the unchanged bases in VCF).
+* ``OCOCO32`` - More accurate statistics (32bits / per position instead of 16bits).
+* ``INSTALL_DEBUG_SCRIPTS`` - Install also auxiliary debugging scripts by ``make install``.
+* ``DEBUGGING_SEVERITY`` - Verbosity of logging in debugging mode (``trace`` / ``debug`` / ``info`` / ``warning`` / ``error`` / ``fatal``).
+
+
+Example of usage:
+
+.. code-block:: bash
+
+	cmake -DOCOCO32=ON .
+	make -j
 
 
 Installation
@@ -74,3 +82,6 @@ Parameters
 	                                  the reference. [2]
 	  -c [ --min-coverage ] arg       Minimum coverage required for update. [2]
 	  -M [ --majority-threshold ] arg Majority threshold. [0.6]
+
+
+
