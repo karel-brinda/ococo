@@ -70,7 +70,7 @@ target_link_libraries(ococo ${Boost_LIBRARIES} ${htslib_LIB} ${zlib_LIB})
 install(TARGETS ococo DESTINATION bin)
 
 if(INSTALL_DEBUG_SCRIPTS)
-	install(PROGRAMS misc/ococo_test_bam.sh DESTINATION bin)
+	install(PROGRAMS misc/_ococo_debug_compare_vcf_pileup.py DESTINATION bin)
 	install(PROGRAMS misc/ococo_test_bam.sh DESTINATION bin)
 endif(INSTALL_DEBUG_SCRIPTS)
 

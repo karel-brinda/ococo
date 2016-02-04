@@ -100,8 +100,8 @@ int main(int argc, const char* argv[])
 
     std::stringstream welcome_message;
     welcome_message << "\nProgram: Ococo (online consensus caller, http://github.com/karel-brinda/ococo).\n" <<
-    "Version: "<< OCOCO_VERSION <<" (" << 8*sizeof(OCOCO_BASIC_TYPE) << "bit variant"
-    <<", counter size " <<  BITS_PER_COUNTER << "bits";
+    "Version: " << OCOCO_VERSION << " (" << 8*sizeof(OCOCO_BASIC_TYPE) << "bit variant"
+    << ", counter size " <<  BITS_PER_COUNTER << "bits";
 
     #ifdef DEBUGGING_MODE
     welcome_message << ", debugging mode";
@@ -112,7 +112,7 @@ int main(int argc, const char* argv[])
     #endif
 
     welcome_message << "). \n\n";
-    printf("%s",welcome_message.str().c_str());
+    fprintf(stderr,"%s",welcome_message.str().c_str());
     
     /*
      * Parse command-line parameters.

@@ -21,7 +21,7 @@ tmp_dir=$script_dir/"tmp"
 unsorted_bam=$1
 sorted_bam=$tmp_dir/bam.bam
 min_mq=$2
-min_bq=3
+min_bq=$3
 vcf=$tmp_dir/vcf.vcf
 pileup=$tmp_dir/pileup.pileup
 

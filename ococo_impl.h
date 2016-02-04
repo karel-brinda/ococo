@@ -13,7 +13,7 @@ char ococo::cons_call_stoch(const pos_stats_uncompr_t &psu, const consensus_para
         return nt16_nt256[psu.nt16];
     }
 
-    if(psu.nt16!=nt256_nt16['N']){
+    if(psu.nt16!=nt256_nt16[static_cast<uint32_t>('N')]){
         if(psu.sum<params.min_coverage+params.init_ref_weight){
             return nt16_nt256[psu.nt16];
         }
@@ -43,15 +43,15 @@ char ococo::cons_call_stoch_amb(const pos_stats_uncompr_t &psu, const consensus_
         return nt16_nt256[psu.nt16];
     }
 
-    if(psu.nt16!=nt256_nt16['N']){
+    if(psu.nt16!=nt256_nt16[static_cast<uint32_t>('N')]){
         if(psu.sum<params.min_coverage+params.init_ref_weight){
             return nt16_nt256[psu.nt16];
         }
     }
     
-    nt16_t nucl_nt16=nt256_nt16['N'];
+    nt16_t nucl_nt16=nt256_nt16[static_cast<uint32_t>('N')];
     
-    while(nucl_nt16==nt256_nt16['N']){
+    while(nucl_nt16==nt256_nt16[static_cast<uint32_t>('N')]){
         nucl_nt16=0;
         for(int32_t i=0;i<4;i++){
             const int32_t rn=rand() % psu.sum;
@@ -70,7 +70,7 @@ char ococo::cons_call_maj(const pos_stats_uncompr_t &psu, const consensus_params
         return nt16_nt256[psu.nt16];
     }
 
-    if(psu.nt16!=nt256_nt16['N']){
+    if(psu.nt16!=nt256_nt16[static_cast<uint32_t>('N')]){
         if(psu.sum<params.min_coverage+params.init_ref_weight){
             return nt16_nt256[psu.nt16];
         }
@@ -97,7 +97,7 @@ char ococo::cons_call_maj_amb(const pos_stats_uncompr_t &psu, const consensus_pa
         return nt16_nt256[psu.nt16];
     }
 
-    if(psu.nt16!=nt256_nt16['N']){
+    if(psu.nt16!=nt256_nt16[static_cast<uint32_t>('N')]){
         if(psu.sum<params.min_coverage+params.init_ref_weight){
             return nt16_nt256[psu.nt16];
         }
