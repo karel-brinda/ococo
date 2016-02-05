@@ -155,11 +155,11 @@ int main(int argc, const char* argv[])
         vol.add_options()
         ("input,i", po::value<std::string>(&sam_fn)->required(), "Input SAM/BAM file (- for standard input).")
         ("fasta-ref,f", po::value<std::string>(&fasta_in_fn), "Initial FASTA reference (if not provided, sequence of N's is considered as the reference).")
-        ("fasta-cons,F", po::value<std::string>(&fasta_out_fn), "FASTA file with consensus, which is continuously updated.")
+        ("fasta-cons,F", po::value<std::string>(&fasta_out_fn), "FASTA file with consensus.")
         ("stats-in,s", po::value<std::string>(&stats_in_fn), "Input statistics.")
         ("stats-out,S", po::value<std::string>(&stats_out_fn), "Outputs statistics.")
-        ("vcf-cons,v", po::value<std::string>(&vcf_fn), "VCF file with updates of consensus.")
-        ("pileup,p", po::value<std::string>(&pileup_fn), "Truncated pileup.")
+        ("vcf-cons,v", po::value<std::string>(&vcf_fn), "VCF file with updates of consensus (- for standard output).")
+        ("pileup,p", po::value<std::string>(&pileup_fn), "Truncated pileup (- for standard output).")
         ("mode,m", po::value<std::string>(&mode), "Mode: real-time / batch. [batch]")
         ("strategy,t", po::value<std::string>(&strategy), "Strategy for updates: no-updates / majority / stochastic. [majority]")
         ("allow-amb,a", "Allow updates to ambiguous nucleotides.")
@@ -544,11 +544,9 @@ int main(int argc, const char* argv[])
                     break;
                     
                 case BAM_CBACK:
-                    ococo::warning("Backward operation in CIGAR strings is not supported.");
-#ifdef DEBUGGING_MODE
-                    BOOST_LOG_TRIVIAL(warning) << "Backward operation in CIGAR strings is not supported.";
-#endif
+                    ref_pos-=ol;
                     break;
+
                 case BAM_CINS:
                     read_pos+=ol;
                     break;
