@@ -202,8 +202,8 @@ namespace ococo {
         int export_stats(const std::string &stats_fn) const;
         
         // Call consensus probabilistically.
-        int call_consensus(FILE *vcf_file);
-        int call_consensus_position(FILE *vcf_file, int32_t seqid, int64_t pos);
+        int call_consensus(FILE *vcf_file, FILE *pileup_file);
+        int call_consensus_position(FILE *vcf_file, FILE *pileup_file, int32_t seqid, int64_t pos);
         
         // Loader header from a BAM.
         int load_headers_bam_hdr(const bam_hdr_t &h);
@@ -213,7 +213,9 @@ namespace ococo {
         
         int print_vcf_header(FILE *vcf_file, std::string cmd, std::string fasta) const;
         int print_vcf_substitution(FILE *vcf_file, int32_t seqid, int64_t pos, char old_base, char new_base, const pos_stats_uncompr_t &psu) const;
-        
+
+        int print_pileup_line(FILE *pileup_file, int32_t seqid, int64_t pos, const pos_stats_uncompr_t &psu) const;
+
         
         /*************************
          * Statistics & counters *

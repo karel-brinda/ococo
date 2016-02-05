@@ -133,7 +133,7 @@ mode(BATCH),
 strategy(STOCHASTIC),
 min_mapq(1),
 min_baseq(13),
-init_ref_weight(2),
+init_ref_weight(0),
 min_coverage(2),
 majority_threshold(0.60)
 {
@@ -397,12 +397,12 @@ int ococo::stats_t<T,counter_size,refbase_size>::export_stats(const std::string 
 
 
 template<typename T, int counter_size, int refbase_size>
-int ococo::stats_t<T,counter_size,refbase_size>::call_consensus(FILE *vcf_file) {
+int ococo::stats_t<T,counter_size,refbase_size>::call_consensus(FILE *vcf_file, FILE *pileup_file) {
     assert(check_allocation());
     
     for(int32_t seqid=0;seqid<n_seqs;seqid++){
         for (int64_t pos=0;pos<seq_len[seqid];pos++){
-            call_consensus_position(vcf_file,seqid, pos);
+            call_consensus_position(vcf_file, pileup_file, seqid, pos);
         }
     }
     
@@ -410,7 +410,7 @@ int ococo::stats_t<T,counter_size,refbase_size>::call_consensus(FILE *vcf_file) 
 }
 
 template<typename T, int counter_size, int refbase_size>
-int ococo::stats_t<T,counter_size,refbase_size>::call_consensus_position(FILE *vcf_file, int32_t seqid, int64_t pos) {
+int ococo::stats_t<T,counter_size,refbase_size>::call_consensus_position(FILE *vcf_file, FILE *pileup_file, int32_t seqid, int64_t pos) {
     pos_stats_uncompr_t psu;
     decompress_position_stats(seq_stats[seqid][pos], psu);
     
@@ -421,12 +421,12 @@ int ococo::stats_t<T,counter_size,refbase_size>::call_consensus_position(FILE *v
     
     if(old_base_nt256!=new_base_nt256){
         if(vcf_file!=nullptr){
-            print_vcf_substitution(vcf_file,seqid,pos,old_base_nt256,new_base_nt256,psu);
+            print_vcf_substitution(vcf_file, seqid, pos, old_base_nt256, new_base_nt256, psu);
         }
         
         set_nucl_nt256(seqid,pos,new_base_nt256);
     }
-
+    
     #ifdef VERBOSE_VCF
         if(old_base_nt256==new_base_nt256){
             if(vcf_file!=nullptr){
@@ -435,6 +435,10 @@ int ococo::stats_t<T,counter_size,refbase_size>::call_consensus_position(FILE *v
         }
     #endif
 
+    if(pileup_file!=nullptr){
+        print_pileup_line(pileup_file, seqid, pos, psu);
+    }
+    
     return 0;
 }
 
@@ -530,6 +534,61 @@ int ococo::stats_t<T,counter_size,refbase_size>::print_vcf_substitution(FILE *vc
     
     return 0;
 }
+
+template<typename T, int counter_size, int refbase_size>
+int ococo::stats_t<T,counter_size,refbase_size>::print_pileup_line(FILE *pileup_file, int32_t seqid, int64_t pos, const pos_stats_uncompr_t &psu) const {
+    assert(check_allocation());
+    assert(pileup_file!=nullptr);
+    
+    // todo: fix situation when depth is larger (use the printing buffer more timess)
+    
+    const int32_t max_depth=1000;
+    
+    assert(psu.sum<max_depth);
+    char bases[max_depth];
+    char qualities[max_depth];
+    
+    char ref_nt256=nt16_nt256[psu.nt16];
+
+    if(psu.sum==0){
+        return 0;
+    }
+    
+    if(ref_nt256=='='){
+        ref_nt256='N';
+    }
+    
+    int32_t j=0;
+    
+    for(int32_t nt4=0;nt4<4;nt4++){
+        const char filling_char=nt4_nt16[nt4]==psu.nt16 ? '.' : nt4_nt256[nt4];
+        for(int32_t i=0;i<psu.counters[nt4];i++,j++){
+            bases[j]=filling_char;
+            qualities[j]='~';
+        }
+    }
+    
+    if(psu.sum>=max_depth){
+        ococo::error("Too high coverage at position %" PRId64 ". Pileup does not support coverage higher than %" PRId32 ".", pos, max_depth);
+        return -1;
+    }
+    
+    bases[j]='\0';
+    qualities[j]='\0';
+    
+    fprintf(pileup_file,"%s\t%" PRId64 "\t%c\t%" PRId32 "\t%s\t%s\n",
+            seq_name[seqid].c_str(),
+            pos+1,
+            ref_nt256,
+            psu.sum,
+            bases,
+            qualities
+            );
+    
+    return 0;
+}
+
+
 
 template<typename T, int counter_size, int refbase_size>
 std::string ococo::stats_t<T,counter_size,refbase_size>::debug_str_counters(int32_t seqid, int64_t pos) const {

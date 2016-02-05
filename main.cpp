@@ -66,6 +66,7 @@ int main(int argc, const char* argv[])
     int main_return_code=0;
 
     FILE *vcf_file=nullptr;
+    FILE *pileup_file=nullptr;
     FILE *fasta_out_file=nullptr;
     
 #ifdef DEBUGGING_MODE
@@ -97,6 +98,7 @@ int main(int argc, const char* argv[])
     std::string fasta_out_fn;
     std::string stats_in_fn;
     std::string stats_out_fn;
+    std::string pileup_fn;
     
 
     std::stringstream welcome_message;
@@ -157,6 +159,7 @@ int main(int argc, const char* argv[])
         ("stats-in,s", po::value<std::string>(&stats_in_fn), "Input statistics.")
         ("stats-out,S", po::value<std::string>(&stats_out_fn), "Outputs statistics.")
         ("vcf-cons,v", po::value<std::string>(&vcf_fn), "VCF file with updates of consensus.")
+        ("pileup,p", po::value<std::string>(&pileup_fn), "Truncated pileup.")
         ("mode,m", po::value<std::string>(&mode), "Mode: real-time / batch. [batch]")
         ("strategy,t", po::value<std::string>(&strategy), "Strategy for updates: majority / stochastic. [stochastic]")
         ("allow-amb,a", "Allow updates to ambiguous nucleotides.")
@@ -362,6 +365,39 @@ int main(int argc, const char* argv[])
         
     }
     
+    
+    /*
+     * Open pileup file.
+     */
+    
+    if(pileup_fn.size()>0){
+        ococo::info("Opening pileup stream ('%s').\n",pileup_fn.c_str());
+        
+#ifdef DEBUGGING_MODE
+        BOOST_LOG_TRIVIAL(info) << "Open pileup: '" << pileup_fn << "'.";
+#endif
+        
+        if (pileup_fn==std::string("-")){
+            pileup_file=stdout;
+        }
+        else{
+            pileup_file=fopen(pileup_fn.c_str(),"w+");
+            if(pileup_file==nullptr){
+                ococo::fatal_error("Problem with opening pileup file '%s'.\n", pileup_fn.c_str());
+                main_return_code=-1;
+                goto cleaning;
+            }
+        }
+        
+    }
+    else {
+        
+#ifdef DEBUGGING_MODE
+        BOOST_LOG_TRIVIAL(info) << "No pileup file required.";
+#endif
+        
+    }
+    
     /*
      * Open consensus FASTA file.
      */
@@ -486,7 +522,7 @@ int main(int argc, const char* argv[])
 #endif
                         
                         if(stats->params.mode==ococo::mode_t::REALTIME){
-                            stats->call_consensus_position(vcf_file, seqid, ref_pos);
+                            stats->call_consensus_position(vcf_file, pileup_file, seqid, ref_pos);
 #ifdef DEBUGGING_MODE
                             BOOST_LOG_TRIVIAL(trace) << "Consensus called. New state: " << stats->debug_str_counters(seqid,ref_pos) << ".";
 #endif
@@ -535,7 +571,7 @@ int main(int argc, const char* argv[])
 #ifdef DEBUGGING_MODE
         BOOST_LOG_TRIVIAL(info) << "Calling consensus for the entire reference sequence (batch mode).";
 #endif
-        stats->call_consensus(vcf_file);
+        stats->call_consensus(vcf_file, pileup_file);
         
         if (fasta_out_fn.size()>0){
 #ifdef DEBUGGING_MODE
@@ -603,6 +639,14 @@ cleaning:
         int error_code = fclose(vcf_file);
         if(error_code!=0){
             ococo::error("VCF file could not be closed.\n");
+            main_return_code=-1;
+        }
+    }
+    
+    if(pileup_file!=nullptr){
+        int error_code = fclose(pileup_file);
+        if(error_code!=0){
+            ococo::error("Pileup file could not be closed.\n");
             main_return_code=-1;
         }
     }
