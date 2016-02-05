@@ -41,6 +41,7 @@ namespace ococo {
         REALTIME
     };
     enum strategy_t {
+        NO_UPDATES,
         STOCHASTIC,
         STOCHASTIC_AMB,
         MAJORITY,
@@ -251,6 +252,7 @@ namespace ococo {
      *                                 *
      ***********************************/
     
+    char cons_call_no_updates(const pos_stats_uncompr_t &psu, const consensus_params_t &params);
     char cons_call_stoch(const pos_stats_uncompr_t &psu, const consensus_params_t &params);
     char cons_call_stoch_amb(const pos_stats_uncompr_t &psu, const consensus_params_t &params);
     char cons_call_maj(const pos_stats_uncompr_t &psu, const consensus_params_t &params);

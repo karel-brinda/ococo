@@ -8,17 +8,21 @@
  *** Consensus calling ***
  *************************/
 
+char ococo::cons_call_no_updates(const pos_stats_uncompr_t &psu, const consensus_params_t &params){
+    return nt16_nt256[psu.nt16];
+}
+
 char ococo::cons_call_stoch(const pos_stats_uncompr_t &psu, const consensus_params_t &params){
     if (psu.sum==0){
         return nt16_nt256[psu.nt16];
     }
-
+    
     if(psu.nt16!=nt256_nt16[static_cast<uint32_t>('N')]){
         if(psu.sum<params.min_coverage+params.init_ref_weight){
             return nt16_nt256[psu.nt16];
         }
     }
-
+    
     const int32_t prefsum[]={
         psu.counters[0],
         psu.counters[0]+psu.counters[1],
@@ -130,13 +134,14 @@ char ococo::cons_call_maj_amb(const pos_stats_uncompr_t &psu, const consensus_pa
 
 ococo::consensus_params_t::consensus_params_t():
 mode(BATCH),
-strategy(STOCHASTIC),
+strategy(MAJORITY),
 min_mapq(1),
 min_baseq(13),
 init_ref_weight(0),
 min_coverage(2),
 majority_threshold(0.60)
 {
+    cons_alg[strategy_t::NO_UPDATES]=&cons_call_no_updates;
     cons_alg[strategy_t::STOCHASTIC]=&cons_call_stoch;
     cons_alg[strategy_t::STOCHASTIC_AMB]=&cons_call_stoch_amb;
     cons_alg[strategy_t::MAJORITY]=&cons_call_maj;

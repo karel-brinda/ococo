@@ -161,7 +161,7 @@ int main(int argc, const char* argv[])
         ("vcf-cons,v", po::value<std::string>(&vcf_fn), "VCF file with updates of consensus.")
         ("pileup,p", po::value<std::string>(&pileup_fn), "Truncated pileup.")
         ("mode,m", po::value<std::string>(&mode), "Mode: real-time / batch. [batch]")
-        ("strategy,t", po::value<std::string>(&strategy), "Strategy for updates: majority / stochastic. [stochastic]")
+        ("strategy,t", po::value<std::string>(&strategy), "Strategy for updates: no-updates / majority / stochastic. [majority]")
         ("allow-amb,a", "Allow updates to ambiguous nucleotides.")
         ("min-MQ,q", po::value<int32_t>(&tmp_params.min_mapq), min_mq_message.str().c_str())
         ("min-BQ,Q", po::value<int32_t>(&tmp_params.min_baseq), min_bq_message.str().c_str())
@@ -177,7 +177,10 @@ int main(int argc, const char* argv[])
             po::notify(vm); // throws on error, so do after help in case there are any problems
             
             if (vm.count("strategy")) {
-                if (strategy.compare("majority")==0){
+                if (strategy.compare("no-updates")==0){
+                    tmp_params.strategy=ococo::strategy_t::NO_UPDATES;
+                }
+                else if (strategy.compare("majority")==0){
                     if(vm.count("allow-amb")==0){
                         tmp_params.strategy=ococo::strategy_t::MAJORITY;
                     }
