@@ -30,27 +30,13 @@ namespace {
         }
     };
     
-	/*class CounterTest : public ::testing::Test {
-	protected:
-		CounterTest() {
-		}
-		
-		virtual ~CounterTest() {
-		}
-		
-		virtual void SetUp() {
-		}
-		
-		virtual void TearDown() {
-		}
-	};*/
 	
-	class NuclGeneratorTest : public ::testing::Test {
+	class ConsensusTest : public ::testing::Test {
 	protected:
-		NuclGeneratorTest() {
+		ConsensusTest() {
 		}
 		
-		virtual ~NuclGeneratorTest() {
+		virtual ~ConsensusTest() {
 		}
 		
 		virtual void SetUp() {
@@ -150,41 +136,46 @@ namespace {
 		}
 	}*/
 
-	TEST_F(NuclGeneratorTest, IndividualNucleotides) {
+	TEST_F(ConsensusTest, EmptyStats) {
 		char nucl;
 
-		consensus_params_t params={};
-
-		{
-	        ococo::pos_stats_uncompr_t psu = {nt256_nt16[(int)'A'],{0,0,0,0},0};
-	        nucl=cons_call_stoch(psu, params);
-	        ASSERT_EQ('A',nucl);
-	    }
-
-	    {
-	        ococo::pos_stats_uncompr_t psu = {nt256_nt16[(int)'N'],{0,0,0,0},0};
-	        nucl=cons_call_stoch(psu, params);
-	        ASSERT_EQ('N',nucl);
-	    }
+        consensus_params_t params=consensus_params_t();
+        for(uint32_t i=0;i<4;i++){
+            {
+                ococo::pos_stats_uncompr_t psu = {nt256_nt16[(int)'C'],{0,0,0,0},0};
+                nucl=(params.cons_alg[i])(psu, params);
+                ASSERT_EQ('C',nucl);
+            }
+            
+            {
+                ococo::pos_stats_uncompr_t psu = {nt256_nt16[(int)'N'],{0,0,0,0},0};
+                nucl=(params.cons_alg[i])(psu, params);
+                ASSERT_EQ('N',nucl);
+            }
+        }
         
-        /*quadruplet={5,0,0,0,5};
-        nucl=rand_nucl(quadruplet);
-		ASSERT_EQ(nucl, 'A');
-
-        quadruplet={0,5,0,0,5};
-        nucl=rand_nucl(quadruplet);
-		ASSERT_EQ(nucl, 'C');
-
-        quadruplet={0,0,5,0,5};
-        nucl=rand_nucl(quadruplet);
-		ASSERT_EQ(nucl, 'G');
-
-        quadruplet={0,0,0,5,5};
-        nucl=rand_nucl(quadruplet);
-		ASSERT_EQ(nucl, 'T');*/
-
 	}
 	
+    TEST_F(ConsensusTest, Majority) {
+        char nucl;
+        
+        consensus_params_t params=consensus_params_t();
+        params.majority_threshold=0.6;
+
+        {
+            ococo::pos_stats_uncompr_t psu = {nt256_nt16[(int)'T'],{6,0,0,3},9};
+            nucl=cons_call_maj(psu, params);
+            ASSERT_EQ('A',nucl);
+        }
+        
+        {
+            ococo::pos_stats_uncompr_t psu = {nt256_nt16[(int)'T'],{0,0,6,4},10};
+            nucl=cons_call_maj(psu, params);
+            ASSERT_EQ('G',nucl);
+        }
+        
+    }
+    
 	
 }  // namespace
 	
