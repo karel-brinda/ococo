@@ -24,7 +24,6 @@ echo
 ../../ococo \
 	-m batch \
 	-i data/alignment_A_2.sam \
-	-f data/fasta_NN.fa \
 	-F output/fasta_NA.fa \
 	-s output/stats.ococo \
 	-S output/stats.ococo \
@@ -38,7 +37,6 @@ echo
 ../../ococo \
 	-m batch \
 	-i data/alignment_A_2.sam \
-	-f data/fasta_NN.fa \
 	-F output/fasta_NA.fa \
 	-s output/stats.ococo \
 	-S output/stats.ococo \
