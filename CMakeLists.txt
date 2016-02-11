@@ -55,9 +55,9 @@ include(ExternalProject)
 
 include_directories( ${Boost_INCLUDE_DIR} )
 
-include("contrib/htslib.cmake")
-include("contrib/zlib.cmake")
-include("contrib/googletest.cmake")
+include("cmake-ext/htslib.cmake")
+include("cmake-ext/zlib.cmake")
+include("cmake-ext/googletest.cmake")
 
 
 ################
