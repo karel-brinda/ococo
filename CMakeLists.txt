@@ -31,19 +31,19 @@ option(INSTALL_DEBUG_SCRIPTS "Install debugging scripts." OFF)
 set(DEBUGGING_SEVERITY "trace" CACHE STRING  "Verbosity of debugging mode.")
 
 if(CMAKE_BUILD_TYPE MATCHES DEBUG)
-	find_package( Boost 1.46 COMPONENTS program_options system log log_setup thread REQUIRED )
-	add_definitions(-DDEBUGGING_MODE)
+    find_package( Boost 1.46 COMPONENTS program_options system log log_setup thread REQUIRED )
+    add_definitions(-DDEBUGGING_MODE)
     add_definitions(-DDEBUGGING_SEVERITY=${DEBUGGING_SEVERITY})
 else(CMAKE_BUILD_TYPE MATCHES DEBUG)
-	find_package( Boost 1.46 COMPONENTS program_options REQUIRED )
+    find_package( Boost 1.46 COMPONENTS program_options REQUIRED )
 endif(CMAKE_BUILD_TYPE MATCHES DEBUG)
 
 if(OCOCO32)
-	add_definitions(-DOCOCO32)
+    add_definitions(-DOCOCO32)
 endif(OCOCO32)
 
 if(VERBOSE_VCF)
-	add_definitions(-DVERBOSE_VCF)
+    add_definitions(-DVERBOSE_VCF)
 endif(VERBOSE_VCF)
 
 
@@ -66,10 +66,10 @@ include("cmake-ext/googletest.cmake")
 
 add_subdirectory(tests/unit_tests)
 
-set(CMAKE_CXX_FLAGS "-std=c++11")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -DNDEBUG")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -march=native -DNDEBUG -g")
-set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -Wall -Wextra -pedantic -Wshadow")
+set(CMAKE_CXX_FLAGS                "${CMAKE_CXX_FLAGS}                -std=c++11")
+set(CMAKE_CXX_FLAGS_RELEASE        "${CMAKE_CXX_FLAGS_RELEASE}        -O3 -march=native -DNDEBUG")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O3 -march=native -DNDEBUG -g")
+set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG}          -O0 -g -Wall -Wextra -pedantic -Wshadow")
 
 add_executable(ococo main.cpp)
 add_dependencies(ococo htslib zlib)
@@ -83,8 +83,8 @@ target_link_libraries(ococo ${Boost_LIBRARIES} ${htslib_LIB} ${zlib_LIB})
 install(TARGETS ococo DESTINATION bin)
 
 if(INSTALL_DEBUG_SCRIPTS)
-	install(PROGRAMS misc/ococo_test_bam.sh DESTINATION bin)
-	install(PROGRAMS misc/ococo_test_bam.sh DESTINATION bin)
+    install(PROGRAMS misc/ococo_test_bam.sh DESTINATION bin)
+    install(PROGRAMS misc/ococo_test_bam.sh DESTINATION bin)
 endif(INSTALL_DEBUG_SCRIPTS)
 
 
