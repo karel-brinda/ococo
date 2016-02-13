@@ -24,8 +24,8 @@ const char *OCOCO_VERSION = "0.1.0";
 #endif
 
 #include <boost/log/core.hpp>
-#include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
+#include <boost/log/trivial.hpp>
 
 namespace logging = boost::log;
 

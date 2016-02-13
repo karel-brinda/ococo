@@ -288,8 +288,9 @@ bool ococo::stats_t<T, counter_size, refbase_size>::check_allocation() const {
 template <typename T, int counter_size, int refbase_size>
 bool ococo::stats_t<T, counter_size, refbase_size>::check_headers_bam_hdr(
     const bam_hdr_t &h) const {
-    if (!check_allocation())
+    if (!check_allocation()) {
         return false;
+    }
 
     for (int32_t seqid = 0; seqid < n_seqs; seqid++) {
         if (seq_len[seqid] != static_cast<int64_t>(h.target_len[seqid])) {

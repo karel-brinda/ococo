@@ -5,25 +5,25 @@
 
 #include "ococo_misc.h"
 
-#include <iostream>
-#include <sstream>
+#include <cassert>
+#include <cinttypes>
+#include <cmath>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <cstdio>
-#include <string>
-#include <exception>
-#include <unistd.h>
-#include <cmath>
-#include <cassert>
-#include <zlib.h>
-#include <cinttypes>
 #include <ctime>
+#include <exception>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <unistd.h>
+#include <zlib.h>
 
-#include "htslib/sam.h"
 #include "htslib/faidx.h"
-#include "htslib/kstring.h"
 #include "htslib/khash.h"
 #include "htslib/kseq.h"
+#include "htslib/kstring.h"
+#include "htslib/sam.h"
 
 namespace ococo {
 
