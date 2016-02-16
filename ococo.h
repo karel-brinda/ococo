@@ -27,7 +27,7 @@
 
 namespace ococo {
 
-KSEQ_INIT(gzFile, gzread);
+KSEQ_INIT(gzFile, gzread)
 
 /*********************
  *** Configuration ***
@@ -243,7 +243,7 @@ char cons_call_maj(const pos_stats_uncompr_t &psu,
                    const consensus_params_t &params);
 char cons_call_maj_amb(const pos_stats_uncompr_t &psu,
                        const consensus_params_t &params);
-};
+}
 
 #include "ococo_impl.h"
 

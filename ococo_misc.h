@@ -59,8 +59,8 @@ bool file_exists(const std::string &fn) {
  * T - type
  * size - number of 1's
  */
-template <typename T, int size> constexpr T;
-right_full_mask() {
+template <typename T, int size>
+constexpr T right_full_mask() {
     static_assert(size <= 8 * sizeof(T), "Exceeding data type borders.");
     return (size == 0) ? 0
                        : (((static_cast<T>(0x1) << (size - 1)) - 1) << 1) | 1;
@@ -72,8 +72,8 @@ right_full_mask() {
  * T - type
  * size - number of 1's
  */
-template <typename T, int size> constexpr T;
-left_full_mask() {
+template <typename T, int size>
+constexpr T left_full_mask() {
     return right_full_mask<T, size>() << (8 * sizeof(T) - size);
 }
 
@@ -132,6 +132,6 @@ inline T set_left_bits(T pattern) {
         pattern);
 }
 #endif
-};
+}
 
 #endif

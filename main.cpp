@@ -508,8 +508,7 @@ int main(int argc, const char *argv[]) {
                     const uint8_t nt4 = ococo::nt16_nt4[nt16];
                     const char nt256 = ococo::nt16_nt256[nt16];
                     const int32_t bq = qual[read_pos];
-                    assert(0 <= nt4 && nt4 <= 4);
-
+                    
                     if (bq != 0xff && bq < (stats->params.min_baseq)) {
 #ifdef DEBUGGING_MODE
                         BOOST_LOG_TRIVIAL(trace)

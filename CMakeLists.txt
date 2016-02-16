@@ -66,10 +66,10 @@ include("cmake-ext/googletest.cmake")
 
 add_subdirectory(tests/unit_tests)
 
-set(CMAKE_CXX_FLAGS                "${CMAKE_CXX_FLAGS}                -std=c++11")
+set(CMAKE_CXX_FLAGS                "${CMAKE_CXX_FLAGS}                -std=c++11 -Wall -Wextra -Wno-missing-field-initializers -Wshadow ")
 set(CMAKE_CXX_FLAGS_RELEASE        "${CMAKE_CXX_FLAGS_RELEASE}        -O3 -march=native -DNDEBUG")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O3 -march=native -DNDEBUG -g")
-set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG}          -O0 -g -Wall -Wextra -pedantic -Wshadow")
+set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG}          -O0 -g -pedantic")
 
 add_executable(ococo main.cpp)
 add_dependencies(ococo htslib zlib)
