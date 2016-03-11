@@ -24,4 +24,5 @@ ExternalProject_Add(htslib
 
 add_dependencies(htslib zlib)
 include_directories(${htslib_INSTALL}/include)
-set(htslib_LIB ${htslib_INSTALL}/lib/libhts.a ${zlib_LIB})
+find_package (Threads)
+set(htslib_LIB ${htslib_INSTALL}/lib/libhts.a ${zlib_LIB} ${CMAKE_THREAD_LIBS_INIT})
