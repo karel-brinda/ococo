@@ -62,7 +62,7 @@ void print_version(){
         << ", counter size " << BITS_PER_COUNTER << "bits";
 
 #ifdef DEBUGGING_MODE
-    std::err << ", debugging mode";
+    std::cerr << ", debugging mode";
 #endif
 
 #ifdef VERBOSE_VCF
@@ -100,15 +100,6 @@ int main(int argc, const char *argv[]) {
 
     ococo::consensus_params_t tmp_params = ococo::consensus_params_t();
 
-    std::string sam_fn;
-    std::string vcf_fn;
-
-    std::string fasta_in_fn;
-    std::string fasta_out_fn;
-    std::string stats_in_fn;
-    std::string stats_out_fn;
-    std::string pileup_fn;
-
 /*
  * Parse command-line parameters.
  */
@@ -118,8 +109,6 @@ int main(int argc, const char *argv[]) {
 #endif
 
     try {
-        std::string strategy;
-        std::string mode;
 
         std::stringstream min_mq_message;
         min_mq_message
@@ -156,15 +145,15 @@ int main(int argc, const char *argv[]) {
         options_input.add_options()
             //
             ("input,i",
-            po::value<std::string>(&sam_fn)->required(),
+            po::value<std::string>(&tmp_params.sam_fn)->required(),
             "Input SAM/BAM file (- for standard input).")
             //
             (
-            "fasta-ref,f", po::value<std::string>(&fasta_in_fn),
+            "fasta-ref,f", po::value<std::string>(&tmp_params.fasta_in_fn),
             "Initial FASTA reference (if not provided, sequence of N's is "
             "considered as the reference).")
             //
-            ("stats-in,s",po::value<std::string>(&stats_in_fn),
+            ("stats-in,s",po::value<std::string>(&tmp_params.stats_in_fn),
             "Input statistics.")
             //
             ;
@@ -173,15 +162,15 @@ int main(int argc, const char *argv[]) {
         options_output.add_options()
             //
             (
-            "fasta-cons,F", po::value<std::string>(&fasta_out_fn),
+            "fasta-cons,F", po::value<std::string>(&tmp_params.fasta_out_fn),
             "FASTA file with consensus.")
             //
             (
-            "stats-out,S", po::value<std::string>(&stats_out_fn),
+            "stats-out,S", po::value<std::string>(&tmp_params.stats_out_fn),
             "Outputs statistics.")
             //
             (
-            "vcf-cons,V", po::value<std::string>(&vcf_fn),
+            "vcf-cons,V", po::value<std::string>(&tmp_params.vcf_fn),
             "VCF file with updates of consensus (- for standard output)."
             )
             //
@@ -195,15 +184,15 @@ int main(int argc, const char *argv[]) {
         options_consensus.add_options()
             //
             (
-            "pileup,P", po::value<std::string>(&pileup_fn),
+            "pileup,P", po::value<std::string>(&tmp_params.pileup_fn),
             "Truncated pileup (- for standard output).")
             //
             (
-            "mode,m", po::value<std::string>(&mode),
+            "mode,m", po::value<std::string>(&tmp_params.mode_str),
             "Mode: real-time / batch. [batch]")
             //
             (
-            "strategy,t", po::value<std::string>(&strategy),
+            "strategy,t", po::value<std::string>(&tmp_params.strategy_str),
             "Strategy for updates: no-updates / majority / stochastic. "
             "[majority]")
             //
@@ -240,10 +229,9 @@ int main(int argc, const char *argv[]) {
         try {
 
             po::store(po::command_line_parser(argc, argv)
-                          .options(options_generic)
+                          .options(options_all)
                           .run(),
-                          vm);  // can throw
-
+                      vm);  // can throw
 
             if (vm.count("version")) {
                 std::cout<<std::endl;
@@ -252,22 +240,18 @@ int main(int argc, const char *argv[]) {
                 exit(0);
             }
 
-            po::store(po::command_line_parser(argc, argv)
-                          .options(options_all)
-                          .run(),
-                      vm);  // can throw
             po::notify(vm); // throws on error, so do after help in case there
                             // are any problems
             if (vm.count("strategy")) {
-                if (strategy.compare("no-updates") == 0) {
+                if (tmp_params.strategy_str.compare("no-updates") == 0) {
                     tmp_params.strategy = ococo::strategy_t::NO_UPDATES;
-                } else if (strategy.compare("majority") == 0) {
+                } else if (tmp_params.strategy_str.compare("majority") == 0) {
                     if (vm.count("allow-amb") == 0) {
                         tmp_params.strategy = ococo::strategy_t::MAJORITY;
                     } else {
                         tmp_params.strategy = ococo::strategy_t::MAJORITY_AMB;
                     }
-                } else if (strategy.compare("stochastic") == 0) {
+                } else if (tmp_params.strategy_str.compare("stochastic") == 0) {
                     if (vm.count("allow-amb") == 0) {
                         tmp_params.strategy = ococo::strategy_t::STOCHASTIC;
                     } else {
@@ -276,20 +260,20 @@ int main(int argc, const char *argv[]) {
                 } else {
                     ococo::error("Unknown strategy '%s'. Possible strategies "
                                  "are 'majority' and 'stochastic'.\n",
-                                 strategy.c_str());
+                                 tmp_params.strategy_str.c_str());
                     return EXIT_FAILURE;
                 }
             }
 
             if (vm.count("mode")) {
-                if (mode.compare("batch") == 0) {
+                if (tmp_params.mode_str.compare("batch") == 0) {
                     tmp_params.mode = ococo::mode_t::BATCH;
-                } else if (mode.compare("real-time") == 0) {
+                } else if (tmp_params.mode_str.compare("real-time") == 0) {
                     tmp_params.mode = ococo::mode_t::REALTIME;
                 } else {
                     ococo::error("Unknown mode '%s'. Possible modes are "
                                  "'batch' and 'real-time'.\n",
-                                 mode.c_str());
+                                 tmp_params.mode_str.c_str());
                     return EXIT_FAILURE;
                 }
             }
@@ -321,13 +305,13 @@ int main(int argc, const char *argv[]) {
 
 #ifdef DEBUGGING_MODE
     BOOST_LOG_TRIVIAL(info) << "SAM/BAM reader initialization: reading '"
-                            << sam_fn.c_str() << "'.";
+                            << tmp_params.sam_fn.c_str() << "'.";
 #endif
 
-    in = sam_open(sam_fn.c_str(), "r");
+    in = sam_open(tmp_params.sam_fn.c_str(), "r");
     if (in == nullptr) {
         ococo::fatal_error("Problem with opening SAM/BAM file ('%s').\n",
-                           sam_fn.c_str());
+                           tmp_params.sam_fn.c_str());
         main_return_code = -1;
         goto cleaning;
     }
@@ -348,23 +332,23 @@ int main(int argc, const char *argv[]) {
      * Load FASTA and stats.
      */
 
-    if (!stats_in_fn.empty() && !fasta_in_fn.empty()) {
+    if (!tmp_params.stats_in_fn.empty() && !tmp_params.fasta_in_fn.empty()) {
         ococo::fatal_error("Initial FASTA reference and input statistics "
                            "cannot be used at the same time.\n");
         main_return_code = -1;
         goto cleaning;
     }
 
-    if (!stats_in_fn.empty()) {
-        ococo::info("Loading statistics ('%s').\n", stats_in_fn.c_str());
+    if (!tmp_params.stats_in_fn.empty()) {
+        ococo::info("Loading statistics ('%s').\n", tmp_params.stats_in_fn.c_str());
 #ifdef DEBUGGING_MODE
-        BOOST_LOG_TRIVIAL(info) << "Importing statistics: '" << stats_in_fn
+        BOOST_LOG_TRIVIAL(info) << "Importing statistics: '" << tmp_params.stats_in_fn
                                 << "'.";
 #endif
-        int error_code = stats->import_stats(stats_in_fn);
+        int error_code = stats->import_stats(tmp_params.stats_in_fn);
         if (error_code != 0) {
             ococo::fatal_error("Import of statistics failed (file '%s').\n",
-                               stats_in_fn.c_str());
+                               tmp_params.stats_in_fn.c_str());
             main_return_code = -1;
             goto cleaning;
         }
@@ -373,18 +357,18 @@ int main(int argc, const char *argv[]) {
         BOOST_LOG_TRIVIAL(info) << "No file with statistics provided.";
 #endif
 
-        if (!fasta_in_fn.empty()) {
-            ococo::info("Loading reference ('%s').\n", fasta_in_fn.c_str());
+        if (!tmp_params.fasta_in_fn.empty()) {
+            ococo::info("Loading reference ('%s').\n", tmp_params.fasta_in_fn.c_str());
 
 #ifdef DEBUGGING_MODE
-            BOOST_LOG_TRIVIAL(info) << "Loading FASTA: '" << fasta_in_fn
+            BOOST_LOG_TRIVIAL(info) << "Loading FASTA: '" << tmp_params.fasta_in_fn
                                     << "'.";
 #endif
 
-            int error_code = stats->load_fasta(fasta_in_fn);
+            int error_code = stats->load_fasta(tmp_params.fasta_in_fn);
             if (error_code != 0) {
                 ococo::fatal_error("Loading of FASTA failed (file '%s').\n",
-                                   fasta_in_fn.c_str());
+                                   tmp_params.fasta_in_fn.c_str());
                 main_return_code = -1;
                 goto cleaning;
             }
@@ -400,20 +384,20 @@ int main(int argc, const char *argv[]) {
      * Open VCF file.
      */
 
-    if (vcf_fn.size() > 0) {
-        ococo::info("Opening VCF stream ('%s').\n", vcf_fn.c_str());
+    if (tmp_params.vcf_fn.size() > 0) {
+        ococo::info("Opening VCF stream ('%s').\n", tmp_params.vcf_fn.c_str());
 
 #ifdef DEBUGGING_MODE
-        BOOST_LOG_TRIVIAL(info) << "Open VCF: '" << vcf_fn << "'.";
+        BOOST_LOG_TRIVIAL(info) << "Open VCF: '" << tmp_params.vcf_fn << "'.";
 #endif
 
-        if (vcf_fn == std::string("-")) {
+        if (tmp_params.vcf_fn == std::string("-")) {
             vcf_file = stdout;
         } else {
-            vcf_file = fopen(vcf_fn.c_str(), "w+");
+            vcf_file = fopen(tmp_params.vcf_fn.c_str(), "w+");
             if (vcf_file == nullptr) {
                 ococo::fatal_error("Problem with opening VCF file '%s'.\n",
-                                   vcf_fn.c_str());
+                                   tmp_params.vcf_fn.c_str());
                 main_return_code = -1;
                 goto cleaning;
             }
@@ -428,12 +412,12 @@ int main(int argc, const char *argv[]) {
         }
 
         char buf[PATH_MAX + 1];
-        char *res = realpath(fasta_in_fn.c_str(), buf);
+        char *res = realpath(tmp_params.fasta_in_fn.c_str(), buf);
         std::string fasta_full_path;
         if (res) {
             fasta_full_path = std::string(buf);
         } else {
-            fasta_full_path = fasta_in_fn;
+            fasta_full_path = tmp_params.fasta_in_fn;
         }
 
         stats->print_vcf_header(vcf_file, cmd.str(), fasta_full_path);
@@ -447,20 +431,20 @@ int main(int argc, const char *argv[]) {
      * Open pileup file.
      */
 
-    if (pileup_fn.size() > 0) {
-        ococo::info("Opening pileup stream ('%s').\n", pileup_fn.c_str());
+    if (tmp_params.pileup_fn.size() > 0) {
+        ococo::info("Opening pileup stream ('%s').\n", tmp_params.pileup_fn.c_str());
 
 #ifdef DEBUGGING_MODE
-        BOOST_LOG_TRIVIAL(info) << "Open pileup: '" << pileup_fn << "'.";
+        BOOST_LOG_TRIVIAL(info) << "Open pileup: '" << tmp_params.pileup_fn << "'.";
 #endif
 
-        if (pileup_fn == std::string("-")) {
+        if (tmp_params.pileup_fn == std::string("-")) {
             pileup_file = stdout;
         } else {
-            pileup_file = fopen(pileup_fn.c_str(), "w+");
+            pileup_file = fopen(tmp_params.pileup_fn.c_str(), "w+");
             if (pileup_file == nullptr) {
                 ococo::fatal_error("Problem with opening pileup file '%s'.\n",
-                                   pileup_fn.c_str());
+                                   tmp_params.pileup_fn.c_str());
                 main_return_code = -1;
                 goto cleaning;
             }
@@ -476,22 +460,22 @@ int main(int argc, const char *argv[]) {
      * Open consensus FASTA file.
      */
 
-    if (fasta_out_fn.size() > 0) {
-        fasta_out_file = fopen(fasta_out_fn.c_str(), "w+");
+    if (tmp_params.fasta_out_fn.size() > 0) {
+        fasta_out_file = fopen(tmp_params.fasta_out_fn.c_str(), "w+");
 
-        ococo::info("Opening consensus file ('%s').\n", fasta_out_fn.c_str());
+        ococo::info("Opening consensus file ('%s').\n", tmp_params.fasta_out_fn.c_str());
 
 #ifdef DEBUGGING_MODE
-        BOOST_LOG_TRIVIAL(info) << "Open FASTA for consensus: '" << fasta_out_fn
+        BOOST_LOG_TRIVIAL(info) << "Open FASTA for consensus: '" << tmp_params.fasta_out_fn
                                 << "'.";
 #endif
 
-        fasta_out_file = fopen(fasta_out_fn.c_str(), "w+");
+        fasta_out_file = fopen(tmp_params.fasta_out_fn.c_str(), "w+");
 
         if (fasta_out_file == nullptr) {
             ococo::fatal_error(
                 "Problem with opening FASTA for consensus: '%s'.\n",
-                fasta_out_fn.c_str());
+                tmp_params.fasta_out_fn.c_str());
             main_return_code = -1;
             goto cleaning;
         }
@@ -663,15 +647,15 @@ int main(int argc, const char *argv[]) {
 #endif
         stats->call_consensus(vcf_file, pileup_file);
 
-        if (fasta_out_fn.size() > 0) {
+        if (tmp_params.fasta_out_fn.size() > 0) {
 #ifdef DEBUGGING_MODE
-            BOOST_LOG_TRIVIAL(info) << "Saving FASTA: '" << fasta_out_fn
+            BOOST_LOG_TRIVIAL(info) << "Saving FASTA: '" << tmp_params.fasta_out_fn
                                     << "'.";
 #endif
-            int error_code = stats->save_fasta(fasta_out_fn);
+            int error_code = stats->save_fasta(tmp_params.fasta_out_fn);
             if (error_code != 0) {
                 ococo::error("FASTA '%s' could not be saved.\n",
-                             fasta_out_fn.c_str());
+                             tmp_params.fasta_out_fn.c_str());
                 main_return_code = -1;
             }
         } else {
@@ -681,18 +665,18 @@ int main(int argc, const char *argv[]) {
         }
     }
 
-    if (stats_out_fn.size() > 0) {
+    if (tmp_params.stats_out_fn.size() > 0) {
 #ifdef DEBUGGING_MODE
-        BOOST_LOG_TRIVIAL(info) << "Saving statistics: '" << stats_out_fn
+        BOOST_LOG_TRIVIAL(info) << "Saving statistics: '" << tmp_params.stats_out_fn
                                 << "'.";
 #endif
 
-        ococo::info("Saving statistics ('%s').\n", stats_out_fn.c_str());
+        ococo::info("Saving statistics ('%s').\n", tmp_params.stats_out_fn.c_str());
 
-        int error_code = stats->export_stats(stats_out_fn);
+        int error_code = stats->export_stats(tmp_params.stats_out_fn);
         if (error_code != 0) {
             ococo::error("Statistics could not be saved ('%s').\n",
-                         stats_out_fn.c_str());
+                         tmp_params.stats_out_fn.c_str());
             main_return_code = -1;
         }
     } else {

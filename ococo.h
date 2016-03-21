@@ -131,6 +131,26 @@ struct consensus_params_t {
     mode_t mode;
     strategy_t strategy;
 
+    /*
+        Input parameters
+    */
+    std::string sam_fn;
+    std::string fasta_in_fn;
+    std::string stats_in_fn;
+
+
+    /*
+        Output parameters
+    */
+    std::string vcf_fn;
+    std::string fasta_out_fn;
+    std::string stats_out_fn;
+    std::string pileup_fn;
+
+    /*
+        Consensus calling parameters
+    */
+
     /* minimum mapping quality for update */
     int32_t min_mapq;
 
@@ -146,7 +166,13 @@ struct consensus_params_t {
     /* threshold for having majority */
     double majority_threshold;
 
-    /* array consensus calling functions */
+    /* auxiliary */
+    std::string strategy_str;
+    std::string mode_str;
+
+    /*
+        Array of consensus calling functions
+    */
     char (*cons_alg[strategy_t::count])(const pos_stats_uncompr_t &psu,
                                         const consensus_params_t &params);
 
