@@ -54,6 +54,24 @@ typedef ococo::stats_t<OCOCO_BASIC_TYPE, BITS_PER_COUNTER, 4> STATS_T;
     --------------------------
 */
 
+void print_version(){
+    std::cerr << "Program: Ococo (online consensus caller, "
+        << "http://github.com/karel-brinda/ococo)." << std::endl
+        << "Version: " << OCOCO_VERSION << " ("
+        << 8 * sizeof(OCOCO_BASIC_TYPE) << "bit variant"
+        << ", counter size " << BITS_PER_COUNTER << "bits";
+
+#ifdef DEBUGGING_MODE
+    std::err << ", debugging mode";
+#endif
+
+#ifdef VERBOSE_VCF
+    std::cerr << ", verbose VCF";
+#endif
+
+    std::cerr << ")." << std::endl;
+}
+
 int main(int argc, const char *argv[]) {
     int main_return_code = 0;
 
@@ -91,24 +109,6 @@ int main(int argc, const char *argv[]) {
     std::string stats_out_fn;
     std::string pileup_fn;
 
-    std::stringstream welcome_message;
-    welcome_message << "\nProgram: Ococo (online consensus caller, "
-                       "http://github.com/karel-brinda/ococo).\n"
-                    << "Version: " << OCOCO_VERSION << " ("
-                    << 8 * sizeof(OCOCO_BASIC_TYPE) << "bit variant"
-                    << ", counter size " << BITS_PER_COUNTER << "bits";
-
-#ifdef DEBUGGING_MODE
-    welcome_message << ", debugging mode";
-#endif
-
-#ifdef VERBOSE_VCF
-    welcome_message << ", verbose VCF";
-#endif
-
-    welcome_message << "). \n\n";
-    fprintf(stderr, "%s", welcome_message.str().c_str());
-
 /*
  * Parse command-line parameters.
  */
@@ -118,13 +118,6 @@ int main(int argc, const char *argv[]) {
 #endif
 
     try {
-        namespace po = boost::program_options;
-
-        po::positional_options_description pos;
-        pos.add("input-file", -1);
-
-        po::options_description vol("Command-line parameters");
-
         std::string strategy;
         std::string mode;
 
@@ -150,50 +143,121 @@ int main(int argc, const char *argv[]) {
         majority_threshold_message << "Majority threshold. ["
                                    << tmp_params.majority_threshold << "]";
 
-        vol.add_options()("input,i",
-                          po::value<std::string>(&sam_fn)->required(),
-                          "Input SAM/BAM file (- for standard input).")(
+        namespace po = boost::program_options;
+
+        po::options_description options_generic("Generic options");
+        options_generic.add_options()
+            //
+            ("version,v",
+            "Print version and exit.");
+
+
+        po::options_description options_input("Input options");
+        options_input.add_options()
+            //
+            ("input,i",
+            po::value<std::string>(&sam_fn)->required(),
+            "Input SAM/BAM file (- for standard input).")
+            //
+            (
             "fasta-ref,f", po::value<std::string>(&fasta_in_fn),
             "Initial FASTA reference (if not provided, sequence of N's is "
-            "considered as the reference).")(
+            "considered as the reference).")
+            //
+            ("stats-in,s",po::value<std::string>(&stats_in_fn),
+            "Input statistics.")
+            //
+            ;
+
+        po::options_description options_output("Output options");
+        options_output.add_options()
+            //
+            (
             "fasta-cons,F", po::value<std::string>(&fasta_out_fn),
-            "FASTA file with consensus.")("stats-in,s",
-                                          po::value<std::string>(&stats_in_fn),
-                                          "Input statistics.")(
+            "FASTA file with consensus.")
+            //
+            (
             "stats-out,S", po::value<std::string>(&stats_out_fn),
-            "Outputs statistics.")(
-            "vcf-cons,v", po::value<std::string>(&vcf_fn),
-            "VCF file with updates of consensus (- for standard output).")(
-            "pileup,p", po::value<std::string>(&pileup_fn),
-            "Truncated pileup (- for standard output).")(
+            "Outputs statistics.")
+            //
+            (
+            "vcf-cons,V", po::value<std::string>(&vcf_fn),
+            "VCF file with updates of consensus (- for standard output)."
+            )
+            //
+            ("verbose",
+            "Verbose mode.")
+            //
+            ;
+
+
+        po::options_description options_consensus("Parameters of consensus calling");
+        options_consensus.add_options()
+            //
+            (
+            "pileup,P", po::value<std::string>(&pileup_fn),
+            "Truncated pileup (- for standard output).")
+            //
+            (
             "mode,m", po::value<std::string>(&mode),
-            "Mode: real-time / batch. [batch]")(
+            "Mode: real-time / batch. [batch]")
+            //
+            (
             "strategy,t", po::value<std::string>(&strategy),
             "Strategy for updates: no-updates / majority / stochastic. "
-            "[majority]")("allow-amb,a",
-                          "Allow updates to ambiguous nucleotides.")(
+            "[majority]")
+            //
+            ("allow-amb,a", "Allow updates to ambiguous nucleotides.")
+            //
+            (
             "min-MQ,q", po::value<int32_t>(&tmp_params.min_mapq),
-            min_mq_message.str().c_str())(
+            min_mq_message.str().c_str())
+            //
+            (
             "min-BQ,Q", po::value<int32_t>(&tmp_params.min_baseq),
-            min_bq_message.str().c_str())(
+            min_bq_message.str().c_str())
+            //
+            (
             "ref-weight,w", po::value<int32_t>(&tmp_params.init_ref_weight),
-            ref_weight_message.str().c_str())(
+            ref_weight_message.str().c_str())
+            //
+            (
             "min-coverage,c", po::value<int32_t>(&tmp_params.min_coverage),
-            min_coverage_message.str().c_str())(
+            min_coverage_message.str().c_str())
+            //
+            (
             "majority-threshold,M",
             po::value<double>(&tmp_params.majority_threshold),
-            majority_threshold_message.str().c_str());
+            majority_threshold_message.str().c_str()
+            )
+            //
+            ;
+
+        po::options_description options_all;
+        options_all.add(options_generic).add(options_input).add(options_output).add(options_consensus);
 
         po::variables_map vm;
         try {
+
             po::store(po::command_line_parser(argc, argv)
-                          .options(vol)
-                          .positional(pos)
+                          .options(options_generic)
+                          .run(),
+                          vm);  // can throw
+
+
+            if (vm.count("version")) {
+                std::cout<<std::endl;
+                print_version();
+                std::cout<<std::endl;
+                exit(0);
+            }
+
+            po::store(po::command_line_parser(argc, argv)
+                          .options(options_all)
                           .run(),
                       vm);  // can throw
             po::notify(vm); // throws on error, so do after help in case there
                             // are any problems
-
             if (vm.count("strategy")) {
                 if (strategy.compare("no-updates") == 0) {
                     tmp_params.strategy = ococo::strategy_t::NO_UPDATES;
@@ -231,7 +295,7 @@ int main(int argc, const char *argv[]) {
             }
 
         } catch (po::error &e) {
-            std::cout << vol << "\n";
+            std::cout << options_all << "\n";
             ococo::error("%s.\n", e.what());
             return EXIT_FAILURE;
         }
