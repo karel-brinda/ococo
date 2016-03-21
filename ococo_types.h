@@ -5,6 +5,9 @@
 
 namespace ococo {
 
+const int fasta_line_l = 50;
+const int stats_delim_l = 10;
+
 typedef uint8_t nt4_t;
 typedef uint8_t nt16_t;
 typedef uint8_t nt256_t;
