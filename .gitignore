@@ -3,9 +3,6 @@ ococo16
 ococo32
 a.fa
 
-*kdev*
-
-*.xcodeproj
 Debug/
 
 *~
