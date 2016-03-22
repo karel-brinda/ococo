@@ -43,6 +43,15 @@ struct consensus_params_t {
     std::string pileup_fn;
 
     /*
+        Files
+    */
+
+    FILE *vcf_file = nullptr;
+    FILE *pileup_file = nullptr;
+    FILE *fasta_out_file = nullptr;
+
+
+    /*
         Consensus calling parameters
     */
 

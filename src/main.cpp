@@ -75,10 +75,6 @@ void print_version(){
 int main(int argc, const char *argv[]) {
     int main_return_code = 0;
 
-    FILE *vcf_file = nullptr;
-    FILE *pileup_file = nullptr;
-    FILE *fasta_out_file = nullptr;
-
 #ifdef DEBUGGING_MODE
     boost_logging_init();
 
@@ -174,6 +170,10 @@ int main(int argc, const char *argv[]) {
             "VCF file with updates of consensus (- for standard output)."
             )
             //
+            (
+            "pileup,P", po::value<std::string>(&tmp_params.pileup_fn),
+            "Truncated pileup (- for standard output).")
+            //
             ("verbose",
             "Verbose mode.")
             //
@@ -182,10 +182,6 @@ int main(int argc, const char *argv[]) {
 
         po::options_description options_consensus("Parameters of consensus calling");
         options_consensus.add_options()
-            //
-            (
-            "pileup,P", po::value<std::string>(&tmp_params.pileup_fn),
-            "Truncated pileup (- for standard output).")
             //
             (
             "mode,m", po::value<std::string>(&tmp_params.mode_str),
@@ -392,10 +388,10 @@ int main(int argc, const char *argv[]) {
 #endif
 
         if (tmp_params.vcf_fn == std::string("-")) {
-            vcf_file = stdout;
+            tmp_params.vcf_file = stdout;
         } else {
-            vcf_file = fopen(tmp_params.vcf_fn.c_str(), "w+");
-            if (vcf_file == nullptr) {
+            tmp_params.vcf_file = fopen(tmp_params.vcf_fn.c_str(), "w+");
+            if (tmp_params.vcf_file == nullptr) {
                 ococo::fatal_error("Problem with opening VCF file '%s'.\n",
                                    tmp_params.vcf_fn.c_str());
                 main_return_code = -1;
@@ -420,7 +416,7 @@ int main(int argc, const char *argv[]) {
             fasta_full_path = tmp_params.fasta_in_fn;
         }
 
-        stats->print_vcf_header(vcf_file, cmd.str(), fasta_full_path);
+        stats->print_vcf_header(tmp_params.vcf_file, cmd.str(), fasta_full_path);
     } else {
 #ifdef DEBUGGING_MODE
         BOOST_LOG_TRIVIAL(info) << "No VCF file required.";
@@ -439,10 +435,10 @@ int main(int argc, const char *argv[]) {
 #endif
 
         if (tmp_params.pileup_fn == std::string("-")) {
-            pileup_file = stdout;
+            tmp_params.pileup_file = stdout;
         } else {
-            pileup_file = fopen(tmp_params.pileup_fn.c_str(), "w+");
-            if (pileup_file == nullptr) {
+            tmp_params.pileup_file = fopen(tmp_params.pileup_fn.c_str(), "w+");
+            if (tmp_params.pileup_file == nullptr) {
                 ococo::fatal_error("Problem with opening pileup file '%s'.\n",
                                    tmp_params.pileup_fn.c_str());
                 main_return_code = -1;
@@ -461,7 +457,7 @@ int main(int argc, const char *argv[]) {
      */
 
     if (tmp_params.fasta_out_fn.size() > 0) {
-        fasta_out_file = fopen(tmp_params.fasta_out_fn.c_str(), "w+");
+        tmp_params.fasta_out_file = fopen(tmp_params.fasta_out_fn.c_str(), "w+");
 
         ococo::info("Opening consensus file ('%s').\n", tmp_params.fasta_out_fn.c_str());
 
@@ -470,9 +466,9 @@ int main(int argc, const char *argv[]) {
                                 << "'.";
 #endif
 
-        fasta_out_file = fopen(tmp_params.fasta_out_fn.c_str(), "w+");
+        tmp_params.fasta_out_file = fopen(tmp_params.fasta_out_fn.c_str(), "w+");
 
-        if (fasta_out_file == nullptr) {
+        if (tmp_params.fasta_out_file == nullptr) {
             ococo::fatal_error(
                 "Problem with opening FASTA for consensus: '%s'.\n",
                 tmp_params.fasta_out_fn.c_str());
@@ -595,7 +591,7 @@ int main(int argc, const char *argv[]) {
 #endif
 
                     if (stats->params.mode == ococo::mode_t::REALTIME) {
-                        stats->call_consensus_position(vcf_file, pileup_file,
+                        stats->call_consensus_position(tmp_params.vcf_file, tmp_params.pileup_file,
                                                        seqid, ref_pos);
 #ifdef DEBUGGING_MODE
                         BOOST_LOG_TRIVIAL(trace)
@@ -645,7 +641,7 @@ int main(int argc, const char *argv[]) {
         BOOST_LOG_TRIVIAL(info) << "Calling consensus for the entire reference "
                                    "sequence (batch mode).";
 #endif
-        stats->call_consensus(vcf_file, pileup_file);
+        stats->call_consensus(tmp_params.vcf_file, tmp_params.pileup_file);
 
         if (tmp_params.fasta_out_fn.size() > 0) {
 #ifdef DEBUGGING_MODE
@@ -710,24 +706,24 @@ cleaning:
         }
     }
 
-    if (vcf_file != nullptr) {
-        int error_code = fclose(vcf_file);
+    if (tmp_params.vcf_file != nullptr) {
+        int error_code = fclose(tmp_params.vcf_file);
         if (error_code != 0) {
             ococo::error("VCF file could not be closed.\n");
             main_return_code = -1;
         }
     }
 
-    if (pileup_file != nullptr) {
-        int error_code = fclose(pileup_file);
+    if (tmp_params.pileup_file != nullptr) {
+        int error_code = fclose(tmp_params.pileup_file);
         if (error_code != 0) {
             ococo::error("Pileup file could not be closed.\n");
             main_return_code = -1;
         }
     }
 
-    if (fasta_out_file != nullptr) {
-        int error_code = fclose(fasta_out_file);
+    if (tmp_params.fasta_out_file != nullptr) {
+        int error_code = fclose(tmp_params.fasta_out_file);
         if (error_code != 0) {
             ococo::error("FASTA consensus file could not be closed.\n");
             main_return_code = -1;
