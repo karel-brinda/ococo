@@ -37,11 +37,13 @@ enum strategy_t {
 };
 
 
-struct consensus_params_t {
+struct params_t {
     bool correctly_initialized;
 
     mode_t mode;
     strategy_t strategy;
+
+    std::string command;
 
     /*
         Input parameters
@@ -96,13 +98,13 @@ struct consensus_params_t {
         Array of consensus calling functions
     */
     char (*cons_alg[strategy_t::count])(const pos_stats_uncompr_t &psu,
-                                        const consensus_params_t &params);
+                                        const params_t &params);
 
-    consensus_params_t();
+    params_t();
 
-    consensus_params_t(int argc, const char *argv[]);
+    params_t(int argc, const char *argv[]);
 
-    ~consensus_params_t();
+    ~params_t();
     
     void parse_commandline(int argc, const char *argv[]);
 

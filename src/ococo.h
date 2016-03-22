@@ -1,10 +1,13 @@
 #pragma once
 
+#define BOOST_LOG_DYN_LINK
+
 #include "ococo_misc.h"
-#include "consensus_params.h"
+#include "ococo_params.h"
 #include "consensus_functions.h"
 #include "ococo_types.h"
 #include "ococo_stats.h"
+#include "ococo_caller.h"
 #include "version.h"
 
 

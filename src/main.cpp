@@ -1,8 +1,8 @@
 #include "ococo.h"
 
-#ifdef DEBUGGING_MODE
+//#ifdef DEBUGGING_MODE
 #define BOOST_LOG_DYN_LINK
-#endif
+//#endif
 
 //#include <boost/format.hpp>
 
@@ -70,13 +70,17 @@ int main(int argc, const char *argv[]) {
      * Default configuration.
      */
 
+
 #ifdef DEBUGGING_MODE
     BOOST_LOG_TRIVIAL(info) << "Parsing command-line parameters.";
 #endif
-    ococo::consensus_params_t tmp_params = ococo::consensus_params_t(argc, argv);
-    if (!tmp_params.correctly_initialized){
+    ococo::params_t params = ococo::params_t(argc, argv);
+    if (!params.correctly_initialized){
         return -1;
     }
+
+    ococo::caller_t<uint32_t, 7, 4> caller(params);
+    caller.run();
 
     return main_return_code;
 }

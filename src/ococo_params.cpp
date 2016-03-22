@@ -1,11 +1,11 @@
-#include "consensus_params.h"
+#include "ococo_params.h"
 #include "consensus_functions.h"
 
 /****************************
  *** Consensus parameters ***
  ****************************/
 
-void ococo::consensus_params_t::init_default_values() {
+void ococo::params_t::init_default_values() {
     mode=BATCH;
     strategy=MAJORITY;
     min_mapq=1;
@@ -28,16 +28,16 @@ void ococo::consensus_params_t::init_default_values() {
     correctly_initialized=true;
 }
 
-ococo::consensus_params_t::consensus_params_t(){
+ococo::params_t::params_t(){
 	init_default_values();
 }
 
-ococo::consensus_params_t::consensus_params_t(int argc, const char *argv[]){
+ococo::params_t::params_t(int argc, const char *argv[]){
 	init_default_values();
 	parse_commandline(argc, argv);
 }
 
-ococo::consensus_params_t::~consensus_params_t(){
+ococo::params_t::~params_t(){
     /*
      * Close files.
      */
@@ -75,7 +75,16 @@ ococo::consensus_params_t::~consensus_params_t(){
     }
 }
 
-void ococo::consensus_params_t::parse_commandline(int argc, const char *argv[]){
+void ococo::params_t::parse_commandline(int argc, const char *argv[]){
+
+    std::stringstream cmd;
+    for (int32_t i = 0; i < argc; i++) {
+        cmd << argv[i];
+        if (i != argc - 1) {
+            cmd << " ";
+        }
+    }
+    command=cmd.str();
 
     try {
 

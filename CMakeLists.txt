@@ -30,13 +30,14 @@ option(VERBOSE_VCF "Print also VCF records without updates." OFF)
 option(INSTALL_DEBUG_SCRIPTS "Install debugging scripts." OFF)
 set(DEBUGGING_SEVERITY "trace" CACHE STRING  "Verbosity of debugging mode.")
 
-if(CMAKE_BUILD_TYPE MATCHES DEBUG)
+#if(CMAKE_BUILD_TYPE MATCHES DEBUG)
     find_package( Boost 1.46 COMPONENTS program_options system log log_setup thread REQUIRED )
     add_definitions(-DDEBUGGING_MODE)
     add_definitions(-DDEBUGGING_SEVERITY=${DEBUGGING_SEVERITY})
-else(CMAKE_BUILD_TYPE MATCHES DEBUG)
-    find_package( Boost 1.46 COMPONENTS program_options REQUIRED )
-endif(CMAKE_BUILD_TYPE MATCHES DEBUG)
+#else(CMAKE_BUILD_TYPE MATCHES DEBUG)
+    #find_package( Boost 1.46 COMPONENTS program_options REQUIRED )
+#endif(CMAKE_BUILD_TYPE MATCHES DEBUG)
+
 
 if(OCOCO32)
     add_definitions(-DOCOCO32)
@@ -74,8 +75,8 @@ set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG}          -O0 -g -pe
 add_executable(ococo src/main.cpp)
 add_dependencies(ococo htslib zlib ococo_core)
 add_library(ococo_core
-        src/consensus_params.cpp
-        src/consensus_params.h
+        src/ococo_params.cpp
+        src/ococo_params.h
         src/ococo_misc.cpp
         src/ococo_misc.h
         src/ococo.h

@@ -57,7 +57,7 @@ namespace {
 	TEST_F(ConsensusTest, EmptyStats) {
 		char nucl;
 
-        consensus_params_t params=consensus_params_t();
+        params_t params=params_t();
         for(uint32_t i=0;i<4;i++){
             {
                 ococo::pos_stats_uncompr_t psu = {nt256_nt16[(int)'C'],{0,0,0,0},0};
@@ -77,7 +77,7 @@ namespace {
     TEST_F(ConsensusTest, Majority) {
         char nucl;
         
-        consensus_params_t params=consensus_params_t();
+        params_t params=params_t();
         params.majority_threshold=0.6;
 
         {

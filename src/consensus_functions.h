@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ococo_types.h"
-#include "consensus_params.h"
+#include "ococo_params.h"
 
 #include "cassert"
 #include "cmath"
@@ -9,12 +9,12 @@
 namespace ococo {
 
 inline char cons_call_no_updates(const pos_stats_uncompr_t &psu,
-                                 const consensus_params_t &params) {
+                                 const params_t &params) {
     return nt16_nt256[psu.nt16];
 }
 
 inline char cons_call_stoch(const pos_stats_uncompr_t &psu,
-                            const consensus_params_t &params) {
+                            const params_t &params) {
     if (psu.sum == 0) {
         return nt16_nt256[psu.nt16];
     }
@@ -43,7 +43,7 @@ inline char cons_call_stoch(const pos_stats_uncompr_t &psu,
 }
 
 inline char cons_call_stoch_amb(const pos_stats_uncompr_t &psu,
-                                const consensus_params_t &params) {
+                                const params_t &params) {
     if (psu.sum == 0) {
         return nt16_nt256[psu.nt16];
     }
@@ -71,7 +71,7 @@ inline char cons_call_stoch_amb(const pos_stats_uncompr_t &psu,
 }
 
 inline char cons_call_maj(const pos_stats_uncompr_t &psu,
-                          const consensus_params_t &params) {
+                          const params_t &params) {
     if (psu.sum == 0) {
         return nt16_nt256[psu.nt16];
     }
@@ -100,7 +100,7 @@ inline char cons_call_maj(const pos_stats_uncompr_t &psu,
 }
 
 inline char cons_call_maj_amb(const pos_stats_uncompr_t &psu,
-                              const consensus_params_t &params) {
+                              const params_t &params) {
     if (psu.sum == 0) {
         return nt16_nt256[psu.nt16];
     }

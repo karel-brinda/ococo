@@ -23,7 +23,8 @@ namespace ococo {
 
 KSEQ_INIT(gzFile, gzread)
 
-template <typename T, int counter_size, int refbase_size> struct stats_t {
+template <typename T, int counter_size, int refbase_size>
+struct stats_t {
     static_assert(8 * sizeof(T) >= 4 * counter_size + refbase_size,
                   "Too large counter size (does not fit into the main type).");
 
@@ -34,10 +35,10 @@ template <typename T, int counter_size, int refbase_size> struct stats_t {
     std::string *seq_comment;
     T **seq_stats;
 
-    consensus_params_t &params;
+    params_t &params;
 
     // stats_t();
-    stats_t(consensus_params_t params, bam_hdr_t &h);
+    stats_t(params_t params, bam_hdr_t &h);
     ~stats_t();
 
     /*******
@@ -95,7 +96,7 @@ template <typename T, int counter_size, int refbase_size> struct stats_t {
 
 template <typename T, int counter_size, int refbase_size>
 stats_t<T, counter_size, refbase_size>::stats_t(
-    ococo::consensus_params_t parameters, bam_hdr_t &h)
+    ococo::params_t parameters, bam_hdr_t &h)
     : n_seqs(h.n_targets), seq_active(new (std::nothrow) bool[n_seqs]()),
       seq_len(new (std::nothrow) int64_t[n_seqs]()),
       seq_name(new (std::nothrow) std::string[n_seqs]()),
