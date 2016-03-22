@@ -2,53 +2,25 @@
 
 #include <cstdarg>
 #include <cstdio>
+#include <iostream>
 #include <cstdlib>
 #include <string>
 
+#include "version.h"
+
 namespace ococo {
 
-void fatal_error(const char *format, ...) {
-    va_list args;
-    va_start(args, format);
-    fprintf(stderr, "[ococo:fatal-error]: ");
-    vfprintf(stderr, format, args);
-    va_end(args);
-}
+void print_version();
 
-void error(const char *format, ...) {
-    va_list args;
-    va_start(args, format);
-    fprintf(stderr, "[ococo:error]: ");
-    vfprintf(stderr, format, args);
-    va_end(args);
-}
+void fatal_error(const char *format, ...);
 
-void warning(const char *format, ...) {
-    va_list args;
-    va_start(args, format);
-    fprintf(stderr, "[ococo:warning]: ");
-    vfprintf(stderr, format, args);
-    va_end(args);
-}
+void error(const char *format, ...);
 
-void info(const char *format, ...) {
-    va_list args;
-    va_start(args, format);
-    fprintf(stderr, "[ococo]: ");
-    vfprintf(stderr, format, args);
-    va_end(args);
-}
+void warning(const char *format, ...);
 
-bool file_exists(const std::string &fn) {
-    FILE *file;
+void info(const char *format, ...);
 
-    file = fopen(fn.c_str(), "r");
-    if (file) {
-        fclose(file);
-        return true;
-    }
-    return false;
-}
+bool file_exists(const std::string &fn);
 
 /*
  * Get a right full mask (right n bits set to 1)

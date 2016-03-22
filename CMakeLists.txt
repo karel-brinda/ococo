@@ -71,10 +71,19 @@ set(CMAKE_CXX_FLAGS_RELEASE        "${CMAKE_CXX_FLAGS_RELEASE}        -O3 -march
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O3 -march=native -DNDEBUG -g")
 set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG}          -O0 -g -pedantic")
 
-
 add_executable(ococo src/main.cpp)
 add_dependencies(ococo htslib zlib ococo_core)
-add_library(ococo_core src/consensus_params.cpp)
+add_library(ococo_core
+        src/consensus_params.cpp
+        src/consensus_params.h
+        src/ococo_misc.cpp
+        src/ococo_misc.h
+        src/ococo.h
+        src/ococo_types.h
+        src/stats.h
+        src/version.h
+    )
+target_link_libraries(ococo_core ${Boost_LIBRARIES})
 target_link_libraries(ococo ${Boost_LIBRARIES} ${htslib_LIB} ${zlib_LIB} ococo_core)
 
 

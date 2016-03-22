@@ -12,7 +12,7 @@ do
 		-f data/fasta_NN.fa \
 		-F output/fasta_NA.fa \
 		-t $strat \
-		-v - \
+		-V - \
 
 	diff output/fasta_NA.fa data/fasta_NA.fa
 

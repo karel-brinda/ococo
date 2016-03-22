@@ -1,8 +1,23 @@
 #pragma once
 
 #include "ococo_types.h"
+#include "ococo_misc.h"
 
+#include <cstdio>
+#include <iostream>
 #include <string>
+
+#include <boost/program_options.hpp>
+#include <boost/program_options/options_description.hpp>
+#include <boost/program_options/parsers.hpp>
+#include <boost/program_options/variables_map.hpp>
+
+#include <htslib/faidx.h>
+#include <htslib/khash.h>
+#include <htslib/kseq.h>
+#include <htslib/kstring.h>
+#include <htslib/sam.h>
+#include <htslib/kseq.h>
 
 /****************************
  *** Consensus parameters ***
@@ -23,6 +38,8 @@ enum strategy_t {
 
 
 struct consensus_params_t {
+    bool correctly_initialized;
+
     mode_t mode;
     strategy_t strategy;
 
@@ -46,9 +63,10 @@ struct consensus_params_t {
         Files
     */
 
-    FILE *vcf_file = nullptr;
-    FILE *pileup_file = nullptr;
-    FILE *fasta_out_file = nullptr;
+    FILE *vcf_file;
+    FILE *pileup_file;
+    FILE *fasta_out_file;
+    samFile *sam_file;
 
 
     /*
@@ -81,6 +99,14 @@ struct consensus_params_t {
                                         const consensus_params_t &params);
 
     consensus_params_t();
+
+    consensus_params_t(int argc, const char *argv[]);
+
+    ~consensus_params_t();
+    
+    void parse_commandline(int argc, const char *argv[]);
+
+    void init_default_values();
 };
 
 }

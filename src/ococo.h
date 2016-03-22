@@ -5,6 +5,7 @@
 #include "consensus_functions.h"
 #include "ococo_types.h"
 #include "stats.h"
+#include "version.h"
 
 
 #include <cassert>
