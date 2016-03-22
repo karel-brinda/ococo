@@ -80,7 +80,7 @@ add_library(ococo_core
         src/ococo_misc.h
         src/ococo.h
         src/ococo_types.h
-        src/stats.h
+        src/ococo_stats.h
         src/version.h
     )
 target_link_libraries(ococo_core ${Boost_LIBRARIES})

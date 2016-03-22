@@ -34,7 +34,7 @@ template <typename T, int counter_size, int refbase_size> struct stats_t {
     std::string *seq_comment;
     T **seq_stats;
 
-    consensus_params_t params;
+    consensus_params_t &params;
 
     // stats_t();
     stats_t(consensus_params_t params, bam_hdr_t &h);
