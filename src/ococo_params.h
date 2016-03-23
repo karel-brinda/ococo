@@ -68,6 +68,8 @@ struct params_t {
     /*
         Output parameters
     */
+    bool verbose;
+    
     std::string vcf_fn;
     std::string fasta_out_fn;
     std::string stats_out_fn;

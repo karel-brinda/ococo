@@ -6,6 +6,7 @@
  ****************************/
 
 void ococo::params_t::init_default_values() {
+    verbose=false;
     counters_str="ococo16";
     counter_configuration=OCOCO16;
     mode=BATCH;
@@ -266,6 +267,11 @@ void ococo::params_t::parse_commandline(int argc, const char *argv[]){
                 }
             }
             
+            if (vm.count("verbose")) {
+                verbose=true;
+            }
+            
+            
             if (vm.count("counters")) {
                 if (counters_str.compare("ococo16") == 0) {
                     counter_configuration = OCOCO16;
@@ -283,9 +289,9 @@ void ococo::params_t::parse_commandline(int argc, const char *argv[]){
                     correctly_initialized=false;
                     return_code=-1;
                     return;
-                    ococo::info(counters_str_descr.c_str());
                 }
             }
+            ococo::info("Ococo starting: %s\n",counters_str_descr.c_str());
             
         } catch (po::error &e) {
             std::cout << options_all << "\n";
