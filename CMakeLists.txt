@@ -6,6 +6,8 @@ project (ococo C CXX)
 # COMPILATION MODE SWITCHERS #
 ##############################
 
+set(Boost_USE_STATIC_LIBS 1)
+
 if(NOT CMAKE_BUILD_TYPE)
     message(STATUS "Setting build type to 'RELEASE' as none was specified.")
     set(CMAKE_BUILD_TYPE RELEASE CACHE STRING "Choose the type of build." FORCE)
