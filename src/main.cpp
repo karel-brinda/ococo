@@ -30,9 +30,9 @@ void boost_logging_init() {
 #endif
 
 /*
-    CONFIGURATION - STATISTICS
-    --------------------------
-*/
+ CONFIGURATION - STATISTICS
+ --------------------------
+ */
 
 #ifdef OCOCO32
 typedef uint32_t OCOCO_BASIC_TYPE;
@@ -44,43 +44,37 @@ constexpr uint32_t BITS_PER_COUNTER = (sizeof(OCOCO_BASIC_TYPE) * 8 - 4) / 4;
 typedef ococo::stats_t<OCOCO_BASIC_TYPE, BITS_PER_COUNTER, 4> STATS_T;
 
 /*
-    --------------------------
-*/
+ --------------------------
+ */
 
 
 int main(int argc, const char *argv[]) {
-    int main_return_code = 0;
-
-#ifdef DEBUGGING_MODE
-    boost_logging_init();
-
-    /*
-     BOOST_LOG_TRIVIAL(trace) << "A trace severity message";
-     BOOST_LOG_TRIVIAL(debug) << "A debug severity message";
-     BOOST_LOG_TRIVIAL(info) << "An informational severity message";
-     BOOST_LOG_TRIVIAL(warning) << "A warning severity message";
-     BOOST_LOG_TRIVIAL(error) << "An error severity message";
-     BOOST_LOG_TRIVIAL(fatal) << "A fatal severity message";
-     */
-
-    BOOST_LOG_TRIVIAL(info) << "Ococo started.";
-#endif
-
+    if(DEBUGGING_MODE){
+        
+        boost_logging_init();
+        
+        /*
+         BOOST_LOG_TRIVIAL(trace) << "A trace severity message";
+         BOOST_LOG_TRIVIAL(debug) << "A debug severity message";
+         BOOST_LOG_TRIVIAL(info) << "An informational severity message";
+         BOOST_LOG_TRIVIAL(warning) << "A warning severity message";
+         BOOST_LOG_TRIVIAL(error) << "An error severity message";
+         BOOST_LOG_TRIVIAL(fatal) << "A fatal severity message";
+         */
+        
+        BOOST_LOG_TRIVIAL(info) << "Ococo started.";
+    }
+    
     /*
      * Default configuration.
-     */
-
-
-#ifdef DEBUGGING_MODE
-    BOOST_LOG_TRIVIAL(info) << "Parsing command-line parameters.";
-#endif
+     */    
     ococo::params_t params = ococo::params_t(argc, argv);
     if (!params.correctly_initialized){
-        return -1;
+        return params.return_code;
     }
-
+    
     ococo::caller_t<uint32_t, 7, 4> caller(params);
     caller.run();
-
-    return main_return_code;
+    
+    return 0;
 }

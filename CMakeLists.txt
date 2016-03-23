@@ -75,6 +75,7 @@ set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG}          -O0 -g -pe
 add_executable(ococo src/main.cpp)
 add_dependencies(ococo htslib zlib ococo_core)
 add_library(ococo_core
+        src/ococo_caller.h
         src/ococo_params.cpp
         src/ococo_params.h
         src/ococo_misc.cpp

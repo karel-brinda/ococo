@@ -39,6 +39,7 @@ enum strategy_t {
 
 struct params_t {
     bool correctly_initialized;
+    int return_code;
 
     mode_t mode;
     strategy_t strategy;

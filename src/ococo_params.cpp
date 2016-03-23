@@ -7,7 +7,9 @@
 
 void ococo::params_t::init_default_values() {
     mode=BATCH;
+    mode_str="batch";
     strategy=MAJORITY;
+    strategy_str="majority";
     min_mapq=1;
     min_baseq=13;
     init_ref_weight=0;
@@ -26,6 +28,7 @@ void ococo::params_t::init_default_values() {
     sam_file = nullptr;
 
     correctly_initialized=true;
+    return_code=0;
 }
 
 ococo::params_t::params_t(){
@@ -46,7 +49,7 @@ ococo::params_t::~params_t(){
         int error_code = sam_close(sam_file);
         if (error_code != 0) {
             ococo::error("SAM file could not be closed.\n");
-            //main_return_code = -1;
+            return_code=-1;
         }
     }
 
@@ -54,15 +57,16 @@ ococo::params_t::~params_t(){
         int error_code = fclose(vcf_file);
         if (error_code != 0) {
             ococo::error("VCF file could not be closed.\n");
-            //main_return_code = -1;
+            return_code=-1;
         }
     }
 
     if (pileup_file != nullptr) {
         int error_code = fclose(pileup_file);
         if (error_code != 0) {
+            return_code=error_code;
             ococo::error("Pileup file could not be closed.\n");
-            //main_return_code = -1;
+            return_code=-1;
         }
     }
 
@@ -70,13 +74,15 @@ ococo::params_t::~params_t(){
         int error_code = fclose(fasta_out_file);
         if (error_code != 0) {
             ococo::error("FASTA consensus file could not be closed.\n");
-            //main_return_code = -1;
+            return_code=-1;
         }
     }
 }
 
 void ococo::params_t::parse_commandline(int argc, const char *argv[]){
 
+    /* Save cmd parameters */
+    
     std::stringstream cmd;
     for (int32_t i = 0; i < argc; i++) {
         cmd << argv[i];
@@ -86,29 +92,10 @@ void ococo::params_t::parse_commandline(int argc, const char *argv[]){
     }
     command=cmd.str();
 
+    
+    /* Parse cmd parameters*/
+    
     try {
-
-        std::stringstream min_mq_message;
-        min_mq_message
-            << "Skip alignments with mapping quality smaller than INT. ["
-            << min_mapq << "]";
-
-        std::stringstream min_bq_message;
-        min_bq_message << "Skip bases with base quality smaller than INT. ["
-                       << min_baseq << "]";
-
-        std::stringstream ref_weight_message;
-        ref_weight_message
-            << "Initial counter value for nucleotides from the reference. ["
-            << init_ref_weight << "]";
-
-        std::stringstream min_coverage_message;
-        min_coverage_message << "Minimum coverage required for update. ["
-                             << min_coverage << "]";
-
-        std::stringstream majority_threshold_message;
-        majority_threshold_message << "Majority threshold. ["
-                                   << majority_threshold << "]";
 
         namespace po = boost::program_options;
 
@@ -117,7 +104,6 @@ void ococo::params_t::parse_commandline(int argc, const char *argv[]){
             //
             ("version,v",
             "Print version and exit.");
-
 
         po::options_description options_input("Input options");
         options_input.add_options()
@@ -161,41 +147,45 @@ void ococo::params_t::parse_commandline(int argc, const char *argv[]){
             //
             ;
 
-
         po::options_description options_consensus("Parameters of consensus calling");
         options_consensus.add_options()
             //
             (
-            "mode,m", po::value<std::string>(&mode_str),
-            "Mode: real-time / batch. [batch]")
+            "mode,m", po::value<std::string>(&mode_str)->default_value(mode_str),
+            "Mode: real-time / batch.")
             //
             (
-            "strategy,t", po::value<std::string>(&strategy_str),
-            "Strategy for updates: no-updates / majority / stochastic. "
-            "[majority]")
+            "strategy,t", po::value<std::string>(&strategy_str)->default_value(strategy_str),
+            "Strategy for updates: no-updates / majority / stochastic."
+            )
             //
             ("allow-amb,a", "Allow updates to ambiguous nucleotides.")
             //
             (
-            "min-MQ,q", po::value<int32_t>(&min_mapq),
-            min_mq_message.str().c_str())
+            "min-MQ,q", po::value<int32_t>(&min_mapq)->default_value(min_mapq),
+             "Skip alignments with mapping quality smaller than INT."
+            )
             //
             (
-            "min-BQ,Q", po::value<int32_t>(&min_baseq),
-            min_bq_message.str().c_str())
+            "min-BQ,Q", po::value<int32_t>(&min_baseq)->default_value(min_baseq),
+             "Skip bases with base quality smaller than INT."
+             )
             //
             (
-            "ref-weight,w", po::value<int32_t>(&init_ref_weight),
-            ref_weight_message.str().c_str())
+            "ref-weight,w", po::value<int32_t>(&init_ref_weight)->default_value(init_ref_weight),
+            "Initial counter value for nucleotides from the reference."
+            )
             //
             (
-            "min-coverage,c", po::value<int32_t>(&min_coverage),
-            min_coverage_message.str().c_str())
+            "min-coverage,c",
+             po::value<int32_t>(&min_coverage)->default_value(min_coverage),
+            "Minimum coverage required for update."
+            )
             //
             (
             "majority-threshold,M",
-            po::value<double>(&majority_threshold),
-            majority_threshold_message.str().c_str()
+            po::value<double>(&majority_threshold)->default_value(majority_threshold),
+            "Majority threshold."
             )
             //
             ;
@@ -240,6 +230,7 @@ void ococo::params_t::parse_commandline(int argc, const char *argv[]){
                                  "are 'majority' and 'stochastic'.\n",
                                  strategy_str.c_str());
                     correctly_initialized=false;
+                    return_code=-1;
                     return;
                 }
             }
@@ -254,6 +245,7 @@ void ococo::params_t::parse_commandline(int argc, const char *argv[]){
                                  "'batch' and 'real-time'.\n",
                                  mode_str.c_str());
                     correctly_initialized=false;
+                    return_code=-1;
                     return;
                 }
             }
@@ -262,12 +254,14 @@ void ococo::params_t::parse_commandline(int argc, const char *argv[]){
             std::cout << options_all << "\n";
             ococo::error("%s.\n", e.what());
             correctly_initialized=false;
+            return_code=-1;
             return;
         }
 
     } catch (std::exception &e) {
         ococo::error("Unhandled Exception: %s.\n", e.what());
         correctly_initialized=false;
+        return_code=-1;
         return;
     }
 }
