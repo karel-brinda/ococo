@@ -47,9 +47,10 @@ typedef ococo::stats_t<OCOCO_BASIC_TYPE, BITS_PER_COUNTER, 4> STATS_T;
  --------------------------
  */
 
+const bool debugging = false;
 
 int main(int argc, const char *argv[]) {
-    if(DEBUGGING_MODE){
+    if(debugging){
         
         boost_logging_init();
         
@@ -73,8 +74,29 @@ int main(int argc, const char *argv[]) {
         return params.return_code;
     }
     
-    ococo::caller_t<uint32_t, 7, 4> caller(params);
-    caller.run();
+    switch (params.counter_configuration){
+            
+        case ococo::OCOCO16:
+        {
+            ococo::caller_t<uint16_t, 3, 4, debugging> caller(&params);
+            caller.run();
+            return caller.return_code;
+        }
+            
+        case ococo::OCOCO32:
+        {
+            ococo::caller_t<uint32_t, 7, 4, debugging> caller(&params);
+            caller.run();
+            return caller.return_code;
+        }
+            
+        case ococo::OCOCO64:
+        {
+            ococo::caller_t<uint64_t, 15, 4, debugging> caller(&params);
+            caller.run();
+            return caller.return_code;
+        }
+    }
     
-    return 0;
+    return -1;
 }

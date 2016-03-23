@@ -35,10 +35,10 @@ struct stats_t {
     std::string *seq_comment;
     T **seq_stats;
 
-    params_t &params;
+    params_t *params;
 
     // stats_t();
-    stats_t(params_t params, bam_hdr_t &h);
+    stats_t(params_t *params, bam_hdr_t &h);
     ~stats_t();
 
     /*******
@@ -96,12 +96,12 @@ struct stats_t {
 
 template <typename T, int counter_size, int refbase_size>
 stats_t<T, counter_size, refbase_size>::stats_t(
-    ococo::params_t parameters, bam_hdr_t &h)
+    ococo::params_t *params, bam_hdr_t &h)
     : n_seqs(h.n_targets), seq_active(new (std::nothrow) bool[n_seqs]()),
       seq_len(new (std::nothrow) int64_t[n_seqs]()),
       seq_name(new (std::nothrow) std::string[n_seqs]()),
       seq_comment(new (std::nothrow) std::string[n_seqs]()),
-      seq_stats(new (std::nothrow) T *[n_seqs]()), params(parameters) {
+      seq_stats(new (std::nothrow) T *[n_seqs]()), params(params) {
     for (int seqid = 0; seqid < n_seqs; seqid++) {
         seq_len[seqid] = h.target_len[seqid];
         seq_active[seqid] = true;
@@ -166,7 +166,7 @@ int stats_t<T, counter_size, refbase_size>::load_fasta(
             if (psu.nt16 != nt256_nt16[static_cast<int32_t>('N')]) {
                 for (int32_t i = 0; i < 4; i++) {
                     psu.counters[i] = ((0x1 << i) & psu.nt16)
-                                          ? std::min(params.init_ref_weight,
+                                          ? std::min(params->init_ref_weight,
                                                      max_counter_value)
                                           : 0;
                 }
@@ -383,7 +383,7 @@ int stats_t<T, counter_size, refbase_size>::call_consensus_position(
     char old_base_nt256;
     get_nucl_nt256(seqid, pos, old_base_nt256);
     // const char new_base_nt256=cons_call_maj(psu);
-    const char new_base_nt256 = (params.cons_alg[params.strategy])(psu, params);
+    const char new_base_nt256 = (params->cons_alg[params->strategy])(psu, *params);
 
     if (old_base_nt256 != new_base_nt256) {
         if (vcf_file != nullptr) {
@@ -493,7 +493,7 @@ int stats_t<T, counter_size, refbase_size>::print_vcf_substitution(
             ",%" PRId32 ",%" PRId32 ";SUM=%" PRId32 ";COV=%" PRId32 "\n",
             seq_name[seqid].c_str(), pos + 1, old_base, new_base,
             psu.counters[0], psu.counters[1], psu.counters[2], psu.counters[3],
-            psu.sum, psu.sum - params.init_ref_weight);
+            psu.sum, psu.sum - params->init_ref_weight);
 
     return 0;
 }

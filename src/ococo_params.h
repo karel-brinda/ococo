@@ -35,16 +35,27 @@ enum strategy_t {
     MAJORITY_AMB,
     count
 };
-
+    
+enum counter_configuration_t {
+    OCOCO16,
+    OCOCO32,
+    OCOCO64,
+};
 
 struct params_t {
     bool correctly_initialized;
     int return_code;
 
-    mode_t mode;
-    strategy_t strategy;
-
     std::string command;
+    
+    /*
+        Counter parameters
+    */
+    counter_configuration_t counter_configuration;
+    std::string counters_str;
+    std::string counters_str_descr;
+    int32_t stats_bits_per_position;
+    int32_t stats_bits_per_nucleotide;
 
     /*
         Input parameters
@@ -76,6 +87,9 @@ struct params_t {
         Consensus calling parameters
     */
 
+    mode_t mode;
+    strategy_t strategy;
+    
     /* minimum mapping quality for update */
     int32_t min_mapq;
 
