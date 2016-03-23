@@ -10,49 +10,32 @@
 #include <cstdio>
 #include <cstdlib>
 
-#ifdef DEBUGGING_MODE
+#include <boost/log/core.hpp>
+#include <boost/log/expressions.hpp>
+#include <boost/log/trivial.hpp>
 
 #ifndef DEBUGGING_SEVERITY
 #define DEBUGGING_SEVERITY trace
 #endif
 
-#include <boost/log/core.hpp>
-#include <boost/log/expressions.hpp>
-#include <boost/log/trivial.hpp>
-
 namespace logging = boost::log;
 
-void boost_logging_init() {
-    logging::core::get()->set_filter(logging::trivial::severity >=
-                                     logging::trivial::DEBUGGING_SEVERITY);
-}
-
-#endif
-
-/*
- CONFIGURATION - STATISTICS
- --------------------------
- */
-
-#ifdef OCOCO32
-typedef uint32_t OCOCO_BASIC_TYPE;
+#ifdef DEBUGGING_MODE
+const bool debugging = true;
 #else
-typedef uint16_t OCOCO_BASIC_TYPE;
+const bool debugging = false;
 #endif
-
-constexpr uint32_t BITS_PER_COUNTER = (sizeof(OCOCO_BASIC_TYPE) * 8 - 4) / 4;
-typedef ococo::stats_t<OCOCO_BASIC_TYPE, BITS_PER_COUNTER, 4> STATS_T;
 
 /*
  --------------------------
  */
 
-const bool debugging = false;
 
 int main(int argc, const char *argv[]) {
     if(debugging){
         
-        boost_logging_init();
+        logging::core::get()->set_filter(logging::trivial::severity >=
+                                         logging::trivial::DEBUGGING_SEVERITY);
         
         /*
          BOOST_LOG_TRIVIAL(trace) << "A trace severity message";
