@@ -137,6 +137,13 @@ namespace ococo {
         constexpr int32_t max_counter_value =
         ococo::right_full_mask<T, counter_size>();
         
+        if(errno!=0 || fp==nullptr){
+            ococo::error("File '%s' could not be opened.\n",
+                               fasta_fn.c_str());
+            return -1;
+            
+        }
+        
         for (int seqid = 0; (l = kseq_read(seq)) >= 0; seqid++) {
             if (seq_name[seqid].compare(seq->name.s) != 0) {
                 error("Sequence names in BAM/SAM and in FASTA do not correspond "

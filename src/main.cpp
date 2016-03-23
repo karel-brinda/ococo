@@ -71,7 +71,7 @@ int main(int argc, const char *argv[]) {
      */    
     ococo::params_t params = ococo::params_t(argc, argv);
     if (!params.correctly_initialized){
-        return params.return_code;
+        return EXIT_FAILURE;
     }
     
     switch (params.counter_configuration){
@@ -79,6 +79,9 @@ int main(int argc, const char *argv[]) {
         case ococo::OCOCO16:
         {
             ococo::caller_t<uint16_t, 3, 4, debugging> caller(&params);
+            if (!caller.correctly_initialized){
+                return EXIT_FAILURE ;
+            }
             caller.run();
             return caller.return_code;
         }
@@ -86,6 +89,9 @@ int main(int argc, const char *argv[]) {
         case ococo::OCOCO32:
         {
             ococo::caller_t<uint32_t, 7, 4, debugging> caller(&params);
+            if (!caller.correctly_initialized){
+                return EXIT_FAILURE ;
+            }
             caller.run();
             return caller.return_code;
         }
@@ -93,10 +99,13 @@ int main(int argc, const char *argv[]) {
         case ococo::OCOCO64:
         {
             ococo::caller_t<uint64_t, 15, 4, debugging> caller(&params);
+            if (!caller.correctly_initialized){
+                return EXIT_FAILURE ;
+            }
             caller.run();
             return caller.return_code;
         }
     }
     
-    return -1;
+    return EXIT_FAILURE;
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdlib>
+
 #include "ococo_stats.h"
 #include "ococo_params.h"
 
@@ -57,6 +59,7 @@ namespace ococo{
         ococo::info("Initialing SAM/BAM reader.\n");
         
         correctly_initialized=true;
+        return_code=EXIT_SUCCESS;
         
         iter = nullptr;
         b = nullptr;
@@ -439,7 +442,7 @@ namespace ococo{
                 if (error_code != 0) {
                     ococo::error("FASTA '%s' could not be saved.\n",
                                  params->fasta_out_fn.c_str());
-                    return_code = -1;
+                    return_code = EXIT_FAILURE ;
                 }
             } else {
                 if(debugging){
@@ -460,7 +463,7 @@ namespace ococo{
             if (error_code != 0) {
                 ococo::error("Statistics could not be saved ('%s').\n",
                              params->stats_out_fn.c_str());
-                return_code = -1;
+                return_code = EXIT_FAILURE;
             }
         } else {
             if(debugging){
@@ -494,7 +497,7 @@ namespace ococo{
             delete stats;
         }
         
-        if (return_code == 0) {
+        if (return_code==EXIT_SUCCESS && correctly_initialized==true) {
             ococo::info("Ococo successfully finished. Bye.\n");
         }
         
