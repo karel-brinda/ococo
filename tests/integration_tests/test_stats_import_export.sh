@@ -13,7 +13,7 @@ rm -f output/stats.ococo
 	-F output/fasta_NA.fa \
 	-S output/stats.ococo \
 	-t majority \
-	-v - \
+	-V - \
 
 diff output/fasta_NA.fa data/fasta_NC.fa
 
@@ -28,7 +28,7 @@ echo
 	-s output/stats.ococo \
 	-S output/stats.ococo \
 	-t majority \
-	-v - \
+	-V - \
 
 echo
 echo "==============================="
@@ -41,7 +41,7 @@ echo
 	-s output/stats.ococo \
 	-S output/stats.ococo \
 	-t majority \
-	-v - \
+	-V - \
 
 echo
 echo "==============================="
