@@ -12,33 +12,6 @@ Compilation
 	make -j
 
 
-Compilation options
-~~~~~~~~~~~~~~~~~~~
-
-Compilation modes: ``RELEASE``, ``RELWITHDEBINFO``, ``DEBUG``. To use it run, e.g,
-
-.. code-block:: bash
-
-    cmake . -DCMAKE_BUILD_TYPE=DEBUG
-    make -j
-
-
-Other compilation options:
-
-* ``VERBOSE_VCF`` - Verbose mode for VCF (include the unchanged bases in VCF).
-* ``OCOCO32`` - More accurate statistics (32bits / per position instead of 16bits).
-* ``INSTALL_DEBUG_SCRIPTS`` - Install also auxiliary debugging scripts by ``make install``.
-* ``DEBUGGING_SEVERITY`` - Verbosity of logging in debugging mode (``trace`` / ``debug`` / ``info`` / ``warning`` / ``error`` / ``fatal``).
-
-
-Example of usage:
-
-.. code-block:: bash
-
-	cmake -DOCOCO32=ON .
-	make -j
-
-
 Installation
 ------------
 
@@ -60,28 +33,42 @@ Parameters
 
 .. code-block::
 
-	Command-line parameters:
-	  -i [ --input ] arg              Input SAM/BAM file (- for standard input).
-	  -f [ --fasta-ref ] arg          Initial FASTA reference (if not provided, 
-	                                  sequence of N's is considered as the 
-	                                  reference).
-	  -F [ --fasta-cons ] arg         FASTA file with consensus, which is 
-	                                  continuously updated.
-	  -s [ --stats-in ] arg           Input statistics.
-	  -S [ --stats-out ] arg          Outputs statistics.
-	  -v [ --vcf-cons ] arg           VCF file with updates of consensus.
-	  -m [ --mode ] arg               Mode: real-time / batch. [batch]
-	  -t [ --strategy ] arg           Strategy for updates: majority / stochastic. 
-	                                  [stochastic]
-	  -a [ --allow-amb ]              Allow updates to ambiguous nucleotides.
-	  -q [ --min-MQ ] arg             Skip alignments with mapping quality smaller 
-	                                  than INT. [1]
-	  -Q [ --min-BQ ] arg             Skip bases with base quality smaller than 
-	                                  INT. [13]
-	  -w [ --ref-weight ] arg         Initial counter value for nucleotides from 
-	                                  the reference. [2]
-	  -c [ --min-coverage ] arg       Minimum coverage required for update. [2]
-	  -M [ --majority-threshold ] arg Majority threshold. [0.6]
+	Generic options:
+	  -v [ --version ]                      Print version and exit.
+	  -h [ --help ]                         Print this message and exit.
 
+	Input options:
+	  -i [ --input ] arg                    Input SAM/BAM file (- for standard 
+	                                        input).
+	  -f [ --fasta-ref ] arg                Initial FASTA reference (if not 
+	                                        provided, sequence of N's is considered
+	                                        as the reference).
+	  -s [ --stats-in ] arg                 Input statistics.
 
+	Output options:
+	  -F [ --fasta-cons ] arg               FASTA file with consensus.
+	  -S [ --stats-out ] arg                Outputs statistics.
+	  -V [ --vcf-cons ] arg                 VCF file with updates of consensus (- 
+	                                        for standard output).
+	  -P [ --pileup ] arg                   Truncated pileup (- for standard 
+	                                        output).
+	  --verbose                             Verbose mode.
 
+	Parameters of consensus calling:
+	  -x [ --counters ] arg (=ococo16)      Counters configuration: 
+	                                         - ococo16 (3 bits per counter)
+	                                         - ococo32 (7 bits per counter)
+	                                         - ococo64 (15 bits per counter)
+	  -m [ --mode ] arg (=batch)            Mode: real-time / batch.
+	  -t [ --strategy ] arg (=majority)     Strategy for updates: no-updates / 
+	                                        majority / stochastic.
+	  -a [ --allow-amb ]                    Allow updates to ambiguous nucleotides.
+	  -q [ --min-MQ ] arg (=1)              Skip alignments with mapping quality 
+	                                        smaller than INT.
+	  -Q [ --min-BQ ] arg (=13)             Skip bases with base quality smaller 
+	                                        than INT.
+	  -w [ --ref-weight ] arg (=0)          Initial counter value for nucleotides 
+	                                        from the reference.
+	  -c [ --min-coverage ] arg (=2)        Minimum coverage required for update.
+	  -M [ --majority-threshold ] arg (=0.59999999999999998)
+	                                        Majority threshold.
