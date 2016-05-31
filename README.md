@@ -1,9 +1,13 @@
 # OCOCO - Online Consensus Caller
 
+Welcome to OCOCO, an online consensus caller.
+
 ## Prerequisities
 
-* C++ compiler
-* CMake
+* G++ 4.9+ or equivalent
+* CMake (http://cmake.org/)
+* Boost (http://www.boost.org/)
+* Git (https://git-scm.com/)
 
 ## Getting started
 
@@ -56,3 +60,7 @@ Parameters of consensus calling:
   -M [ --majority-threshold ] arg (=0.59999999999999998)
                                         Majority threshold.
 ```
+
+## Citing OCOCO
+
+* K. Brinda, V. Boeva, G. Kucherov. Dynamic read mapping and online consensus calling for better variant detection. arXiv:1605.09070v1 [q-bio.GN], 2016. http://arxiv.org/abs/1605.09070
