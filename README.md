@@ -1,5 +1,8 @@
 # OCOCO - Online Consensus Caller
 
+[![Build Status](https://travis-ci.org/karel-brinda/ococo.svg?branch=master)](https://travis-ci.org/karel-brinda/ococo)
+[![Arxiv](https://img.shields.io/badge/arXiv-1605.09070-green.svg?style=flat)](https://arxiv.org/abs/1605.09070)
+
 Welcome to OCOCO, an online consensus caller.
 
 ## Prerequisities
