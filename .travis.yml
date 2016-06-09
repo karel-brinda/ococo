@@ -3,6 +3,18 @@ language: cpp
 cache:
   apt: true
 
+
+env:
+  global:
+    # Maintenance note: to move to a new version
+    # of boost, update both BOOST_ROOT and BOOST_URL.
+    # Note that for simplicity, BOOST_ROOT's final
+    # namepart must match the folder name internal
+    # to boost's .tar.gz.
+    - BOOST_ROOT=$HOME/boost_1_60_0
+    - BOOST_URL='http://downloads.sourceforge.net/project/boost/boost/1.60.0/boost_1_60_0.tar.gz?r=https%3A%2F%2Fsourceforge.net%2Fprojects%2Fboost%2Ffiles%2Fboost%2F1.60.0%2Fboost_1_60_0.tar.gz&ts=1460417589&use_mirror=netix'
+
+
 matrix:
   include:
 
@@ -19,8 +31,9 @@ matrix:
         - sudo apt-get install cmake
         - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 90
         - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 90
-        - sudo apt-get install zlib1g-dev libbz2-dev libboost-dev
+        - sudo apt-get install zlib1g-dev
         - sudo apt-get install git-svn
+        - ./scripts/install-boost.sh
 
     - os: osx
       compiler: clang-3.7
@@ -36,3 +49,7 @@ matrix:
 
 script:
   - cmake . && make && ./run.sh
+
+cache:
+  directories:
+  - $BOOST_ROOT
