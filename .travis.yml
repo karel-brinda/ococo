@@ -7,13 +7,20 @@ matrix:
   include:
 
     - os: linux 
-      compiler: gcc5
+      compiler: gcc
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test', 'george-edison55-precise-backports']
-          packages: ['g++-5', 'cmake', 'cmake-data', 'libboost-dev']
+          packages: ['cmake', 'cmake-data']
       install:
-        - export CXX="g++-5" CC="gcc-5"
+        - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+        - sudo apt-get update
+        - sudo apt-get install g++-4.8
+        - sudo apt-get install cmake
+        - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 90
+        - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 90
+        - sudo apt-get install zlib1g-dev libbz2-dev libboost-dev
+        - sudo apt-get install git-svn
 
     - os: osx
       compiler: clang-3.7
