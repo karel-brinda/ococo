@@ -51,7 +51,7 @@ before-script:
 
 script:
   - cmake . && make && ./run.sh
-  - cd tests/integration_tests && bats ${CI:+--tap} integration_tests.bats
+  - (cd tests/integration_tests && bats ${CI:+--tap} integration_tests.bats)
   - ./tests/unit_tests/unittests
 
 cache:
