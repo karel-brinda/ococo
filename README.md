@@ -7,7 +7,7 @@ Welcome to OCOCO, an online consensus caller.
 
 ## Prerequisities
 
-* G++ 4.9+ or equivalent
+* GCC 4.8+ or equivalent
 * CMake (http://cmake.org/)
 * Boost (http://www.boost.org/)
 * Git (https://git-scm.com/)
