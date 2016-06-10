@@ -42,6 +42,7 @@ matrix:
         - sudo brew tap homebrew/versions
         - sudo brew install llvm37
         - sudo brew install boost155
+        - sudo brew install bats
         - sudo brew unlink cmake && sudo brew install cmake31
         - sudo pip install --upgrade jinja2 nose
       install:
