@@ -1,18 +1,21 @@
 # OCOCO - Online Consensus Caller
 
+[![Build Status](https://travis-ci.org/karel-brinda/ococo.svg?branch=master)](https://travis-ci.org/karel-brinda/ococo)
+[![Arxiv](https://img.shields.io/badge/arXiv-1605.09070-green.svg?style=flat)](https://arxiv.org/abs/1605.09070)
+
 Welcome to OCOCO, an online consensus caller.
 
 ## Prerequisities
 
-* G++ 4.9+ or equivalent
+* GCC 4.8+ or equivalent
 * CMake (http://cmake.org/)
-* Boost (http://www.boost.org/)
+* Boost 1.46+ (http://www.boost.org/)
 * Git (https://git-scm.com/)
 
 ## Getting started
 
 ```bash
-git clone https://github.com/karel-brinda/ococo
+git clone --recursive https://github.com/karel-brinda/ococo
 cd ococo && cmake . && make
 ./ococo -i test.bam -f test.fa -m real-time --vcf-cons -
 ```

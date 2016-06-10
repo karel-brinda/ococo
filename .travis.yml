@@ -1,0 +1,62 @@
+language: cpp
+
+cache:
+  apt: true
+
+env:
+  global:
+    # Maintenance note: to move to a new version
+    # of boost, update both BOOST_ROOT and BOOST_URL.
+    # Note that for simplicity, BOOST_ROOT's final
+    # namepart must match the folder name internal
+    # to boost's .tar.gz.
+    - BOOST_ROOT=$HOME/boost_1_60_0
+    - BOOST_URL='http://downloads.sourceforge.net/project/boost/boost/1.60.0/boost_1_60_0.tar.gz?r=https%3A%2F%2Fsourceforge.net%2Fprojects%2Fboost%2Ffiles%2Fboost%2F1.60.0%2Fboost_1_60_0.tar.gz&ts=1460417589&use_mirror=netix'
+
+matrix:
+  include:
+
+    - os: linux 
+      compiler: gcc
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'george-edison55-precise-backports']
+          packages: ['cmake', 'cmake-data']
+      install:
+        - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+        - sudo add-apt-repository ppa:duggan/bats -y
+        - sudo apt-get update
+        - sudo apt-get install g++-4.8
+        - sudo apt-get install cmake
+        - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 90
+        - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 90
+        - sudo apt-get install zlib1g-dev
+        - sudo apt-get install git-svn
+        - sudo apt-get install bats
+        - ./scripts/install-boost.sh
+
+    - os: osx
+      compiler: clang-3.7
+      before_install:
+        - sudo brew update
+        - sudo brew tap homebrew/versions
+        - sudo brew install llvm37
+        - sudo brew install boost155
+        - sudo brew install bats
+        - sudo brew unlink cmake && sudo brew install cmake31
+        - sudo pip install --upgrade jinja2 nose
+      install:
+        - export CXX="clang++-3.7" CC="clang-3.7"
+
+#before-script:
+#  - git clone git://github.com/sstephenson/bats $PWD/bats
+#  - export PATH=$PATH:$PWD/bats/bin
+
+script:
+  - cmake . && make && ./run.sh
+  - (cd tests/integration_tests && bats ${CI:+--tap} integration_tests.bats)
+  - ./tests/unit_tests/unittests
+
+cache:
+  directories:
+  - $BOOST_ROOT
