@@ -69,7 +69,7 @@ ExternalProject_Add(htslib
     INSTALL_COMMAND ""
 )
 
-include_directories(${CMAKE_BINARY_DIR}/ext/htslib/include)
+include_directories(${CMAKE_BINARY_DIR}/ext/htslib)
 
 
 ########
