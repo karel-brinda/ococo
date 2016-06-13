@@ -10,6 +10,7 @@ Welcome to OCOCO, an online consensus caller.
 * GCC 4.8+ or equivalent
 * CMake (http://cmake.org/)
 * Boost 1.46+ (http://www.boost.org/)
+* ZLib
 
 ## Getting started
 
