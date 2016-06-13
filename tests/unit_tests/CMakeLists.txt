@@ -1,9 +1,13 @@
 include_directories(../..)
 
-list( APPEND CMAKE_CXX_FLAGS "-Wall -std=c++11")
+list(APPEND CMAKE_CXX_FLAGS "-Wall -std=c++11")
 
 add_executable(unittests unittests.cpp)
 
 find_package (Threads REQUIRED)
 
-target_link_libraries(unittests ${googletest_LIB} ${CMAKE_THREAD_LIBS_INIT} ${Boost_LIBRARIES} ${htslib_LIB} ${zlib_LIB} ococo_core)
+enable_testing()
+find_package(GTest REQUIRED)
+include_directories(${GTEST_INCLUDE_DIRS})
+
+target_link_libraries(unittests ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${Boost_LIBRARIES} ${htslib_LIB} ${zlib_LIB} ococo_core)

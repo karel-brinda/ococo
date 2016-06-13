@@ -2,6 +2,7 @@ cmake_minimum_required (VERSION 2.6)
 project (ococo C CXX)
 
 
+
 ##############################
 # COMPILATION MODE SWITCHERS #
 ##############################
@@ -39,6 +40,7 @@ if(CMAKE_BUILD_TYPE MATCHES DEBUG)
 endif(CMAKE_BUILD_TYPE MATCHES DEBUG)
 
 
+
 ######################
 # EXTERNAL LIBRARIES #
 ######################
@@ -48,7 +50,8 @@ include(ExternalProject)
 include_directories( ${Boost_INCLUDE_DIR} )
 
 include("cmake-ext/htslib.cmake")
-include("cmake-ext/googletest.cmake")
+
+
 
 
 ################
@@ -78,14 +81,6 @@ add_library(ococo_core
 target_link_libraries(ococo_core ${Boost_LIBRARIES})
 target_link_libraries(ococo ${Boost_LIBRARIES} ${htslib_LIB} ococo_core)
 
-
-#find_package(ZLIB REQUIRED)
-#if (ZLIB_FOUND)
-#    include_directories(${ZLIB_INCLUDE_DIRS})
-#    target_link_libraries(ococo ${ZLIB_LIBRARIES})
-#else()
-#    message (FATAL_ERROR "zlib not found.")
-#endif(ZLIB_FOUND)
 
 ################
 # INSTALLATION #
