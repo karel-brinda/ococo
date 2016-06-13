@@ -26,14 +26,15 @@ matrix:
         - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
         - sudo add-apt-repository ppa:duggan/bats -y
         - sudo apt-get update
-        - sudo apt-get install g++-4.8
-        - sudo apt-get install cmake
+        - sudo apt-get install g++-4.8 cmake zlib1g-dev git-svn bats libgtest-dev
         - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 90
         - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 90
-        - sudo apt-get install zlib1g-dev
-        - sudo apt-get install git-svn
-        - sudo apt-get install bats
         - ./scripts/install-boost.sh
+        - cd /usr/src/gtest && sudo cmake . && sudo cmake --build . && sudo mv libg* /usr/local/lib/ ; cd -
+      script:
+        - cmake . -DBUILD_TESTS=1 && make && ./run.sh
+        - (cd tests/integration_tests && bats ${CI:+--tap} integration_tests.bats)
+        - ./tests/unit_tests/unittests
 
     - os: osx
       compiler: clang-3.7
@@ -47,15 +48,9 @@ matrix:
         - sudo pip install --upgrade jinja2 nose
       install:
         - export CXX="clang++-3.7" CC="clang-3.7"
-
-#before-script:
-#  - git clone git://github.com/sstephenson/bats $PWD/bats
-#  - export PATH=$PATH:$PWD/bats/bin
-
-script:
-  - cmake . && make && ./run.sh
-  - (cd tests/integration_tests && bats ${CI:+--tap} integration_tests.bats)
-  - ./tests/unit_tests/unittests
+      script:
+        - cmake . && make && ./run.sh
+        - (cd tests/integration_tests && bats ${CI:+--tap} integration_tests.bats)
 
 cache:
   directories:

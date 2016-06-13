@@ -32,29 +32,65 @@ endif(CMAKE_BUILD_TYPE MATCHES RELWITHDEBINFO)
 option(INSTALL_DEBUG_SCRIPTS "Install debugging scripts." OFF)
 set(DEBUGGING_SEVERITY "trace" CACHE STRING  "Verbosity of debugging mode.")
 
+option(BUILD_TESTS "Build tests." OFF)
+
+
+#########
+# BOOST #
+#########
+
 find_package( Boost 1.46 COMPONENTS program_options system log log_setup thread REQUIRED )
 if(CMAKE_BUILD_TYPE MATCHES DEBUG)
     add_definitions(-DDEBUGGING_MODE)
     add_definitions(-DDEBUGGING_SEVERITY=${DEBUGGING_SEVERITY})
 endif(CMAKE_BUILD_TYPE MATCHES DEBUG)
 
-
-######################
-# EXTERNAL LIBRARIES #
-######################
-
-include(ExternalProject)
-
 include_directories( ${Boost_INCLUDE_DIR} )
 
-include("cmake-ext/htslib.cmake")
-include("cmake-ext/zlib.cmake")
-include("cmake-ext/googletest.cmake")
+
+##########
+# HTSLIB #
+##########
+
+if (CMAKE_GENERATOR STREQUAL "Unix Makefiles")
+    set(MAKE_COMMAND "$(MAKE)")
+else()
+    find_program(MAKE_COMMAND NAMES make gmake)
+endif()
+
+include(ExternalProject)
+ExternalProject_Add(htslib
+    PREFIX ${CMAKE_BINARY_DIR}/ext/htslib.tmp
+    SOURCE_DIR "${CMAKE_BINARY_DIR}/ext/htslib"
+    BUILD_IN_SOURCE 1
+    UPDATE_COMMAND ""
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ${MAKE_COMMAND} lib-static
+    INSTALL_COMMAND ""
+)
+
+include_directories(${CMAKE_BINARY_DIR}/ext/htslib)
+
+
+########
+# ZLIB #
+########
+
+find_package(ZLIB REQUIRED)
+if (ZLIB_FOUND)
+    include_directories(${ZLIB_INCLUDE_DIRS})
+else()
+    message (FATAL_ERROR "zlib not found.")
+endif(ZLIB_FOUND)
+
+include_directories(${htslib_INSTALL}/include)
+find_package (Threads)
 
 
 ################
 # MAIN PROGRAM #
 ################
+
 include_directories( "src" )
 add_subdirectory(tests/unit_tests)
 
@@ -64,7 +100,7 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O3 -march
 set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG}          -O0 -g -pedantic")
 
 add_executable(ococo src/main.cpp)
-add_dependencies(ococo htslib zlib ococo_core)
+add_dependencies(ococo htslib ococo_core)
 add_library(ococo_core
         src/ococo_caller.h
         src/ococo_params.cpp
@@ -76,8 +112,8 @@ add_library(ococo_core
         src/ococo_stats.h
         src/version.h
     )
-target_link_libraries(ococo_core ${Boost_LIBRARIES})
-target_link_libraries(ococo ${Boost_LIBRARIES} ${htslib_LIB} ${zlib_LIB} ococo_core)
+target_link_libraries(ococo_core ${Boost_LIBRARIES} ${CMAKE_BINARY_DIR}/ext/htslib/libhts.a ${ZLIB_LIBRARIES})
+target_link_libraries(ococo ${CMAKE_THREAD_LIBS_INIT} ${ZLIB_LIBRARIES} ococo_core)
 
 
 ################
@@ -96,6 +132,5 @@ endif(INSTALL_DEBUG_SCRIPTS)
 # TESTS #
 #########
 
-enable_testing()
 add_test(NAME unit_tests COMMAND unittests)
 #add_test(NAME integration_tests COMMAND "cd tests/integration_test/ && ./integration_tests.bats")

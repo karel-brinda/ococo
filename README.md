@@ -10,7 +10,7 @@ Welcome to OCOCO, an online consensus caller.
 * GCC 4.8+ or equivalent
 * CMake (http://cmake.org/)
 * Boost 1.46+ (http://www.boost.org/)
-* Git (https://git-scm.com/)
+* ZLib
 
 ## Getting started
 
@@ -19,6 +19,8 @@ git clone --recursive https://github.com/karel-brinda/ococo
 cd ococo && cmake . && make
 ./ococo -i test.bam -f test.fa -m real-time --vcf-cons -
 ```
+
+** Installation: ** ``make install``
 
 ## Command line parameters
 

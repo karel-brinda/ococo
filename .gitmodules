@@ -1,0 +1,6 @@
+[submodule "ext/googletest"]
+	path = ext/googletest
+	url = http://github.com/google/googletest
+[submodule "ext/htslib"]
+	path = ext/htslib
+	url = http://github.com/samtools/htslib
