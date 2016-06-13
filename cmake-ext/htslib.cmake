@@ -22,7 +22,16 @@ ExternalProject_Add(htslib
 
 #include("./zlib.cmake")
 
-add_dependencies(htslib zlib)
+find_package(ZLIB REQUIRED)
+if (ZLIB_FOUND)
+    include_directories(${ZLIB_INCLUDE_DIRS})
+    target_link_libraries(htslib ${ZLIB_LIBRARIES})
+    #add_dependencies(htslib ${ZLIB_LIBRARIES})
+else()
+    message (FATAL_ERROR "zlib not found.")
+endif(ZLIB_FOUND)
+
+
 include_directories(${htslib_INSTALL}/include)
 find_package (Threads)
-set(htslib_LIB ${htslib_INSTALL}/lib/libhts.a ${zlib_LIB} ${CMAKE_THREAD_LIBS_INIT})
+set(htslib_LIB ${htslib_INSTALL}/lib/libhts.a ${CMAKE_THREAD_LIBS_INIT} ${ZLIB_LIBRARIES})

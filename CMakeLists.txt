@@ -48,7 +48,6 @@ include(ExternalProject)
 include_directories( ${Boost_INCLUDE_DIR} )
 
 include("cmake-ext/htslib.cmake")
-include("cmake-ext/zlib.cmake")
 include("cmake-ext/googletest.cmake")
 
 
@@ -64,7 +63,7 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O3 -march
 set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG}          -O0 -g -pedantic")
 
 add_executable(ococo src/main.cpp)
-add_dependencies(ococo htslib zlib ococo_core)
+add_dependencies(ococo htslib ococo_core)
 add_library(ococo_core
         src/ococo_caller.h
         src/ococo_params.cpp
@@ -77,8 +76,16 @@ add_library(ococo_core
         src/version.h
     )
 target_link_libraries(ococo_core ${Boost_LIBRARIES})
-target_link_libraries(ococo ${Boost_LIBRARIES} ${htslib_LIB} ${zlib_LIB} ococo_core)
+target_link_libraries(ococo ${Boost_LIBRARIES} ${htslib_LIB} ococo_core)
 
+
+#find_package(ZLIB REQUIRED)
+#if (ZLIB_FOUND)
+#    include_directories(${ZLIB_INCLUDE_DIRS})
+#    target_link_libraries(ococo ${ZLIB_LIBRARIES})
+#else()
+#    message (FATAL_ERROR "zlib not found.")
+#endif(ZLIB_FOUND)
 
 ################
 # INSTALLATION #
