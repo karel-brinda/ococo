@@ -32,6 +32,8 @@ endif(CMAKE_BUILD_TYPE MATCHES RELWITHDEBINFO)
 option(INSTALL_DEBUG_SCRIPTS "Install debugging scripts." OFF)
 set(DEBUGGING_SEVERITY "trace" CACHE STRING  "Verbosity of debugging mode.")
 
+option(BUILD_TESTS "Build tests." OFF)
+
 
 #########
 # BOOST #

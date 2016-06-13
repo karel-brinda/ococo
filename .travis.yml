@@ -53,7 +53,7 @@ matrix:
 #  - export PATH=$PATH:$PWD/bats/bin
 
 script:
-  - cmake . && make && ./run.sh
+  - cmake . -DBUILD_TESTS=1 && make && ./run.sh
   - (cd tests/integration_tests && bats ${CI:+--tap} integration_tests.bats)
   - ./tests/unit_tests/unittests
 
