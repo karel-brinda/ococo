@@ -475,13 +475,14 @@ namespace ococo {
             fprintf(vcf_file, "##contig=<ID=%s,length=%" PRId64 ">\n",
                     seq_name[seqid].c_str(), seq_len[seqid]);
         }
+
         
+        fprintf(vcf_file, "##INFO=<ID=AF,Number=A,Type=Float,Description="
+                "\"Allele frequency for the ALT allele.\">\n");
         fprintf(vcf_file, "##INFO=<ID=CS,Number=4,Type=Integer,Description="
                 "\"Values of A,C,G,T counters.\">\n");
-        fprintf(vcf_file, "##INFO=<ID=SUM,Number=1,Type=Integer,Description=\"Sum "
-                "of all counters.\">\n");
         fprintf(vcf_file, "##INFO=<ID=COV,Number=1,Type=Integer,Description="
-                "\"Coverage (correct if no shift has been performed and "
+                "\"Coverage (correct if no shift has been performed so far and "
                 "reference nucleotide was unambiguous).\">\n");
         fprintf(vcf_file, "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n");
         
@@ -495,12 +496,15 @@ namespace ococo {
         assert(check_allocation());
         assert(vcf_file != nullptr);
         
+        float alt_freq=1.0*psu.counters[nt256_nt4[new_base]]/psu.sum;
+
         fprintf(vcf_file,
-                "%s\t%" PRId64 "\t.\t%c\t%c\t100\tPASS\tCS=%" PRId32 ",%" PRId32
-                ",%" PRId32 ",%" PRId32 ";SUM=%" PRId32 ";COV=%" PRId32 "\n",
+                "%s\t%" PRId64 "\t.\t%c\t%c\t100\tPASS\tAF=%.2f;CS=%" PRId32 ",%" PRId32
+                ",%" PRId32 ",%" PRId32 ";COV=%" PRId32 "\n",
                 seq_name[seqid].c_str(), pos + 1, old_base, new_base,
+                round(alt_freq*100.0)/100,
                 psu.counters[0], psu.counters[1], psu.counters[2], psu.counters[3],
-                psu.sum, psu.sum - params->init_ref_weight);
+                psu.sum);
         
         return 0;
     }
