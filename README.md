@@ -20,7 +20,7 @@ cd ococo && cmake . && make
 ./ococo -i test.bam -f test.fa -m real-time --vcf-cons -
 ```
 
-** Installation: ** ``make install``
+**Installation:** ``make install``
 
 ## Command line parameters
 
