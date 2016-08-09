@@ -348,6 +348,7 @@ namespace ococo {
             strncpy(seq_ser.seq_name, seq_name[seqid].c_str(), 999);
             strncpy(seq_ser.seq_name, seq_name[seqid].c_str(), 999);
             uint64_t written = 0;
+            written += fwrite(&seq_ser, sizeof(single_seq_serial_t), 1, fo);
             written += fwrite(seq_stats[seqid], sizeof(T), seq_len[seqid], fo);
             if (written != 1 + static_cast<uint64_t>(seq_len[seqid])) {
                 ococo::error(
