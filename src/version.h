@@ -2,6 +2,6 @@
 
 namespace ococo{
 
-static const char *OCOCO_VERSION = "0.1.0";
+static const char *OCOCO_VERSION = "0.1.1";
 
 }
