@@ -9,17 +9,17 @@ project (ococo C CXX)
 set(Boost_USE_STATIC_LIBS 1)
 
 if(NOT CMAKE_BUILD_TYPE)
-    message(STATUS "Setting build type to 'RELEASE' as none was specified.")
-    set(CMAKE_BUILD_TYPE RELEASE CACHE STRING "Choose the type of build." FORCE)
-    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "DEBUG" "RELEASE")
+	message(STATUS "Setting build type to 'RELEASE' as none was specified.")
+	set(CMAKE_BUILD_TYPE RELEASE CACHE STRING "Choose the type of build." FORCE)
+	set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "DEBUG" "RELEASE")
 endif()
 
 if(CMAKE_BUILD_TYPE MATCHES DEBUG)
-    message("DEBUG mode")
+	message("DEBUG mode")
 endif(CMAKE_BUILD_TYPE MATCHES DEBUG)
 
 if(CMAKE_BUILD_TYPE MATCHES RELEASE)
-    message("RELEASE mode")
+	message("RELEASE mode")
 endif(CMAKE_BUILD_TYPE MATCHES RELEASE)
 
 option(INSTALL_DEBUG_SCRIPTS "Install debugging scripts." OFF)
@@ -42,21 +42,21 @@ include_directories( ${Boost_INCLUDE_DIR} )
 ##########
 
 if (CMAKE_GENERATOR STREQUAL "Unix Makefiles")
-    set(MAKE_COMMAND "$(MAKE)")
+	set(MAKE_COMMAND "$(MAKE)")
 else()
-    find_program(MAKE_COMMAND NAMES make gmake)
+	find_program(MAKE_COMMAND NAMES make gmake)
 endif()
 
 include(ExternalProject)
 ExternalProject_Add(htslib
-    PREFIX ${CMAKE_BINARY_DIR}/ext/htslib.tmp
-    SOURCE_DIR "${CMAKE_BINARY_DIR}/ext/htslib"
-    BUILD_IN_SOURCE 1
-    UPDATE_COMMAND ""
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND ${MAKE_COMMAND} lib-static
-    INSTALL_COMMAND ""
-)
+	PREFIX ${CMAKE_BINARY_DIR}/ext/htslib.tmp
+	SOURCE_DIR "${CMAKE_BINARY_DIR}/ext/htslib"
+	BUILD_IN_SOURCE 1
+	UPDATE_COMMAND ""
+	CONFIGURE_COMMAND ""
+	BUILD_COMMAND ${MAKE_COMMAND} lib-static
+	INSTALL_COMMAND ""
+	)
 
 include_directories(${CMAKE_BINARY_DIR}/ext/htslib)
 
@@ -67,9 +67,9 @@ include_directories(${CMAKE_BINARY_DIR}/ext/htslib)
 
 find_package(ZLIB REQUIRED)
 if (ZLIB_FOUND)
-    include_directories(${ZLIB_INCLUDE_DIRS})
+	include_directories(${ZLIB_INCLUDE_DIRS})
 else()
-    message (FATAL_ERROR "zlib not found.")
+	message (FATAL_ERROR "zlib not found.")
 endif(ZLIB_FOUND)
 
 include_directories(${htslib_INSTALL}/include)
@@ -90,16 +90,16 @@ set(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG}   -O0 -pedantic")
 add_executable(ococo src/main.cpp)
 add_dependencies(ococo htslib ococo_core)
 add_library(ococo_core
-        src/ococo_caller.h
-        src/ococo_params.cpp
-        src/ococo_params.h
-        src/ococo_misc.cpp
-        src/ococo_misc.h
-        src/ococo.h
-        src/ococo_types.h
-        src/ococo_stats.h
-        src/version.h
-    )
+	src/ococo_caller.h
+	src/ococo_params.cpp
+	src/ococo_params.h
+	src/ococo_misc.cpp
+	src/ococo_misc.h
+	src/ococo.h
+	src/ococo_types.h
+	src/ococo_stats.h
+	src/version.h
+	)
 target_link_libraries(ococo_core ${Boost_LIBRARIES} ${CMAKE_BINARY_DIR}/ext/htslib/libhts.a ${ZLIB_LIBRARIES})
 target_link_libraries(ococo ${CMAKE_THREAD_LIBS_INIT} ${ZLIB_LIBRARIES} ococo_core)
 
@@ -111,7 +111,7 @@ target_link_libraries(ococo ${CMAKE_THREAD_LIBS_INIT} ${ZLIB_LIBRARIES} ococo_co
 install(TARGETS ococo DESTINATION bin)
 
 if(INSTALL_DEBUG_SCRIPTS)
-    install(PROGRAMS scripts/ococo_test_bam.sh DESTINATION bin)
+	install(PROGRAMS scripts/ococo_test_bam.sh DESTINATION bin)
 endif(INSTALL_DEBUG_SCRIPTS)
 
 

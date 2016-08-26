@@ -25,107 +25,107 @@
 
 namespace ococo {
 
-enum mode_t { BATCH, REALTIME };
+		  enum mode_t { BATCH, REALTIME };
 
-enum strategy_t {
-    NO_UPDATES,
-    STOCHASTIC,
-    STOCHASTIC_AMB,
-    MAJORITY,
-    MAJORITY_AMB,
-    count
-};
-    
-enum counter_configuration_t {
-    OCOCO16,
-    OCOCO32,
-    OCOCO64,
-};
+		  enum strategy_t {
+					 NO_UPDATES,
+					 STOCHASTIC,
+					 STOCHASTIC_AMB,
+					 MAJORITY,
+					 MAJORITY_AMB,
+					 count
+		  };
 
-struct params_t {
-    bool correctly_initialized;
-    int return_code;
+		  enum counter_configuration_t {
+					 OCOCO16,
+					 OCOCO32,
+					 OCOCO64,
+		  };
 
-    std::string command;
-    
-    /*
-        Counter parameters
-    */
-    counter_configuration_t counter_configuration;
-    std::string counters_str;
-    std::string counters_str_descr;
-    int32_t stats_bits_per_position;
-    int32_t stats_bits_per_nucleotide;
+		  struct params_t {
+					 bool correctly_initialized;
+					 int return_code;
 
-    /*
-        Input parameters
-    */
-    std::string sam_fn;
-    std::string fasta_in_fn;
-    std::string stats_in_fn;
+					 std::string command;
 
+					 /*
+						 Counter parameters
+						 */
+					 counter_configuration_t counter_configuration;
+					 std::string counters_str;
+					 std::string counters_str_descr;
+					 int32_t stats_bits_per_position;
+					 int32_t stats_bits_per_nucleotide;
 
-    /*
-        Output parameters
-    */
-    bool verbose;
-    
-    std::string vcf_fn;
-    std::string fasta_out_fn;
-    std::string stats_out_fn;
-    std::string pileup_fn;
-
-    /*
-        Files
-    */
-
-    FILE *vcf_file;
-    FILE *pileup_file;
-    FILE *fasta_out_file;
-    samFile *sam_file;
+					 /*
+						 Input parameters
+						 */
+					 std::string sam_fn;
+					 std::string fasta_in_fn;
+					 std::string stats_in_fn;
 
 
-    /*
-        Consensus calling parameters
-    */
+					 /*
+						 Output parameters
+						 */
+					 bool verbose;
 
-    mode_t mode;
-    strategy_t strategy;
-    
-    /* minimum mapping quality for update */
-    int32_t min_mapq;
+					 std::string vcf_fn;
+					 std::string fasta_out_fn;
+					 std::string stats_out_fn;
+					 std::string pileup_fn;
 
-    /* minimum base quality for update */
-    int32_t min_baseq;
+					 /*
+						 Files
+						 */
 
-    /* initial values for counters corresponding to ref */
-    int32_t init_ref_weight;
+					 FILE *vcf_file;
+					 FILE *pileup_file;
+					 FILE *fasta_out_file;
+					 samFile *sam_file;
 
-    /* minimum coverage for update (does not include init_ref_weight */
-    int32_t min_coverage;
 
-    /* threshold for having majority */
-    double majority_threshold;
+					 /*
+						 Consensus calling parameters
+						 */
 
-    /* auxiliary */
-    std::string strategy_str;
-    std::string mode_str;
+					 mode_t mode;
+					 strategy_t strategy;
 
-    /*
-        Array of consensus calling functions
-    */
-    char (*cons_alg[strategy_t::count])(const pos_stats_uncompr_t &psu,
-                                        const params_t &params);
+					 /* minimum mapping quality for update */
+					 int32_t min_mapq;
 
-    params_t();
+					 /* minimum base quality for update */
+					 int32_t min_baseq;
 
-    params_t(int argc, const char *argv[]);
+					 /* initial values for counters corresponding to ref */
+					 int32_t init_ref_weight;
 
-    ~params_t();
-    
-    void parse_commandline(int argc, const char *argv[]);
+					 /* minimum coverage for update (does not include init_ref_weight */
+					 int32_t min_coverage;
 
-    void init_default_values();
-};
+					 /* threshold for having majority */
+					 double majority_threshold;
+
+					 /* auxiliary */
+					 std::string strategy_str;
+					 std::string mode_str;
+
+					 /*
+						 Array of consensus calling functions
+						 */
+					 char (*cons_alg[strategy_t::count])(const pos_stats_uncompr_t &psu,
+										  const params_t &params);
+
+					 params_t();
+
+					 params_t(int argc, const char *argv[]);
+
+					 ~params_t();
+
+					 void parse_commandline(int argc, const char *argv[]);
+
+					 void init_default_values();
+		  };
 
 }
