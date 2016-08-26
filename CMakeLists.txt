@@ -90,14 +90,14 @@ set(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG}   -O0 -pedantic")
 add_executable(ococo src/main.cpp)
 add_dependencies(ococo htslib ococo_core)
 add_library(ococo_core
-	src/ococo_caller.h
-	src/ococo_params.cpp
-	src/ococo_params.h
-	src/ococo_misc.cpp
-	src/ococo_misc.h
+	src/caller.h
+	src/params.cpp
+	src/params.h
+	src/misc.cpp
+	src/misc.h
 	src/ococo.h
-	src/ococo_types.h
-	src/ococo_stats.h
+	src/types.h
+	src/stats.h
 	src/version.h
 	)
 target_link_libraries(ococo_core ${Boost_LIBRARIES} ${CMAKE_BINARY_DIR}/ext/htslib/libhts.a ${ZLIB_LIBRARIES})

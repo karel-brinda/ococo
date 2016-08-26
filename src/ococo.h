@@ -1,11 +1,11 @@
 #pragma once
 
-#include "ococo_misc.h"
-#include "ococo_params.h"
-#include "consensus_functions.h"
-#include "ococo_types.h"
-#include "ococo_stats.h"
-#include "ococo_caller.h"
+#include "misc.h"
+#include "params.h"
+#include "consensus.h"
+#include "types.h"
+#include "stats.h"
+#include "caller.h"
 #include "version.h"
 
 

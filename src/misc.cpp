@@ -1,4 +1,4 @@
-#include "ococo_misc.h"
+#include "misc.h"
 
 void ococo::print_version(){
 	std::cout << "Program: Ococo (online consensus caller, "
@@ -48,3 +48,4 @@ bool ococo::file_exists(const std::string &fn) {
 	}
 	return false;
 }
+

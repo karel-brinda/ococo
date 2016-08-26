@@ -2,8 +2,8 @@
 
 #include <cstdlib>
 
-#include "ococo_stats.h"
-#include "ococo_params.h"
+#include "stats.h"
+#include "params.h"
 
 namespace ococo{
 
@@ -178,6 +178,25 @@ namespace ococo{
 				return;
 			}
 		}
+
+		/*
+		 * Open log file.
+		 */
+
+		if (params->log_fn.size() > 0) {
+			params->log_file = fopen(params->log_fn.c_str(), "w+");
+
+			ococo::info("Opening log file ('%s').\n", params->log_fn.c_str());            
+			params->log_file = fopen(params->log_fn.c_str(), "w+");
+
+			if (params->log_file == nullptr) {
+				ococo::fatal_error(
+						"Problem with opening log file: '%s'.\n",
+						params->log_fn.c_str());
+				correctly_initialized=false;
+				return;
+			}
+		}	
 	}
 
 	/*
@@ -215,8 +234,10 @@ namespace ococo{
 
 			int32_t r;
 			b = bam_init1();
+			int64_t n_upd0=0;
+			int64_t i_read=0;
 			while ((r = sam_read1(params->sam_file, header, b)) >= 0) {
-				//const char *rname = bam_get_qname(b);
+				const char *rname = bam_get_qname(b);
 				const uint8_t *seq = bam_get_seq(b);
 				const uint8_t *qual = bam_get_qual(b);
 				const uint32_t *cigar = bam_get_cigar(b);
@@ -289,7 +310,14 @@ namespace ococo{
 						case BAM_CHARD_CLIP:
 							break;
 					}
+
+					if (stats->params->log_file != nullptr){
+						fprintf(stats->params->log_file, "%" PRIu64 "\t%s\t%" PRIu64 "\n", i_read, rname, stats->params->n_upd - n_upd0);
+						n_upd0=stats->params->n_upd;
+					}
 				}
+
+				i_read+=1;
 			}
 
 			/*

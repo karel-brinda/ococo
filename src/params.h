@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ococo_types.h"
-#include "ococo_misc.h"
+#include "types.h"
+#include "misc.h"
 
 #include <cstdio>
 #include <iostream>
@@ -49,8 +49,8 @@ namespace ococo {
 					 std::string command;
 
 					 /*
-						 Counter parameters
-						 */
+					  * Counter parameters
+					  */
 					 counter_configuration_t counter_configuration;
 					 std::string counters_str;
 					 std::string counters_str_descr;
@@ -58,36 +58,38 @@ namespace ococo {
 					 int32_t stats_bits_per_nucleotide;
 
 					 /*
-						 Input parameters
-						 */
+					  * Input parameters
+					  */
 					 std::string sam_fn;
 					 std::string fasta_in_fn;
 					 std::string stats_in_fn;
 
 
 					 /*
-						 Output parameters
-						 */
+					  * Output parameters
+					  */
 					 bool verbose;
 
 					 std::string vcf_fn;
 					 std::string fasta_out_fn;
 					 std::string stats_out_fn;
 					 std::string pileup_fn;
+					 std::string log_fn;
 
 					 /*
-						 Files
-						 */
+					  * Files
+					  */
 
 					 FILE *vcf_file;
 					 FILE *pileup_file;
 					 FILE *fasta_out_file;
 					 samFile *sam_file;
+					 FILE *log_file;
 
 
 					 /*
-						 Consensus calling parameters
-						 */
+					  * Consensus calling parameters
+					  */
 
 					 mode_t mode;
 					 strategy_t strategy;
@@ -110,10 +112,11 @@ namespace ococo {
 					 /* auxiliary */
 					 std::string strategy_str;
 					 std::string mode_str;
+					 int64_t n_upd;
 
 					 /*
-						 Array of consensus calling functions
-						 */
+					  * Array of consensus calling functions
+					  */
 					 char (*cons_alg[strategy_t::count])(const pos_stats_uncompr_t &psu,
 										  const params_t &params);
 

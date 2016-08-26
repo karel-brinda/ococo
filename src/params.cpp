@@ -1,5 +1,5 @@
-#include "ococo_params.h"
-#include "consensus_functions.h"
+#include "params.h"
+#include "consensus.h"
 
 /****************************
  *** Consensus parameters ***
@@ -29,6 +29,9 @@ void ococo::params_t::init_default_values() {
 		  pileup_file = nullptr;
 		  fasta_out_file = nullptr;
 		  sam_file = nullptr;
+		  log_file = nullptr;
+
+		  n_upd=0;
 
 		  correctly_initialized=true;
 		  return_code=0;
@@ -79,6 +82,10 @@ ococo::params_t::~params_t(){
 								ococo::error("FASTA consensus file could not be closed.\n");
 								return_code=-1;
 					 }
+		  }
+
+		  if (log_file != nullptr) {
+					 int error_code = fclose(log_file);
 		  }
 }
 
@@ -150,6 +157,10 @@ void ococo::params_t::parse_commandline(int argc, const char *argv[]){
 								 "pileup,P", po::value<std::string>(&pileup_fn),
 								 "Truncated pileup (- for standard output).")
 								//
+								(
+								 "log", po::value<std::string>(&log_fn),
+								 "Auxiliary log file.")
+								//
 								("verbose",
 								 "Verbose mode.")
 								//
@@ -160,7 +171,7 @@ void ococo::params_t::parse_commandline(int argc, const char *argv[]){
 								//
 								(
 								 "counters,x", po::value<std::string>(&counters_str)->default_value(counters_str),
-								 "Counters configuration: \n - ococo16 (3 bits per counter)\n - ococo32 (7 bits per counter)\n - ococo64 (15 bits per counter)")
+								 "Counters configuration: \n - ococo16 (3b/counter, 16b/position)\n - ococo32 (7b/counter, 32b/position)\n - ococo64 (15b/counter, 64b/position)")
 								//
 								(
 								 "mode,m", po::value<std::string>(&mode_str)->default_value(mode_str),

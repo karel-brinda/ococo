@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ococo_types.h"
-#include "ococo_params.h"
+#include "types.h"
+#include "params.h"
 
 #include "cassert"
 #include "cmath"
