@@ -11,7 +11,7 @@ set(Boost_USE_STATIC_LIBS 1)
 if(NOT CMAKE_BUILD_TYPE)
     message(STATUS "Setting build type to 'RELEASE' as none was specified.")
     set(CMAKE_BUILD_TYPE RELEASE CACHE STRING "Choose the type of build." FORCE)
-    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "DEBUG" "RELEASE" "RELWITHDEBINFO")
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "DEBUG" "RELEASE")
 endif()
 
 if(CMAKE_BUILD_TYPE MATCHES DEBUG)
@@ -22,13 +22,6 @@ if(CMAKE_BUILD_TYPE MATCHES RELEASE)
     message("RELEASE mode")
 endif(CMAKE_BUILD_TYPE MATCHES RELEASE)
 
-if(CMAKE_BUILD_TYPE MATCHES RELWITHDEBINFO)
-    message("RELWITHDEBINFO mode")
-endif(CMAKE_BUILD_TYPE MATCHES RELWITHDEBINFO)
-
-#option(DEBUG "Build in the debugging mode" OFF)
-#option(OCOCO32 "Increase size of stats per position from 16b to 32b." OFF)
-#option(VERBOSE_VCF "Print also VCF records without updates." OFF)
 option(INSTALL_DEBUG_SCRIPTS "Install debugging scripts." OFF)
 set(DEBUGGING_SEVERITY "trace" CACHE STRING  "Verbosity of debugging mode.")
 
@@ -39,11 +32,7 @@ option(BUILD_TESTS "Build tests." OFF)
 # BOOST #
 #########
 
-find_package( Boost 1.46 COMPONENTS program_options system log log_setup thread REQUIRED )
-if(CMAKE_BUILD_TYPE MATCHES DEBUG)
-    add_definitions(-DDEBUGGING_MODE)
-    add_definitions(-DDEBUGGING_SEVERITY=${DEBUGGING_SEVERITY})
-endif(CMAKE_BUILD_TYPE MATCHES DEBUG)
+find_package( Boost 1.46 COMPONENTS program_options REQUIRED )
 
 include_directories( ${Boost_INCLUDE_DIR} )
 
@@ -94,10 +83,9 @@ find_package (Threads)
 include_directories( "src" )
 add_subdirectory(tests/unit_tests)
 
-set(CMAKE_CXX_FLAGS                "${CMAKE_CXX_FLAGS}                -std=c++11 -Wall -Wextra -Wno-missing-field-initializers -Wshadow ")
-set(CMAKE_CXX_FLAGS_RELEASE        "${CMAKE_CXX_FLAGS_RELEASE}        -O3 -march=native -DNDEBUG")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O3 -march=native -DNDEBUG -g")
-set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG}          -O0 -g -pedantic")
+set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS}         -std=c++11 -Wall -Wextra -Wno-missing-field-initializers -Wshadow -g ")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native -DNDEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG}   -O0 -pedantic")
 
 add_executable(ococo src/main.cpp)
 add_dependencies(ococo htslib ococo_core)
@@ -124,7 +112,6 @@ install(TARGETS ococo DESTINATION bin)
 
 if(INSTALL_DEBUG_SCRIPTS)
     install(PROGRAMS scripts/ococo_test_bam.sh DESTINATION bin)
-    #install(PROGRAMS scripts/ococo_test_bam.sh DESTINATION bin)
 endif(INSTALL_DEBUG_SCRIPTS)
 
 
