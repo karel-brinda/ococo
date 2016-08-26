@@ -5,27 +5,9 @@
 #include "ococo_stats.h"
 #include "ococo_params.h"
 
-
-//#ifndef DEBUGGING_SEVERITY
-//#define DEBUGGING_SEVERITY trace
-
-#include <boost/log/core.hpp>
-#include <boost/log/expressions.hpp>
-#include <boost/log/trivial.hpp>
-
-namespace logging = boost::log;
-
-//void boost_logging_init() {
-//    logging::core::get()->set_filter(logging::trivial::severity >=
-//                                     logging::trivial::DEBUGGING_SEVERITY);
-//}
-
-//#endif
-
-
 namespace ococo{
     
-    template <typename T, int counter_size, int refbase_size, bool debugging=false>
+    template <typename T, int counter_size, int refbase_size>
     struct caller_t {
         bool correctly_initialized;
         int return_code;
@@ -46,12 +28,10 @@ namespace ococo{
         void run();
     };
     
-    template <typename T, int counter_size, int refbase_size, bool debugging>
-    caller_t<T, counter_size, refbase_size, debugging>::caller_t(params_t *params_):
+    template <typename T, int counter_size, int refbase_size>
+    caller_t<T, counter_size, refbase_size>::caller_t(params_t *params_):
     params(params_)
     {
-        
-        
         /*
          * Read SAM headers.
          */
@@ -65,11 +45,6 @@ namespace ococo{
         b = nullptr;
         header = nullptr;
         stats = nullptr;
-        
-        if(debugging){
-            BOOST_LOG_TRIVIAL(info) << "SAM/BAM reader initialization: reading '"
-            << params->sam_fn.c_str() << "'.";
-        }
         
         params->sam_file = sam_open(params->sam_fn.c_str(), "r");
         if (params->sam_file == nullptr) {
@@ -105,10 +80,6 @@ namespace ococo{
         
         if (!params->stats_in_fn.empty()) {
             ococo::info("Loading statistics ('%s').\n", params->stats_in_fn.c_str());
-            if(debugging){
-                BOOST_LOG_TRIVIAL(info) << "Importing statistics: '" << params->stats_in_fn
-                << "'.";
-            }
             
             int error_code = stats->import_stats(params->stats_in_fn);
             if (error_code != 0) {
@@ -118,18 +89,9 @@ namespace ococo{
                 return;
             }
         } else {
-            if(debugging){
-                
-                BOOST_LOG_TRIVIAL(info) << "No file with statistics provided.";
-            }
             
             if (!params->fasta_in_fn.empty()) {
                 ococo::info("Loading reference ('%s').\n", params->fasta_in_fn.c_str());
-                
-                if(debugging){
-                    BOOST_LOG_TRIVIAL(info) << "Loading FASTA: '" << params->fasta_in_fn
-                    << "'.";
-                }
                 
                 int error_code = stats->load_fasta(params->fasta_in_fn);
                 if (error_code != 0) {
@@ -153,10 +115,6 @@ namespace ococo{
         if (params->vcf_fn.size() > 0) {
             ococo::info("Opening VCF stream ('%s').\n", params->vcf_fn.c_str());
             
-            if(debugging){
-                BOOST_LOG_TRIVIAL(info) << "Open VCF: '" << params->vcf_fn << "'.";
-            }
-            
             if (params->vcf_fn == std::string("-")) {
                 params->vcf_file = stdout;
             } else {
@@ -179,10 +137,6 @@ namespace ococo{
             }
             
             stats->print_vcf_header(params->vcf_file, params->command, fasta_full_path);
-        } else {
-            if(debugging){
-                BOOST_LOG_TRIVIAL(info) << "No VCF file required.";
-            }
         }
         
         /*
@@ -191,10 +145,6 @@ namespace ococo{
         
         if (params->pileup_fn.size() > 0) {
             ococo::info("Opening pileup stream ('%s').\n", params->pileup_fn.c_str());
-            
-            if(debugging){
-                BOOST_LOG_TRIVIAL(info) << "Open pileup: '" << params->pileup_fn << "'.";
-            }
             
             if (params->pileup_fn == std::string("-")) {
                 params->pileup_file = stdout;
@@ -208,10 +158,6 @@ namespace ococo{
                 }
             }
             
-        } else {
-            if(debugging){
-                BOOST_LOG_TRIVIAL(info) << "No pileup file required.";
-            }
         }
         
         /*
@@ -221,13 +167,7 @@ namespace ococo{
         if (params->fasta_out_fn.size() > 0) {
             params->fasta_out_file = fopen(params->fasta_out_fn.c_str(), "w+");
             
-            ococo::info("Opening consensus file ('%s').\n", params->fasta_out_fn.c_str());
-            
-            if(debugging){
-                BOOST_LOG_TRIVIAL(info) << "Open FASTA for consensus: '" << params->fasta_out_fn
-                << "'.";
-            }
-            
+            ococo::info("Opening consensus file ('%s').\n", params->fasta_out_fn.c_str());            
             params->fasta_out_file = fopen(params->fasta_out_fn.c_str(), "w+");
             
             if (params->fasta_out_file == nullptr) {
@@ -237,9 +177,6 @@ namespace ococo{
                 correctly_initialized=false;
                 return;
             }
-        } else {
-            if(debugging)
-                BOOST_LOG_TRIVIAL(info) << "No FASTA file for consensus required.";
         }
     }
     
@@ -249,37 +186,17 @@ namespace ococo{
      //////////////////////////////////////////////////////
      */
     
-    template <typename T, int counter_size, int refbase_size, bool debugging>
-    bool caller_t<T, counter_size, refbase_size, debugging>::check_read(int32_t seqid, int32_t flags, int32_t mapq) {
-        /* TODO: return back
-         if(debugging){
-         
-         BOOST_LOG_TRIVIAL(debug)
-         << "Reading alignment: rname='" << rname << ", chrom=" << seqid
-         << ", pos=" << mappping_pos << ", mapq=" << mapq
-         << ", flags=" << flags;
-         }*/
-        
+    template <typename T, int counter_size, int refbase_size>
+    bool caller_t<T, counter_size, refbase_size>::check_read(int32_t seqid, int32_t flags, int32_t mapq) {     
         if ((flags & BAM_FUNMAP) != 0) {
-            if(debugging){
-                BOOST_LOG_TRIVIAL(debug) << "Discarded: read is not aligned.";
-            }
             return false;
         }
         
         if (!stats->seq_active[seqid]) {
-            if(debugging){
-                BOOST_LOG_TRIVIAL(debug)
-                << "Discarded: consensus calling is off for this chromosome.";
-            }
             return false;
         }
         
         if (mapq < stats->params->min_mapq) {
-            if(debugging){
-                BOOST_LOG_TRIVIAL(debug)
-                << "Discarded: mapping quality is too low.";
-            }
             return false;
         }
         
@@ -288,8 +205,8 @@ namespace ococo{
     
     
     
-    template <typename T, int counter_size, int refbase_size, bool debugging>
-    void caller_t<T, counter_size, refbase_size, debugging>::run() {
+    template <typename T, int counter_size, int refbase_size>
+    void caller_t<T, counter_size, refbase_size>::run() {
         
         /*
          * Process alignments.
@@ -377,43 +294,23 @@ namespace ococo{
         }
         
         /*
-         * Calling final consensus and export stats.
+         * Call final consensus and export stats.
          */
         
         if (stats->params->mode == ococo::mode_t::BATCH) {
-            if(debugging){
-                BOOST_LOG_TRIVIAL(info) << "Calling consensus for the entire reference "
-                "sequence (batch mode).";
-            }
-            
             stats->call_consensus(params->vcf_file, params->pileup_file);
             
             if (params->fasta_out_fn.size() > 0) {
-                if(debugging){
-                    
-                    BOOST_LOG_TRIVIAL(info) << "Saving FASTA: '" << params->fasta_out_fn
-                    << "'.";
-                }
-                
                 int error_code = stats->save_fasta(params->fasta_out_fn);
                 if (error_code != 0) {
                     ococo::error("FASTA '%s' could not be saved.\n",
                                  params->fasta_out_fn.c_str());
                     return_code = EXIT_FAILURE ;
                 }
-            } else {
-                if(debugging){
-                    BOOST_LOG_TRIVIAL(info) << "FASTA not saved.";
-                }
             }
         }
         
         if (params->stats_out_fn.size() > 0) {
-            if(debugging){
-                BOOST_LOG_TRIVIAL(info) << "Saving statistics: '" << params->stats_out_fn
-                << "'.";
-            }
-            
             ococo::info("Saving statistics ('%s').\n", params->stats_out_fn.c_str());
             
             int error_code = stats->export_stats(params->stats_out_fn);
@@ -421,10 +318,6 @@ namespace ococo{
                 ococo::error("Statistics could not be saved ('%s').\n",
                              params->stats_out_fn.c_str());
                 return_code = EXIT_FAILURE;
-            }
-        } else {
-            if(debugging){
-                BOOST_LOG_TRIVIAL(info) << "Statistics not saved.";
             }
         }
     }
@@ -439,14 +332,10 @@ namespace ococo{
      */
     
     
-    template <typename T, int counter_size, int refbase_size, bool debugging>
-    caller_t<T, counter_size, refbase_size, debugging>::~caller_t(){
-        
-        if(debugging){
-            BOOST_LOG_TRIVIAL(info) << "Freeing memory.";
-        }
-        
-        hts_itr_destroy(iter);
+    template <typename T, int counter_size, int refbase_size>
+    caller_t<T, counter_size, refbase_size>::~caller_t(){
+
+	hts_itr_destroy(iter);
         bam_destroy1(b);
         bam_hdr_destroy(header);
         
@@ -456,10 +345,6 @@ namespace ococo{
         
         if (return_code==EXIT_SUCCESS && correctly_initialized==true) {
             ococo::info("Ococo successfully finished. Bye.\n");
-        }
-        
-        if(debugging){
-            BOOST_LOG_TRIVIAL(info) << "Ococo finished.";
         }
         
     }

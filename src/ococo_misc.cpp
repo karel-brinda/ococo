@@ -4,19 +4,6 @@ void ococo::print_version(){
     std::cout << "Program: Ococo (online consensus caller, "
         << "http://github.com/karel-brinda/ococo)." << std::endl;
     std::cout << "Version: " << OCOCO_VERSION << std::endl;
-    /* " ("
-        << 8 * sizeof(OCOCO_BASIC_TYPE) << "bit variant"
-        << ", counter size " << BITS_PER_COUNTER << "bits";
-
-#ifdef DEBUGGING_MODE
-    std::cerr << ", debugging mode";
-#endif
-
-#ifdef VERBOSE_VCF
-    std::cerr << ", verbose VCF";
-#endif
-
-    std::cerr << ")." << std::endl;*/
 }
 
 void ococo::fatal_error(const char *format, ...) {

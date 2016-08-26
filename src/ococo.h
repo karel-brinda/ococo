@@ -1,7 +1,5 @@
 #pragma once
 
-#define BOOST_LOG_DYN_LINK
-
 #include "ococo_misc.h"
 #include "ococo_params.h"
 #include "consensus_functions.h"
