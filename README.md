@@ -40,17 +40,18 @@ Input options:
 Output options:
   -F [ --fasta-cons ] arg               FASTA file with consensus.
   -S [ --stats-out ] arg                Outputs statistics.
-  -V [ --vcf-cons ] arg                 VCF file with updates of consensus (-
+  -V [ --vcf-cons ] arg                 VCF file with updates of consensus (- 
                                         for standard output).
-  -P [ --pileup ] arg                   Truncated pileup (- for standard
+  -P [ --pileup ] arg                   Truncated pileup (- for standard 
                                         output).
+  --log arg                             Auxiliary log file.
   --verbose                             Verbose mode.
 
 Parameters of consensus calling:
-  -x [ --counters ] arg (=ococo16)      Counters configuration:
-                                         - ococo16 (3 bits per counter)
-                                         - ococo32 (7 bits per counter)
-                                         - ococo64 (15 bits per counter)
+  -x [ --counters ] arg (=ococo16)      Counters configuration: 
+                                         - ococo16 (3b/counter, 16b/position)
+                                         - ococo32 (7b/counter, 32b/position)
+                                         - ococo64 (15b/counter, 64b/position)
   -m [ --mode ] arg (=batch)            Mode: real-time / batch.
   -t [ --strategy ] arg (=majority)     Strategy for updates: no-updates /
                                         majority / stochastic.
