@@ -496,7 +496,7 @@ namespace ococo {
         assert(check_allocation());
         assert(vcf_file != nullptr);
 
-        float alt_freq=1.0*psu.counters[nt256_nt4[new_base]]/psu.sum;
+        float alt_freq=1.0*psu.counters[nt256_nt4[static_cast<int16_t>(new_base)]]/psu.sum;
 
         fprintf(vcf_file,
                 "%s\t%" PRId64 "\t.\t%c\t%c\t100\tPASS\tAF=%.2f;CS=%" PRId32 ",%" PRId32

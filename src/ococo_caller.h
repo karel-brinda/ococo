@@ -216,12 +216,11 @@ namespace ococo{
         int32_t r;
         b = bam_init1();
         while ((r = sam_read1(params->sam_file, header, b)) >= 0) {
-            const char *rname = bam_get_qname(b);
+            //const char *rname = bam_get_qname(b);
             const uint8_t *seq = bam_get_seq(b);
             const uint8_t *qual = bam_get_qual(b);
             const uint32_t *cigar = bam_get_cigar(b);
             const int32_t n_cigar = b->core.n_cigar;
-            //+b->core.l_qname
             const int32_t seqid = b->core.tid;
             const int64_t mappping_pos = b->core.pos;
             const int32_t mapq = b->core.qual;
@@ -247,7 +246,7 @@ namespace ococo{
                         for (; read_pos < next_read_pos; read_pos++, ref_pos++) {
                             const uint8_t nt16 = bam_seqi(seq, read_pos);
                             const uint8_t nt4 = ococo::nt16_nt4[nt16];
-                            const char nt256 = ococo::nt16_nt256[nt16];
+                            //const char nt256 = ococo::nt16_nt256[nt16];
                             const int32_t bq = qual[read_pos];
                             
                             if (bq != 0xff && bq < (stats->params->min_baseq)) {
