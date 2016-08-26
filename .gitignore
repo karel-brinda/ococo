@@ -6,6 +6,7 @@ a.fa
 Debug/
 
 *~
+*.swp
 
 *.anjuta
 .anjuta*

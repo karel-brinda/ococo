@@ -296,10 +296,6 @@ namespace ococo{
          */
         ococo::info("Starting the main loop.\n");
         
-        if(debugging){
-            BOOST_LOG_TRIVIAL(info) << "Starting the main loop.";
-        }
-        
         int32_t r;
         b = bam_init1();
         while ((r = sam_read1(params->sam_file, header, b)) >= 0) {
@@ -338,53 +334,19 @@ namespace ococo{
                             const int32_t bq = qual[read_pos];
                             
                             if (bq != 0xff && bq < (stats->params->min_baseq)) {
-                                if(debugging){
-                                    
-                                    BOOST_LOG_TRIVIAL(trace)
-                                    << "Omitting base (too low base quality): chrom="
-                                    << seqid << ", pos=" << ref_pos
-                                    << ", nucl=" << nt256 << ", quality=" << bq << ".";
-                                }
                                 continue;
                             }
                             
                             if (nt4 == 0x4) {
-                                if(debugging){
-                                    BOOST_LOG_TRIVIAL(trace)
-                                    << "Omitting base (ambiguous nucleotide): chrom="
-                                    << seqid << ", pos=" << ref_pos
-                                    << ", nucl=" << nt256 << ", quality=" << bq << ".";
-                                }
                                 continue;
-                            }
-                            
-                            if(debugging){
-                                
-                                BOOST_LOG_TRIVIAL(trace)
-                                << "Incrementing counter: chrom=" << seqid
-                                << ", pos=" << ref_pos << ", nucl=" << nt256
-                                << ", quality=" << bq << ". Old state: "
-                                << stats->debug_str_counters(seqid, ref_pos) << ",";
                             }
                             
                             stats->seq_stats[seqid][ref_pos] =
                             stats->increment(stats->seq_stats[seqid][ref_pos], nt4);
                             
-                            if(debugging){
-                                BOOST_LOG_TRIVIAL(trace)
-                                << "           ...new state: "
-                                << stats->debug_str_counters(seqid, ref_pos) << ".";
-                            }
-                            
                             if (stats->params->mode == ococo::mode_t::REALTIME) {
                                 stats->call_consensus_position(params->vcf_file, params->pileup_file,
                                                                seqid, ref_pos);
-                                if(debugging){
-                                    
-                                    BOOST_LOG_TRIVIAL(trace)
-                                    << "Consensus called. New state: "
-                                    << stats->debug_str_counters(seqid, ref_pos) << ".";
-                                }
                             }
                         }
                         
@@ -411,11 +373,6 @@ namespace ococo{
                     case BAM_CHARD_CLIP:
                         break;
                 }
-            }
-            
-            if(debugging) {
-                BOOST_LOG_TRIVIAL(debug) << "Alignment of '" << rname
-                << "' incorporated into statistics.";
             }
         }
         
