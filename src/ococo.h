@@ -1,13 +1,12 @@
 #pragma once
 
+#include "caller.h"
+#include "consensus.h"
 #include "misc.h"
 #include "params.h"
-#include "consensus.h"
-#include "types.h"
 #include "stats.h"
-#include "caller.h"
+#include "types.h"
 #include "version.h"
-
 
 #include <cassert>
 #include <cmath>
@@ -17,4 +16,3 @@
 #include <exception>
 #include <iostream>
 #include <string>
-
