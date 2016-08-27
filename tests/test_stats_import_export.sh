@@ -6,7 +6,7 @@ set -o xtrace
 
 rm -f output/stats.ococo
 
-../../ococo \
+ococo \
 	-m batch \
 	-i data/alignment_C_2.sam \
 	-f data/fasta_NN.fa \
@@ -21,7 +21,7 @@ echo
 echo "==============================="
 echo
 
-../../ococo \
+ococo \
 	-m batch \
 	-i data/alignment_A_2.sam \
 	-F output/fasta_NA.fa \
@@ -34,7 +34,7 @@ echo
 echo "==============================="
 echo
 
-../../ococo \
+ococo \
 	-m batch \
 	-i data/alignment_A_2.sam \
 	-F output/fasta_NA.fa \
