@@ -336,5 +336,11 @@ void ococo::params_t::parse_commandline(int argc, const char **argv) {
         ococo::error("SAM/BAM file must be specified (option '-i').\n");
         exit(1);
     }
+
+    if(pileup_fn.size()!=0 && pileup_fn.compare(vcf_fn)==0){
+        ococo::error("Pileup and VCF files cannot be the same (both currently '%s').\n", pileup_fn.c_str());
+        exit(1);
+    }
+
     ococo::info("Ococo starting: %s\n", counters_str_descr.c_str());
 }
