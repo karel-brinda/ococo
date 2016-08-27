@@ -1,0 +1,9 @@
+BasedOnStyle: Google
+Language: Cpp
+Standard: Cpp11
+AlignConsecutiveAssignments: true
+SortIncludes: true
+UseTab: Never
+IndentWidth: 4
+IndentCaseLabels: true
+NamespaceIndentation: None
