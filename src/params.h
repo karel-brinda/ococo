@@ -20,6 +20,12 @@
 
 namespace ococo {
 
+const int default_c   = 2;
+const float default_M = 0.5;
+const int default_w   = 0;
+const int default_q   = 1;
+const int default_Q   = 13;
+
 enum mode_t { BATCH, REALTIME };
 
 enum strategy_t {

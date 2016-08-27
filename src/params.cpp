@@ -15,11 +15,11 @@ void ococo::params_t::init_default_values() {
     mode_str              = "batch";
     strategy              = MAJORITY;
     strategy_str          = "majority";
-    min_mapq              = 1;
-    min_baseq             = 13;
-    init_ref_weight       = 0;
-    min_coverage          = 2;
-    majority_threshold    = 0.60;
+    min_mapq              = default_q;
+    min_baseq             = default_Q;
+    init_ref_weight       = default_w;
+    min_coverage          = default_c;
+    majority_threshold    = default_M;
 
     cons_alg[strategy_t::NO_UPDATES]     = &cons_call_no_updates;
     cons_alg[strategy_t::STOCHASTIC]     = &cons_call_stoch;
@@ -90,53 +90,60 @@ ococo::params_t::~params_t() {
 }
 
 void ococo::params_t::print_help() {
+    print_version();
+
     std::cerr
         <<
-
         // clang-format off
+
         // "---------------------------------------------------------------------------------"
-           "Generic options:\n"
-           "  -v, --version         print version and exit\n"
-           "  -h, --help            print this message and exit\n\n"           
+           "Usage:   ococo -i <SAM/BAM file> [other options]\n\n"
+        // "---------------------------------------------------------------------------------"
+           //"Generic options:\n"
+           //"  -h, --help            print this message and exit\n\n"           
         // "---------------------------------------------------------------------------------"
            "Input options:\n"
            "  -i, --input FILE      input SAM/BAM file (- for standard input)\n"
-           "  -f, --fasta-ref FILE  initial FASTA reference (otherwise sequence of N's \n"
-           "                           considered as the reference)\n"
-           "  -s, --stats-in arg    input statistics.\n\n"
+           "  -f, --fasta-ref FILE  initial FASTA reference (otherwise seq of N's is used)\n"
+           "  -s, --stats-in FILE   input statistics\n\n"
         // "---------------------------------------------------------------------------------"
            "Output options:\n"
            "  -F, --fasta-cons FILE FASTA file with consensus\n"
-           "  -S, --stats-out FILE  outputs statistics\n"
+           "  -S, --stats-out FILE  output statistics\n"
            "  -V, --vcf-cons FILE   VCF file with updates of consensus (- for standard output)\n"
            "  -P, --pileup FILE     truncated pileup (- for standard output)\n"
-           "  --log FILE            auxiliary log file\n"
-           "  --verbose             verbose mode (report every counter update)\n\n"
+           //"  --log FILE            auxiliary log file\n"
+           "  --verbose             verbose mode (report every update of a counter)\n\n"
         // "---------------------------------------------------------------------------------"
-           "Parameters of consensus calling:\n"
-           "  -x, --counters STR    counters configuration: [ococo16]\n"
+           "Parameters for consensus calling:\n"
+           "  -x, --counters STR    counter configuration: [ococo16]\n"
            "                           - ococo16 (3b/counter, 16b/position)\n"
            "                           - ococo32 (7b/counter, 32b/position)\n"
            "                           - ococo64 (15b/counter, 64b/position)\n"
-           "  -m, --mode STR        mode: real-time / batch [batch]\n"
+           "  -m, --mode STR        mode: [batch]\n"
+           "                           - real-time (updates reported immediately)\n"
+           "                           - batch (updates reported after end of algn stream)\n"
            "  -t, --strategy STR    strategy for updates: [majority]\n"
            "                           - majority (update to majority base)\n"
            "                           - stochastic (update to stochastically chosen base)\n"
-           "                           - no-updates (useful when only pileup is needed)\n"
+           "                           - no-updates (no updates, only counters updated)\n"
            //"  -a [ --allow-amb ]                    Allow updates to ambiguous "
            //"nucleotides.\n"
-           "  -q, --min-MQ INT      skip alignments with mapping quality smaller than INT [1]\n"
-           "  -Q, --min-BQ INT      skip bases with base quality smaller than INT [13]\n"
-           "  -w, --ref-weight INT  initial counter value for nucleotides from ref [0]\n"
-           "  -c, --min-cov INT     minimum coverage required for update [2]\n"
-           "  -M, --maj-thres FLOAT majority threshold [0.6]"
+           "  -q, --min-MQ INT      skip alignments with mapping quality smaller than INT [" << default_q << "]\n"
+           "  -Q, --min-BQ INT      skip bases with base quality smaller than INT [" << default_Q <<"]\n"
+           "  -w, --ref-weight INT  initial counter value for nucleotides from ref ["<< default_w <<"]\n"
+           "  -c, --min-cov INT     minimum coverage required for update [" << default_c <<"]\n"
+           "  -M, --maj-thres FLOAT majority threshold [" << default_M << "]\n\n"
+        // "---------------------------------------------------------------------------------"
+           "Examples:\n"
+           "   ococo -i test.bam -f test.fa -m real-time -V -\n"
+           "   ococo -x ococo64 -i test.bam -f test.fa -V - -P pileup.txt\n"
         // "---------------------------------------------------------------------------------"
         // clang-format on
         << std::endl;
 }
 
 void ococo::params_t::parse_commandline(int argc, const char **argv) {
-
     /* Parse cmd parameters */
 
     const struct option lopts[] = {

@@ -1,9 +1,14 @@
 #include "misc.h"
 
 void ococo::print_version() {
-    std::cout << "Program: Ococo (online consensus caller, "
-              << "http://github.com/karel-brinda/ococo)." << std::endl;
-    std::cout << "Version: " << OCOCO_VERSION << std::endl;
+    // clang-format off
+    std::cerr << 
+           "\n"
+           "Program: ococo (Online consensus caller, call cons. from unsorted SAM/BAM stream)\n"
+           "Version: " << OCOCO_VERSION  << "\n"
+           "Contact: Karel Brinda <karel.brinda@gmail.com>\n";
+    // clang-format on
+    std::cerr << std::endl;
 }
 
 void ococo::fatal_error(const char *format, ...) {
