@@ -12,6 +12,6 @@ if (BUILD_TESTS)
 	find_package(GTest REQUIRED)
 	include_directories(${GTEST_INCLUDE_DIRS})
 
-	target_link_libraries(unittests ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${Boost_LIBRARIES} ${htslib_LIB} ${zlib_LIB} ococo_core)
+	target_link_libraries(unittests ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${htslib_LIB} ${zlib_LIB} ococo_core)
 
 endif (BUILD_TESTS)

@@ -12,7 +12,9 @@
 #include <htslib/sam.h>
 
 #include <zlib.h>
+#include <cassert>
 #include <sstream>
+#include <cmath>
 
 /***********************
  *** Main statistics ***

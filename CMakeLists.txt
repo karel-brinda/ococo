@@ -6,8 +6,6 @@ project (ococo C CXX)
 # COMPILATION MODE SWITCHERS #
 ##############################
 
-set(Boost_USE_STATIC_LIBS 1)
-
 if(NOT CMAKE_BUILD_TYPE)
 	message(STATUS "Setting build type to 'RELEASE' as none was specified.")
 	set(CMAKE_BUILD_TYPE RELEASE CACHE STRING "Choose the type of build." FORCE)
@@ -26,15 +24,6 @@ option(INSTALL_DEBUG_SCRIPTS "Install debugging scripts." OFF)
 set(DEBUGGING_SEVERITY "trace" CACHE STRING  "Verbosity of debugging mode.")
 
 option(BUILD_TESTS "Build tests." OFF)
-
-
-#########
-# BOOST #
-#########
-
-find_package( Boost 1.46 COMPONENTS program_options REQUIRED )
-
-include_directories( ${Boost_INCLUDE_DIR} )
 
 
 ##########
@@ -73,8 +62,6 @@ else()
 endif(ZLIB_FOUND)
 
 include_directories(${htslib_INSTALL}/include)
-find_package (Threads)
-
 
 ################
 # MAIN PROGRAM #
@@ -100,8 +87,8 @@ add_library(ococo_core
 	src/stats.h
 	src/version.h
 	)
-target_link_libraries(ococo_core ${Boost_LIBRARIES} ${CMAKE_BINARY_DIR}/ext/htslib/libhts.a ${ZLIB_LIBRARIES})
-target_link_libraries(ococo ${CMAKE_THREAD_LIBS_INIT} ${ZLIB_LIBRARIES} ococo_core)
+target_link_libraries(ococo_core ${CMAKE_BINARY_DIR}/ext/htslib/libhts.a ${ZLIB_LIBRARIES})
+target_link_libraries(ococo ${ZLIB_LIBRARIES} ococo_core)
 
 
 ################

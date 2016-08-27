@@ -111,17 +111,18 @@ void ococo::params_t::print_help() {
            "  -V, --vcf-cons FILE   VCF file with updates of consensus (- for standard output)\n"
            "  -P, --pileup FILE     truncated pileup (- for standard output)\n"
            "  --log FILE            auxiliary log file\n"
-           "  --verbose             verbose mode\n\n"
+           "  --verbose             verbose mode (report every counter update)\n\n"
         // "---------------------------------------------------------------------------------"
            "Parameters of consensus calling:\n"
            "  -x, --counters STR    counters configuration: [ococo16]\n"
            "                           - ococo16 (3b/counter, 16b/position)\n"
            "                           - ococo32 (7b/counter, 32b/position)\n"
            "                           - ococo64 (15b/counter, 64b/position)\n"
-           "  -m, --mode STR        mode:  [batch]\n"
-           "                           - real-time / batch\n"
+           "  -m, --mode STR        mode: real-time / batch [batch]\n"
            "  -t, --strategy STR    strategy for updates: [majority]\n"
-           "                           - no-updates / majority / stochastic\n"
+           "                           - majority (update to majority base)\n"
+           "                           - stochastic (update to stochastically chosen base)\n"
+           "                           - no-updates (useful when only pileup is needed)\n"
            //"  -a [ --allow-amb ]                    Allow updates to ambiguous "
            //"nucleotides.\n"
            "  -q, --min-MQ INT      skip alignments with mapping quality smaller than INT [1]\n"
@@ -135,230 +136,92 @@ void ococo::params_t::print_help() {
 }
 
 void ococo::params_t::parse_commandline(int argc, const char **argv) {
-    /* Save cmd parameters */
-
-    std::stringstream cmd;
-    for (int32_t i = 0; i < argc; i++) {
-        cmd << argv[i];
-        if (i != argc - 1) {
-            cmd << " ";
-        }
-    }
-    command = cmd.str();
 
     /* Parse cmd parameters */
 
     const struct option lopts[] = {
-        {"version", no_argument, NULL, 'v'},
-        {"help", no_argument, NULL, 'h'},
+        {"version", no_argument, nullptr, 'v'},
+        {"help", no_argument, nullptr, 'h'},
         //
-        {"input", required_argument, NULL, 'i'},
-        {"fasta-ref", required_argument, NULL, 'f'},
-        {"stats-in", required_argument, NULL, 's'},
+        {"input", required_argument, nullptr, 'i'},
+        {"fasta-ref", required_argument, nullptr, 'f'},
+        {"stats-in", required_argument, nullptr, 's'},
         //
-        {"fasta-cons", required_argument, NULL, 'F'},
-        {"stats-out", required_argument, NULL, 'S'},
-        {"vcf-cons", required_argument, NULL, 'V'},
-        {"pileup", required_argument, NULL, 'P'},
-        {"log", required_argument, NULL, 'L'},
-        {"verbose", required_argument, NULL, 'W'},
+        {"fasta-cons", required_argument, nullptr, 'F'},
+        {"stats-out", required_argument, nullptr, 'S'},
+        {"vcf-cons", required_argument, nullptr, 'V'},
+        {"pileup", required_argument, nullptr, 'P'},
+        {"log", required_argument, nullptr, 'L'},
+        {"verbose", required_argument, nullptr, 'W'},
         //
-        {"counters", required_argument, NULL, 'x'},
-        {"mode", required_argument, NULL, 'm'},
-        {"strategy", required_argument, NULL, 's'},
-        {"min-MQ", required_argument, NULL, 'q'},
-        {"min-BQ", required_argument, NULL, 'Q'},
-        {"ref-weight", required_argument, NULL, 'w'},
-        {"min-cov", required_argument, NULL, 'c'},
-        {"min-coverage", required_argument, NULL, 'c'},  // deprec
-        {"maj-thres", required_argument, NULL, 'M'},
-        {"majority-threshold", required_argument, NULL, 'M'},  // deprec
+        {"counters", required_argument, nullptr, 'x'},
+        {"mode", required_argument, nullptr, 'm'},
+        {"strategy", required_argument, nullptr, 's'},
+        {"min-MQ", required_argument, nullptr, 'q'},
+        {"min-BQ", required_argument, nullptr, 'Q'},
+        {"ref-weight", required_argument, nullptr, 'w'},
+        {"min-cov", required_argument, nullptr, 'c'},
+        {"min-coverage", required_argument, nullptr, 'c'},  // deprec
+        {"maj-thres", required_argument, nullptr, 'M'},
+        {"majority-threshold", required_argument, nullptr, 'M'},  // deprec
         //
-        {NULL, 0, NULL, 0}};
+        {nullptr, 0, nullptr, 0}};
 
     int c;
+    using std::string;
     while ((c = getopt_long(argc, (char *const *)argv,
                             "vhi:f:s:F:S:V:P:L:W:x:m:s:q:Q:w:c:M:", lopts,
-                            NULL)) >= 0) {
+                            nullptr)) >= 0) {
         switch (c) {
-            case 'h':
-                // print_help();
-                break;
-            case 'v':
-                // print_help();
-                break;
-            case 1:
-                break;
-            case '?':
-                correctly_initialized = false;
-                return_code           = -1;
-                // return -1;
-        }
-    }
-
-    try {
-        namespace po = boost::program_options;
-
-        po::options_description options_generic("Generic options");
-        options_generic.add_options()
-            //
-            ("version,v", "Print version and exit.")
-            //
-            ("help,h", "Print this message and exit.")
-            //
-            ;
-
-        po::options_description options_input("Input options");
-        options_input.add_options()
-            //
-            ("input,i", po::value<std::string>(&sam_fn)->required(),
-             "Input SAM/BAM file (- for standard input).")
-            //
-            ("fasta-ref,f", po::value<std::string>(&fasta_in_fn),
-             "Initial FASTA reference (if not provided, sequence of N's is "
-             "considered as the reference).")
-            //
-            ("stats-in,s", po::value<std::string>(&stats_in_fn),
-             "Input statistics.")
-            //
-            ;
-
-        po::options_description options_output("Output options");
-        options_output.add_options()
-            //
-            ("fasta-cons,F", po::value<std::string>(&fasta_out_fn),
-             "FASTA file with consensus.")
-            //
-            ("stats-out,S", po::value<std::string>(&stats_out_fn),
-             "Outputs statistics.")
-            //
-            ("vcf-cons,V", po::value<std::string>(&vcf_fn),
-             "VCF file with updates of consensus (- for standard output).")
-            //
-            ("pileup,P", po::value<std::string>(&pileup_fn),
-             "Truncated pileup (- for standard output).")
-            //
-            ("log", po::value<std::string>(&log_fn), "Auxiliary log file.")
-            //
-            ("verbose", "Verbose mode.")
-            //
-            ;
-
-        po::options_description options_consensus(
-            "Parameters of consensus calling");
-        options_consensus.add_options()
-            //
-            ("counters,x",
-             po::value<std::string>(&counters_str)->default_value(counters_str),
-             "Counters configuration: \n - ococo16 (3b/counter, "
-             "16b/position)\n - ococo32 (7b/counter, 32b/position)\n - ococo64 "
-             "(15b/counter, 64b/position)")
-            //
-            ("mode,m",
-             po::value<std::string>(&mode_str)->default_value(mode_str),
-             "Mode: real-time / batch.")
-            //
-            ("strategy,t",
-             po::value<std::string>(&strategy_str)->default_value(strategy_str),
-             "Strategy for updates: no-updates / majority / stochastic.")
-            //
-            ("allow-amb,a", "Allow updates to ambiguous nucleotides.")
-            //
-            ("min-MQ,q", po::value<int32_t>(&min_mapq)->default_value(min_mapq),
-             "Skip alignments with mapping quality smaller than INT.")
-            //
-            ("min-BQ,Q",
-             po::value<int32_t>(&min_baseq)->default_value(min_baseq),
-             "Skip bases with base quality smaller than INT.")
-            //
-            ("ref-weight,w", po::value<int32_t>(&init_ref_weight)
-                                 ->default_value(init_ref_weight),
-             "Initial counter value for nucleotides from the reference.")
-            //
-            ("min-coverage,c",
-             po::value<int32_t>(&min_coverage)->default_value(min_coverage),
-             "Minimum coverage required for update.")
-            //
-            ("majority-threshold,M", po::value<double>(&majority_threshold)
-                                         ->default_value(majority_threshold),
-             "Majority threshold.")
-            //
-            ;
-
-        po::options_description options_all;
-        options_all.add(options_generic)
-            .add(options_input)
-            .add(options_output)
-            .add(options_consensus);
-
-        po::variables_map vm;
-        try {
-            po::store(
-                po::command_line_parser(argc, argv).options(options_all).run(),
-                vm);  // can throw
-
-            if (vm.count("version")) {
-                std::cout << std::endl;
+            case 'v': {
                 print_version();
-                std::cout << std::endl;
                 exit(0);
+                break;
             }
-
-            if (vm.count("help")) {
-                std::cout << options_all << "\n";
+            case 'h': {
+                print_help();
                 exit(0);
+                break;
             }
-
-            po::notify(vm);
-            // throws on error, so do after help in case there
-            // are any problems
-            if (vm.count("strategy")) {
-                if (strategy_str.compare("no-updates") == 0) {
-                    strategy = ococo::strategy_t::NO_UPDATES;
-                } else if (strategy_str.compare("majority") == 0) {
-                    if (vm.count("allow-amb") == 0) {
-                        strategy = ococo::strategy_t::MAJORITY;
-                    } else {
-                        strategy = ococo::strategy_t::MAJORITY_AMB;
-                    }
-                } else if (strategy_str.compare("stochastic") == 0) {
-                    if (vm.count("allow-amb") == 0) {
-                        strategy = ococo::strategy_t::STOCHASTIC;
-                    } else {
-                        strategy = ococo::strategy_t::STOCHASTIC_AMB;
-                    }
-                } else {
-                    ococo::error(
-                        "Unknown strategy '%s'. Possible strategies "
-                        "are 'majority' and 'stochastic'.\n",
-                        strategy_str.c_str());
-                    correctly_initialized = false;
-                    return_code           = -1;
-                    return;
-                }
+            case 'i': {
+                sam_fn = optarg;
+                break;
             }
-
-            if (vm.count("mode")) {
-                if (mode_str.compare("batch") == 0) {
-                    mode = ococo::mode_t::BATCH;
-                } else if (mode_str.compare("real-time") == 0) {
-                    mode = ococo::mode_t::REALTIME;
-                } else {
-                    ococo::error(
-                        "Unknown mode '%s'. Possible modes are "
-                        "'batch' and 'real-time'.\n",
-                        mode_str.c_str());
-                    correctly_initialized = false;
-                    return_code           = -1;
-                    return;
-                }
+            case 'f': {
+                fasta_in_fn = optarg;
+                break;
             }
-
-            if (vm.count("verbose")) {
+            case 's': {
+                stats_in_fn = optarg;
+                break;
+            }
+            case 'F': {
+                fasta_out_fn = optarg;
+                break;
+            }
+            case 'S': {
+                stats_out_fn = optarg;
+                break;
+            }
+            case 'V': {
+                vcf_fn = optarg;
+                break;
+            }
+            case 'P': {
+                pileup_fn = optarg;
+                break;
+            }
+            case 'L': {
+                log_fn = optarg;
+                break;
+            }
+            case 'W': {
                 verbose = true;
+                break;
             }
+            case 'x': {
+                counters_str = optarg;
 
-            if (vm.count("counters")) {
                 if (counters_str.compare("ococo16") == 0) {
                     counter_configuration = OCOCO16;
                     counters_str_descr =
@@ -383,21 +246,76 @@ void ococo::params_t::parse_commandline(int argc, const char **argv) {
                     return_code           = -1;
                     return;
                 }
+
+                break;
             }
-            ococo::info("Ococo starting: %s\n", counters_str_descr.c_str());
+            case 'm': {
+                mode_str = optarg;
 
-        } catch (po::error &e) {
-            std::cout << options_all << "\n";
-            ococo::error("%s.\n", e.what());
-            correctly_initialized = false;
-            return_code           = -1;
-            return;
+                if (mode_str.compare("batch") == 0) {
+                    mode = ococo::mode_t::BATCH;
+                } else if (mode_str.compare("real-time") == 0) {
+                    mode = ococo::mode_t::REALTIME;
+                } else {
+                    ococo::error(
+                        "Unknown mode '%s'. Possible modes are 'batch' and "
+                        "'real-time'.\n",
+                        mode_str.c_str());
+                    correctly_initialized = false;
+                    return_code           = -1;
+                    return;
+                }
+
+                break;
+            }
+            case 't': {
+                strategy_str = optarg;
+
+                if (strategy_str.compare("stochastic") == 0) {
+                    strategy = ococo::strategy_t::STOCHASTIC;
+                } else if (strategy_str.compare("no-updates") == 0) {
+                    strategy = ococo::strategy_t::NO_UPDATES;
+                } else if (strategy_str.compare("majority") == 0) {
+                    strategy = ococo::strategy_t::MAJORITY;
+                } else {
+                    ococo::error(
+                        "Unknown strategy '%s'. Possible strategies are "
+                        "'majority', 'stochastic' and 'no-updates'.\n",
+                        strategy_str.c_str());
+                    correctly_initialized = false;
+                    return_code           = -1;
+                    return;
+                }
+
+                break;
+            }
+            case 'q': {
+                min_mapq = atoi(optarg);
+                break;
+            }
+            case 'Q': {
+                min_baseq = atoi(optarg);
+                break;
+            }
+            case 'w': {
+                init_ref_weight = atoi(optarg);
+                break;
+            }
+            case 'c': {
+                min_coverage = atoi(optarg);
+                break;
+            }
+            case 'M': {
+                majority_threshold = atof(optarg);
+                exit(0);
+                break;
+            }
+            case '?': {
+                ococo::error("probably unknown option");
+                exit(1);
+                break;
+            }
         }
-
-    } catch (std::exception &e) {
-        ococo::error("Unhandled Exception: %s.\n", e.what());
-        correctly_initialized = false;
-        return_code           = -1;
-        return;
     }
+    ococo::info("Ococo starting: %s\n", counters_str_descr.c_str());
 }
