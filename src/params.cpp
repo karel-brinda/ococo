@@ -159,7 +159,7 @@ void ococo::params_t::parse_commandline(int argc, const char **argv) {
         {"vcf-cons", required_argument, nullptr, 'V'},
         {"pileup", required_argument, nullptr, 'P'},
         {"log", required_argument, nullptr, 'L'},
-        {"verbose", required_argument, nullptr, 'W'},
+        {"verbose", no_argument, nullptr, 'W'},
         //
         {"counters", required_argument, nullptr, 'x'},
         {"mode", required_argument, nullptr, 'm'},
