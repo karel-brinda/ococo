@@ -1,13 +1,8 @@
 ococo
-ococo16
-ococo32
-a.fa
 
-Debug/
-
+.vscode/.*
 *~
 *.swp
-
 *.anjuta
 .anjuta*
 
