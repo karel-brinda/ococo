@@ -120,11 +120,11 @@ struct params_t {
 
     params_t();
 
-    params_t(int argc, const char *argv[]);
+    params_t(int argc, const char **argv);
 
     ~params_t();
 
-    void parse_commandline(int argc, const char *argv[]);
+    void parse_commandline(int argc, const char **argv);
 
     void init_default_values();
 };

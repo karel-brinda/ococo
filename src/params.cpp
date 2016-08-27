@@ -1,5 +1,16 @@
 #include "params.h"
+#include <unistd.h>
 #include "consensus.h"
+
+#include<getopt.h>
+#include<iostream>
+#include<stdio.h>
+#include<ctype.h>
+#include<stdlib.h>
+
+#define no_argument 0
+#define required_argument 1 
+#define optional_argument 2
 
 /****************************
  *** Consensus parameters ***
@@ -39,7 +50,7 @@ void ococo::params_t::init_default_values() {
 
 ococo::params_t::params_t() { init_default_values(); }
 
-ococo::params_t::params_t(int argc, const char *argv[]) {
+ococo::params_t::params_t(int argc, const char **argv) {
     init_default_values();
     parse_commandline(argc, argv);
 }
@@ -87,7 +98,7 @@ ococo::params_t::~params_t() {
     }
 }
 
-void ococo::params_t::parse_commandline(int argc, const char *argv[]) {
+void ococo::params_t::parse_commandline(int argc, const char **argv) {
     /* Save cmd parameters */
 
     std::stringstream cmd;
@@ -100,6 +111,53 @@ void ococo::params_t::parse_commandline(int argc, const char *argv[]) {
     command = cmd.str();
 
     /* Parse cmd parameters */
+    //int getopt_long(int argc, char *const *argv, const char *optstring,
+    //                const struct option *longopts, int *longindex);
+
+    const struct option lopts[] = {
+        {"version", no_argument, NULL, 'v'},
+        {"help", no_argument, NULL, 'h'},
+        //
+        {"input", required_argument, NULL, 'i'},
+        {"fasta-ref", required_argument, NULL, 'f'},
+        {"stats-in", required_argument, NULL, 's'},
+        //
+        {"fasta-cons", required_argument, NULL, 'F'},
+        {"stats-out", required_argument, NULL, 'S'},
+        {"vcf-cons", required_argument, NULL, 'V'},
+        {"pileup", required_argument, NULL, 'P'},
+        {"log", required_argument, NULL, 'L'},
+        {"verbose", required_argument, NULL, 'W'},
+        //
+        {"counters", required_argument, NULL, 'x'},  // require flag
+        {"mode", required_argument, NULL, 'm'},      // filter flag
+        {"strategy", required_argument, NULL, 's'},
+        {"min-MQ", required_argument, NULL, 'q'},
+        {"min-BQ", required_argument, NULL, 'Q'},
+        {"ref-weight", required_argument, NULL, 'w'},
+        {"min-coverage", required_argument, NULL, 'c'},
+        {"majority-threshold", required_argument, NULL, 'M'},
+        //
+        {NULL, 0, NULL, 0}};
+
+    int c;
+    while ((c = getopt_long(argc,(char *const *) argv, "vhi:f:s:F:S:V:P:L:W:x:m:s:q:Q:w:c:M:",
+                            lopts, NULL)) >= 0) {
+        switch (c) {
+            case 'h':
+                // print_help();
+                break;
+            case 'v':
+                // print_help();
+                break;
+            case 1:
+                break;
+            case '?':
+                correctly_initialized = false;
+                return_code           = -1;
+                // return -1;
+        }
+    }
 
     try {
         namespace po = boost::program_options;

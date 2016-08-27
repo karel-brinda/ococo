@@ -6,7 +6,7 @@
 #include <cstdio>
 #include <cstdlib>
 
-int main(int argc, const char *argv[]) {
+int main(int argc, const char **argv) {
     /* Use default configuration */
     ococo::params_t params = ococo::params_t(argc, argv);
     if (!params.correctly_initialized) {
