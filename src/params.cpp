@@ -145,6 +145,15 @@ void ococo::params_t::print_help() {
 
 void ococo::params_t::parse_commandline(int argc, const char **argv) {
     /* Parse cmd parameters */
+    std::stringstream cmd;
+    for (int32_t i = 0; i < argc; i++) {
+        cmd << argv[i];
+        if (i != argc - 1) {
+            cmd << " ";
+        }
+    }
+    command=cmd.str();
+
 
     if (argc == 1) {
         print_help();
