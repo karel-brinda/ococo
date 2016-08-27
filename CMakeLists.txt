@@ -59,6 +59,8 @@ else()
 endif(ZLIB_FOUND)
 
 include_directories(${htslib_INSTALL}/include)
+find_package (Threads)
+
 
 ################
 # MAIN PROGRAM #
@@ -84,7 +86,7 @@ add_library(ococo_core
 	src/version.h
 	)
 target_link_libraries(ococo_core ${CMAKE_BINARY_DIR}/ext/htslib/libhts.a ${ZLIB_LIBRARIES})
-target_link_libraries(ococo ${ZLIB_LIBRARIES} ococo_core)
+target_link_libraries(ococo ${ZLIB_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ococo_core)
 
 
 ################
