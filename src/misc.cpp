@@ -67,5 +67,8 @@ double ococo::cputime()
 {
         struct rusage r;
         getrusage(RUSAGE_SELF, &r);
+
+        //todo: check also memory
+        //std::cerr << r.ru_maxrss << std::endl;
         return r.ru_utime.tv_sec + r.ru_stime.tv_sec + 1e-6 * (r.ru_utime.tv_usec + r.ru_stime.tv_usec);
 }
