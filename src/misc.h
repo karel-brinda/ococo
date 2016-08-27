@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <sys/time.h>
 
 #include "version.h"
 
@@ -21,6 +22,11 @@ void warning(const char *format, ...);
 void info(const char *format, ...);
 
 bool file_exists(const std::string &fn);
+
+double realtime();
+
+double cputime();
+
 
 /*
       * Get a right full mask (right n bits set to 1)

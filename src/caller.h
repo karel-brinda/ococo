@@ -19,6 +19,7 @@ struct caller_t {
     stats_t<T, counter_size, refbase_size> *stats;
 
     params_t *params;
+    double t_real;
 
     caller_t(params_t *params_);
     ~caller_t();
@@ -34,6 +35,7 @@ caller_t<T, counter_size, refbase_size>::caller_t(params_t *params_)
      * Read SAM headers.
      */
 
+	t_real = realtime();
     ococo::info("Initialing SAM/BAM reader.\n");
 
     correctly_initialized = true;
@@ -375,6 +377,7 @@ caller_t<T, counter_size, refbase_size>::~caller_t() {
 
     if (return_code == EXIT_SUCCESS && correctly_initialized == true) {
         ococo::info("Ococo successfully finished. Bye.\n");
+        ococo::info("%.3f sec; CPU: %.3f sec\n", realtime() - t_real, cputime());
     }
 }
 }
