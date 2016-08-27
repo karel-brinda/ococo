@@ -125,7 +125,7 @@ void ococo::params_t::print_help() {
            "                           - batch (updates reported after end of algn stream)\n"
            "  -t, --strategy STR    strategy for updates: [majority]\n"
            "                           - majority (update to majority base)\n"
-           "                           - stochastic (update to stochastically chosen base)\n"
+           "                           - stochastic (update to stochastically drawn base)\n"
            "                           - no-updates (no updates, only counters updated)\n"
            //"  -a [ --allow-amb ]                    Allow updates to ambiguous "
            //"nucleotides.\n"
@@ -137,7 +137,7 @@ void ococo::params_t::print_help() {
         // "---------------------------------------------------------------------------------"
            "Examples:\n"
            "   ococo -i test.bam -f test.fa -m real-time -V -\n"
-           "   ococo -x ococo64 -i test.bam -f test.fa -V - -P pileup.txt\n"
+           "   ococo -x ococo64 -i test.bam -f test.fa -P - -V variants.vcf\n"
         // "---------------------------------------------------------------------------------"
         // clang-format on
         << std::endl;
