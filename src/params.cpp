@@ -146,6 +146,11 @@ void ococo::params_t::print_help() {
 void ococo::params_t::parse_commandline(int argc, const char **argv) {
     /* Parse cmd parameters */
 
+    if (argc == 1) {
+        print_help();
+        exit(1);
+    }
+
     const struct option lopts[] = {
         {"version", no_argument, nullptr, 'v'},
         {"help", no_argument, nullptr, 'h'},
@@ -249,9 +254,7 @@ void ococo::params_t::parse_commandline(int argc, const char **argv) {
                         "Unknown counter configuration '%s'. Possible modes "
                         "are 'ococo16', 'ococo32', and 'ococo64'.\n",
                         counters_str.c_str());
-                    correctly_initialized = false;
-                    return_code           = -1;
-                    return;
+                    exit(1);
                 }
 
                 break;
@@ -268,9 +271,7 @@ void ococo::params_t::parse_commandline(int argc, const char **argv) {
                         "Unknown mode '%s'. Possible modes are 'batch' and "
                         "'real-time'.\n",
                         mode_str.c_str());
-                    correctly_initialized = false;
-                    return_code           = -1;
-                    return;
+                    exit(1);
                 }
 
                 break;
@@ -287,11 +288,9 @@ void ococo::params_t::parse_commandline(int argc, const char **argv) {
                 } else {
                     ococo::error(
                         "Unknown strategy '%s'. Possible strategies are "
-                        "'majority', 'stochastic' and 'no-updates'.\n",
+                        "'majority', 'stochastic', and 'no-updates'.\n",
                         strategy_str.c_str());
-                    correctly_initialized = false;
-                    return_code           = -1;
-                    return;
+                    exit(1);
                 }
 
                 break;
@@ -318,11 +317,15 @@ void ococo::params_t::parse_commandline(int argc, const char **argv) {
                 break;
             }
             case '?': {
-                ococo::error("probably unknown option");
+                ococo::error("Unknown error");
                 exit(1);
                 break;
             }
         }
+    }
+    if (sam_fn.size()==0){
+        ococo::error("SAM/BAM file must be specified (option '-i').\n");
+        exit(1);
     }
     ococo::info("Ococo starting: %s\n", counters_str_descr.c_str());
 }
