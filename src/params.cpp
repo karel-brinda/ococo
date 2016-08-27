@@ -1,16 +1,7 @@
 #include "params.h"
-#include <unistd.h>
 #include "consensus.h"
 
-#include<getopt.h>
-#include<iostream>
-#include<stdio.h>
-#include<ctype.h>
-#include<stdlib.h>
-
-#define no_argument 0
-#define required_argument 1 
-#define optional_argument 2
+#include <getopt.h>
 
 /****************************
  *** Consensus parameters ***
@@ -98,6 +89,51 @@ ococo::params_t::~params_t() {
     }
 }
 
+void ococo::params_t::print_help() {
+    std::cerr
+        <<
+
+        // clang-format off
+        // "---------------------------------------------------------------------------------"
+           "Generic options:\n"
+           "  -v, --version         print version and exit\n"
+           "  -h, --help            print this message and exit\n\n"           
+        // "---------------------------------------------------------------------------------"
+           "Input options:\n"
+           "  -i, --input FILE      input SAM/BAM file (- for standard input)\n"
+           "  -f, --fasta-ref FILE  initial FASTA reference (otherwise sequence of N's \n"
+           "                           considered as the reference)\n"
+           "  -s, --stats-in arg    input statistics.\n\n"
+        // "---------------------------------------------------------------------------------"
+           "Output options:\n"
+           "  -F, --fasta-cons FILE FASTA file with consensus\n"
+           "  -S, --stats-out FILE  outputs statistics\n"
+           "  -V, --vcf-cons FILE   VCF file with updates of consensus (- for standard output)\n"
+           "  -P, --pileup FILE     truncated pileup (- for standard output)\n"
+           "  --log FILE            auxiliary log file\n"
+           "  --verbose             verbose mode\n\n"
+        // "---------------------------------------------------------------------------------"
+           "Parameters of consensus calling:\n"
+           "  -x, --counters STR    counters configuration: [ococo16]\n"
+           "                           - ococo16 (3b/counter, 16b/position)\n"
+           "                           - ococo32 (7b/counter, 32b/position)\n"
+           "                           - ococo64 (15b/counter, 64b/position)\n"
+           "  -m, --mode STR        mode:  [batch]\n"
+           "                           - real-time / batch\n"
+           "  -t, --strategy STR    strategy for updates: [majority]\n"
+           "                           - no-updates / majority / stochastic\n"
+           //"  -a [ --allow-amb ]                    Allow updates to ambiguous "
+           //"nucleotides.\n"
+           "  -q, --min-MQ INT      skip alignments with mapping quality smaller than INT [1]\n"
+           "  -Q, --min-BQ INT      skip bases with base quality smaller than INT [13]\n"
+           "  -w, --ref-weight INT  initial counter value for nucleotides from ref [0]\n"
+           "  -c, --min-cov INT     minimum coverage required for update [2]\n"
+           "  -M, --maj-thres FLOAT majority threshold [0.6]"
+        // "---------------------------------------------------------------------------------"
+        // clang-format on
+        << std::endl;
+}
+
 void ococo::params_t::parse_commandline(int argc, const char **argv) {
     /* Save cmd parameters */
 
@@ -111,8 +147,6 @@ void ococo::params_t::parse_commandline(int argc, const char **argv) {
     command = cmd.str();
 
     /* Parse cmd parameters */
-    //int getopt_long(int argc, char *const *argv, const char *optstring,
-    //                const struct option *longopts, int *longindex);
 
     const struct option lopts[] = {
         {"version", no_argument, NULL, 'v'},
@@ -129,20 +163,23 @@ void ococo::params_t::parse_commandline(int argc, const char **argv) {
         {"log", required_argument, NULL, 'L'},
         {"verbose", required_argument, NULL, 'W'},
         //
-        {"counters", required_argument, NULL, 'x'},  // require flag
-        {"mode", required_argument, NULL, 'm'},      // filter flag
+        {"counters", required_argument, NULL, 'x'},
+        {"mode", required_argument, NULL, 'm'},
         {"strategy", required_argument, NULL, 's'},
         {"min-MQ", required_argument, NULL, 'q'},
         {"min-BQ", required_argument, NULL, 'Q'},
         {"ref-weight", required_argument, NULL, 'w'},
-        {"min-coverage", required_argument, NULL, 'c'},
-        {"majority-threshold", required_argument, NULL, 'M'},
+        {"min-cov", required_argument, NULL, 'c'},
+        {"min-coverage", required_argument, NULL, 'c'},  // deprec
+        {"maj-thres", required_argument, NULL, 'M'},
+        {"majority-threshold", required_argument, NULL, 'M'},  // deprec
         //
         {NULL, 0, NULL, 0}};
 
     int c;
-    while ((c = getopt_long(argc,(char *const *) argv, "vhi:f:s:F:S:V:P:L:W:x:m:s:q:Q:w:c:M:",
-                            lopts, NULL)) >= 0) {
+    while ((c = getopt_long(argc, (char *const *)argv,
+                            "vhi:f:s:F:S:V:P:L:W:x:m:s:q:Q:w:c:M:", lopts,
+                            NULL)) >= 0) {
         switch (c) {
             case 'h':
                 // print_help();

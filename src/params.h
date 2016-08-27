@@ -126,6 +126,8 @@ struct params_t {
 
     void parse_commandline(int argc, const char **argv);
 
+    void print_help();
+
     void init_default_values();
 };
 }
