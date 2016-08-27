@@ -63,4 +63,4 @@ Examples:
 
 ## Citing OCOCO
 
-* K. Brinda, V. Boeva, G. Kucherov. Dynamic read mapping and online consensus calling for better variant detection. arXiv:1605.09070v1 [q-bio.GN], 2016. http://arxiv.org/abs/1605.09070
+* K. Brinda, V. Boeva, G. Kucherov. **Dynamic read mapping and online consensus calling for better variant detection.** arXiv:1605.09070v1 [q-bio.GN], 2016. http://arxiv.org/abs/1605.09070
