@@ -39,7 +39,4 @@ matrix:
       script:
         - cmake . && make && ./run.sh
         - (cd tests/integration_tests && bats ${CI:+--tap} integration_tests.bats)
-
-cache:
-  directories:
-  - $BOOST_ROOT
+        

@@ -156,7 +156,7 @@ void ococo::params_t::parse_commandline(int argc, const char **argv) {
         //
         {"counters", required_argument, nullptr, 'x'},
         {"mode", required_argument, nullptr, 'm'},
-        {"strategy", required_argument, nullptr, 's'},
+        {"strategy", required_argument, nullptr, 't'},
         {"min-MQ", required_argument, nullptr, 'q'},
         {"min-BQ", required_argument, nullptr, 'Q'},
         {"ref-weight", required_argument, nullptr, 'w'},
@@ -170,7 +170,7 @@ void ococo::params_t::parse_commandline(int argc, const char **argv) {
     int c;
     using std::string;
     while ((c = getopt_long(argc, (char *const *)argv,
-                            "vhi:f:s:F:S:V:P:L:W:x:m:s:q:Q:w:c:M:", lopts,
+                            "vhi:f:s:F:S:V:P:L:W:x:m:t:q:Q:w:c:M:", lopts,
                             nullptr)) >= 0) {
         switch (c) {
             case 'v': {
