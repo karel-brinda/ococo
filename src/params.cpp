@@ -137,7 +137,10 @@ void ococo::params_t::print_help() {
         // "---------------------------------------------------------------------------------"
            "Examples:\n"
            "   ococo -i test.bam -f test.fa -m real-time -V -\n"
-           "   ococo -x ococo64 -i test.bam -f test.fa -P - -V variants.vcf\n"
+           "   ococo -x ococo64 -i test.bam -f test.fa -P - -V variants.vcf\n\n"
+        // "---------------------------------------------------------------------------------"
+           "Note:\n"
+           "   For more details, see the manual page 'man ./ococo.1'.\n"
         // "---------------------------------------------------------------------------------"
         // clang-format on
         << std::endl;
