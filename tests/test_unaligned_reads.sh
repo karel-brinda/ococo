@@ -6,7 +6,7 @@ set -o pipefail
 
 for strat in "majority" "stochastic";
 do
-	../../ococo \
+	ococo \
 		-m batch \
 		-i data/alignment_AA_unm.sam \
 		-f data/fasta_NN.fa \

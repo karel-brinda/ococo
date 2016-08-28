@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ococo_types.h"
-#include "ococo_params.h"
+#include "params.h"
+#include "types.h"
 
 #include "cassert"
 #include "cmath"
@@ -90,7 +90,7 @@ inline char cons_call_maj(const pos_stats_uncompr_t &psu,
     for (int32_t i = 0; i < 4; i++) {
         if (psu.counters[i] >= required_min) {
             if (psu.counters[i] > max) {
-                max = psu.counters[i];
+                max        = psu.counters[i];
                 nucl_nt256 = nt4_nt256[i];
             }
         }
@@ -119,7 +119,7 @@ inline char cons_call_maj_amb(const pos_stats_uncompr_t &psu,
     for (int32_t i = 0; i < 4; i++) {
         if (psu.counters[i] >= required_min) {
             if (psu.counters[i] > max) {
-                max = psu.counters[i];
+                max       = psu.counters[i];
                 nucl_nt16 = nt4_nt16[i];
             } else if (psu.counters[i] >= max) {
                 nucl_nt16 |= nt4_nt16[i];
@@ -129,5 +129,4 @@ inline char cons_call_maj_amb(const pos_stats_uncompr_t &psu,
 
     return nt16_nt256[static_cast<int32_t>(nucl_nt16)];
 }
-
 }

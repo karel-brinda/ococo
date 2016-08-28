@@ -8,15 +8,13 @@ Welcome to OCOCO, an online consensus caller.
 ## Prerequisities
 
 * GCC 4.8+ or equivalent
-* CMake (http://cmake.org/)
-* Boost 1.46+ (http://www.boost.org/)
 * ZLib
 
 ## Getting started
 
 ```bash
 git clone --recursive https://github.com/karel-brinda/ococo
-cd ococo && cmake . && make
+cd ococo && make -j
 ./ococo -i test.bam -f test.fa -m real-time --vcf-cons -
 ```
 
@@ -25,47 +23,43 @@ cd ococo && cmake . && make
 ## Command line parameters
 
 ```
-Generic options:
-  -v [ --version ]                      Print version and exit.
-  -h [ --help ]                         Print this message and exit.
+Usage:   ococo -i <SAM/BAM file> [other options]
 
 Input options:
-  -i [ --input ] arg                    Input SAM/BAM file (- for standard
-                                        input).
-  -f [ --fasta-ref ] arg                Initial FASTA reference (if not
-                                        provided, sequence of N's is considered
-                                        as the reference).
-  -s [ --stats-in ] arg                 Input statistics.
+  -i, --input FILE      input SAM/BAM file (- for standard input)
+  -f, --fasta-ref FILE  initial FASTA reference (otherwise seq of N's is used)
+  -s, --stats-in FILE   input statistics
 
 Output options:
-  -F [ --fasta-cons ] arg               FASTA file with consensus.
-  -S [ --stats-out ] arg                Outputs statistics.
-  -V [ --vcf-cons ] arg                 VCF file with updates of consensus (-
-                                        for standard output).
-  -P [ --pileup ] arg                   Truncated pileup (- for standard
-                                        output).
-  --verbose                             Verbose mode.
+  -F, --fasta-cons FILE FASTA file with consensus
+  -S, --stats-out FILE  output statistics
+  -V, --vcf-cons FILE   VCF file with updates of consensus (- for standard output)
+  -P, --pileup FILE     truncated pileup (- for standard output)
+  --verbose             verbose mode (report every update of a counter)
 
-Parameters of consensus calling:
-  -x [ --counters ] arg (=ococo16)      Counters configuration:
-                                         - ococo16 (3 bits per counter)
-                                         - ococo32 (7 bits per counter)
-                                         - ococo64 (15 bits per counter)
-  -m [ --mode ] arg (=batch)            Mode: real-time / batch.
-  -t [ --strategy ] arg (=majority)     Strategy for updates: no-updates /
-                                        majority / stochastic.
-  -a [ --allow-amb ]                    Allow updates to ambiguous nucleotides.
-  -q [ --min-MQ ] arg (=1)              Skip alignments with mapping quality
-                                        smaller than INT.
-  -Q [ --min-BQ ] arg (=13)             Skip bases with base quality smaller
-                                        than INT.
-  -w [ --ref-weight ] arg (=0)          Initial counter value for nucleotides
-                                        from the reference.
-  -c [ --min-coverage ] arg (=2)        Minimum coverage required for update.
-  -M [ --majority-threshold ] arg (=0.59999999999999998)
-                                        Majority threshold.
+Parameters for consensus calling:
+  -x, --counters STR    counter configuration: [ococo16]
+                           - ococo16 (3b/counter, 16b/position)
+                           - ococo32 (7b/counter, 32b/position)
+                           - ococo64 (15b/counter, 64b/position)
+  -m, --mode STR        mode: [batch]
+                           - real-time (updates reported immediately)
+                           - batch (updates reported after end of algn stream)
+  -t, --strategy STR    strategy for updates: [majority]
+                           - majority (update to majority base)
+                           - stochastic (update to stochastically drawn base)
+                           - no-updates (no updates, only counters updated)
+  -q, --min-MQ INT      skip alignments with mapping quality smaller than INT [1]
+  -Q, --min-BQ INT      skip bases with base quality smaller than INT [13]
+  -w, --ref-weight INT  initial counter value for nucleotides from ref [0]
+  -c, --min-cov INT     minimum coverage required for update [2]
+  -M, --maj-thres FLOAT majority threshold [0.51]
+
+Examples:
+   ococo -i test.bam -f test.fa -m real-time -V -
+   ococo -x ococo64 -i test.bam -f test.fa -P - -V variants.vcf
 ```
 
 ## Citing OCOCO
 
-* K. Brinda, V. Boeva, G. Kucherov. Dynamic read mapping and online consensus calling for better variant detection. arXiv:1605.09070v1 [q-bio.GN], 2016. http://arxiv.org/abs/1605.09070
+* K. Brinda, V. Boeva, G. Kucherov. **Dynamic read mapping and online consensus calling for better variant detection.** arXiv:1605.09070v1 [q-bio.GN], 2016. http://arxiv.org/abs/1605.09070

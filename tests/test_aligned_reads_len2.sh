@@ -1,4 +1,4 @@
-##! /usr/bin/env bash
+#! /usr/bin/env bash
 
 set -eu
 set -o xtrace
@@ -6,15 +6,15 @@ set -o pipefail
 
 for strat in "majority" "stochastic";
 do
-	../../ococo \
+	ococo \
 		-m batch \
-		-i data/alignment_A_2.sam \
+		-i data/alignment_AA_1.sam \
 		-f data/fasta_NN.fa \
-		-F output/fasta_NA.fa \
+		-F output/fasta_AA.fa \
 		-t $strat \
 		-V - \
 
-	diff output/fasta_NA.fa data/fasta_NA.fa
+	diff output/fasta_AA.fa data/fasta_AA.fa
 
 	echo
 	echo "==============================="

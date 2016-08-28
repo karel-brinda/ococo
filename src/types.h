@@ -1,11 +1,11 @@
 #pragma once
 
-#include <cinttypes>
 #include <unistd.h>
+#include <cinttypes>
 
 namespace ococo {
 
-const int fasta_line_l = 50;
+const int fasta_line_l  = 50;
 const int stats_delim_l = 10;
 
 typedef uint8_t nt4_t;
@@ -84,5 +84,4 @@ static const uint8_t nt16_nt256[] = "=ACMGRSVTWYHKDBN";
 static const uint8_t nt4_nt256[] = "ACGTN";
 
 static const uint8_t nt4_nt16[] = {1, 2, 4, 8, 15};
-
 }

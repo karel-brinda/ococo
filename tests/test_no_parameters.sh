@@ -3,4 +3,4 @@
 set -eux
 set -o pipefail
 
-../../ococo
+ococo

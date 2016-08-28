@@ -1,24 +1,13 @@
 ococo
-ococo16
-ococo32
-a.fa
 
-Debug/
-
+.vscode/.*
 *~
-
+*.swp
 *.anjuta
 .anjuta*
 
 CTestTestfile.cmake
 Testing
-
-CMakeCache.txt
-CMakeFiles
-CMakeScripts
-Makefile
-cmake_install.cmake
-install_manifest.txt
 
 # Compiled Object files
 *.slo

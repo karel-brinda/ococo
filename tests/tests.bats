@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 
-export PATH=$PATH:../..
+export PATH=$PATH:..
 
 @test "Test of ococo without parameters" {
 
