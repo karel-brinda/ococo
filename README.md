@@ -8,14 +8,13 @@ Welcome to OCOCO, an online consensus caller.
 ## Prerequisities
 
 * GCC 4.8+ or equivalent
-* CMake (http://cmake.org/)
 * ZLib
 
 ## Getting started
 
 ```bash
 git clone --recursive https://github.com/karel-brinda/ococo
-cd ococo && cmake . && make
+cd ococo && make -j
 ./ococo -i test.bam -f test.fa -m real-time --vcf-cons -
 ```
 
