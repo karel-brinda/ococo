@@ -9,12 +9,15 @@ MANPAGE   = ococo.1
 
 HTSLIBDIR = ext/htslib
 HTSLIB    = $(HTSLIBDIR)/libhts.a
+HTSLIBINCLUDE = $(HTSLIBDIR)
 
 export CXX
 export CXXFLAGS
 
 export HTSLIBDIR
 export HTSLIB
+export HTSLIBINCLUDE
+
 
 .PHONY: all clean install ococo
 
