@@ -8,19 +8,15 @@ matrix:
 
     - os: linux 
       compiler: gcc
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'george-edison55-precise-backports']
-          packages: ['cmake', 'cmake-data']
       install:
         - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
         - sudo add-apt-repository ppa:duggan/bats -y
         - sudo apt-get update
-        - sudo apt-get install g++-4.8 cmake zlib1g-dev bats
+        - sudo apt-get install g++-4.8 zlib1g-dev bats
         - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 90
         - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 90
       script:
-        - cmake . && make && ./run.sh
+        - make -j && ./run.sh
         - (cd tests && bats ${CI:+--tap} tests.bats)
 
     - os: osx
@@ -30,11 +26,9 @@ matrix:
         - sudo brew tap homebrew/versions
         - sudo brew install llvm37
         - sudo brew install bats
-        - sudo brew unlink cmake && sudo brew install cmake31
-        #- sudo pip install --upgrade jinja2 nose
       install:
         - export CXX="clang++-3.7" CC="clang-3.7"
       script:
-        - cmake . && make && ./run.sh
+        - make -j  && ./run.sh
         - (cd tests && bats ${CI:+--tap} tests.bats)
         
