@@ -38,4 +38,4 @@ $(HTSLIB):
 clean:
 	$(MAKE) -C ext/htslib clean
 	$(MAKE) -C src clean
-	rm ococo
+	rm -f ococo
