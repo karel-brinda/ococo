@@ -318,12 +318,13 @@ void caller_t<T, counter_size, refbase_size>::run() {
                     break;
             }
 
-            if (stats->params->log_file != nullptr) {
-                fprintf(stats->params->log_file,
-                        "%" PRIu64 "\t%s\t%" PRIu64 "\n", i_read, rname,
-                        stats->params->n_upd - n_upd0);
-                n_upd0 = stats->params->n_upd;
-            }
+        }
+
+        if (stats->params->log_file != nullptr) {
+            fprintf(stats->params->log_file,
+                    "%" PRIu64 "\t%s\t%" PRIu64 "\n", i_read, rname,
+                    stats->params->n_upd - n_upd0);
+            n_upd0 = stats->params->n_upd;
         }
 
         i_read += 1;
