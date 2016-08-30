@@ -11,7 +11,7 @@ HTSLIBDIR = ext/htslib
 HTSLIB    = $(HTSLIBDIR)/libhts.a
 HTSLIBINCLUDE = $(HTSLIBDIR)
 
-ofiles    = src/main.o src/misc.o src/params.o
+ofiles    = src/main.cpp.o src/misc.cpp.o src/params.cpp.o
 hfiles    = $(wildcard src/*.h)
 
 .PHONY: all clean install ococo
@@ -25,7 +25,7 @@ install: ococo
 ococo: $(HTSLIB) $(ofiles) 
 	$(CXX) $(CXXFLAGS) $(DFLAGS) $(ofiles) -o $@ -L. $(LIBS) $(HTSLIB)
 
-src/%.o: src/%.cpp src/%.h $(hfiles)
+src/%.cpp.o: src/%.cpp $(hfiles)
 	$(CXX) $(CXXFLAGS) $(DFLAGS) -c $< -I $(HTSLIBINCLUDE) -o $@
 
 $(HTSLIB):
