@@ -33,9 +33,6 @@ $(HTSLIB):
 
 clean:
 	$(MAKE) -C ext/htslib clean
-<<<<<<< fdbd0877c3cc69dd5388c83a1b986d458fcc89ce
-	$(MAKE) -C src clean
-=======
 	rm -f src/*.o
->>>>>>> Use single Makefile
 	rm -f ococo
+
