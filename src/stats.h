@@ -140,7 +140,8 @@ int stats_t<T, counter_size, refbase_size>::load_fasta(
     constexpr int32_t max_counter_value =
         ococo::right_full_mask<T, counter_size>();
 
-    if (errno != 0 || fp == nullptr) {
+    //if (errno != 0 || fp == nullptr) {
+    if (fp == nullptr) {
         ococo::error("File '%s' could not be opened.\n", fasta_fn.c_str());
         return -1;
     }
