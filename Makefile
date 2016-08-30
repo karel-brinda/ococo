@@ -11,13 +11,8 @@ HTSLIBDIR = ext/htslib
 HTSLIB    = $(HTSLIBDIR)/libhts.a
 HTSLIBINCLUDE = $(HTSLIBDIR)
 
-export CXX
-export CXXFLAGS
-
-export HTSLIBDIR
-export HTSLIB
-export HTSLIBINCLUDE
-
+ofiles    = src/main.o src/misc.o src/params.o
+hfiles    = $(wildcard src/*.h)
 
 .PHONY: all clean install ococo
 
@@ -27,15 +22,20 @@ install: ococo
 	install  ococo $(BINDIR)/ococo
 	install  $(MANPAGE) $(MANDIR)/$(MANPAGE)
 
-ococo: $(HTSLIB)
-	$(MAKE) -C ./src
+ococo: $(HTSLIB) $(ofiles) 
+	$(CXX) $(CXXFLAGS) $(DFLAGS) $(ofiles) -o $@ -L. $(LIBS) $(HTSLIB)
 
-	$(CXX) $(CXXFLAGS) $(DFLAGS) ./src/*.o -o $@ -L. $(LIBS) $(HTSLIB)
+src/%.o: src/%.cpp src/%.h $(hfiles)
+	$(CXX) $(CXXFLAGS) $(DFLAGS) -c $< -I ../$(HTSLIBINCLUDE) -o $@
 
 $(HTSLIB):
 	$(MAKE) -C $(HTSLIBDIR) lib-static
 
 clean:
 	$(MAKE) -C ext/htslib clean
+<<<<<<< fdbd0877c3cc69dd5388c83a1b986d458fcc89ce
 	$(MAKE) -C src clean
+=======
+	rm -f src/*.o
+>>>>>>> Use single Makefile
 	rm -f ococo
