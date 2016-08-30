@@ -26,7 +26,7 @@ ococo: $(HTSLIB) $(ofiles)
 	$(CXX) $(CXXFLAGS) $(DFLAGS) $(ofiles) -o $@ -L. $(LIBS) $(HTSLIB)
 
 src/%.o: src/%.cpp src/%.h $(hfiles)
-	$(CXX) $(CXXFLAGS) $(DFLAGS) -c $< -I ../$(HTSLIBINCLUDE) -o $@
+	$(CXX) $(CXXFLAGS) $(DFLAGS) -c $< -I $(HTSLIBINCLUDE) -o $@
 
 $(HTSLIB):
 	$(MAKE) -C $(HTSLIBDIR) lib-static
