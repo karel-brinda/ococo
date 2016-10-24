@@ -20,6 +20,7 @@ void ococo::params_t::init_default_values() {
     init_ref_weight       = default_w;
     min_coverage          = default_c;
     majority_threshold    = default_M;
+    coverage_filter       = default_C;
 
     cons_alg[strategy_t::NO_UPDATES]     = &cons_call_no_updates;
     cons_alg[strategy_t::STOCHASTIC]     = &cons_call_stoch;
@@ -27,11 +28,13 @@ void ococo::params_t::init_default_values() {
     cons_alg[strategy_t::MAJORITY]       = &cons_call_maj;
     cons_alg[strategy_t::MAJORITY_AMB]   = &cons_call_maj_amb;
 
-    vcf_file       = nullptr;
-    pileup_file    = nullptr;
-    fasta_out_file = nullptr;
-    sam_file       = nullptr;
-    log_file       = nullptr;
+    in_sam_file = nullptr;
+
+    out_vcf_file    = nullptr;
+    out_pileup_file = nullptr;
+    out_fasta_file  = nullptr;
+    out_sam_file    = nullptr;
+    out_log_file    = nullptr;
 
     n_upd = 0;
 
@@ -51,41 +54,49 @@ ococo::params_t::~params_t() {
      * Close files.
      */
 
-    if (sam_file != nullptr) {
-        int error_code = sam_close(sam_file);
+    if (in_sam_file != nullptr) {
+        int error_code = sam_close(in_sam_file);
         if (error_code != 0) {
-            ococo::error("SAM file could not be closed.\n");
+            ococo::error("Input SAM file could not be closed.\n");
             return_code = -1;
         }
     }
 
-    if (vcf_file != nullptr) {
-        int error_code = fclose(vcf_file);
+    if (out_sam_file != nullptr) {
+        int error_code = sam_close(out_sam_file);
         if (error_code != 0) {
-            ococo::error("VCF file could not be closed.\n");
+            ococo::error("Output SAM file could not be closed.\n");
             return_code = -1;
         }
     }
 
-    if (pileup_file != nullptr) {
-        int error_code = fclose(pileup_file);
+    if (out_vcf_file != nullptr) {
+        int error_code = fclose(out_vcf_file);
+        if (error_code != 0) {
+            ococo::error("Output VCF file could not be closed.\n");
+            return_code = -1;
+        }
+    }
+
+    if (out_pileup_file != nullptr) {
+        int error_code = fclose(out_pileup_file);
         if (error_code != 0) {
             return_code = error_code;
-            ococo::error("Pileup file could not be closed.\n");
+            ococo::error("Output pileup file could not be closed.\n");
             return_code = -1;
         }
     }
 
-    if (fasta_out_file != nullptr) {
-        int error_code = fclose(fasta_out_file);
+    if (out_fasta_file != nullptr) {
+        int error_code = fclose(out_fasta_file);
         if (error_code != 0) {
-            ococo::error("FASTA consensus file could not be closed.\n");
+            ococo::error("Output FASTA consensus file could not be closed.\n");
             return_code = -1;
         }
     }
 
-    if (log_file != nullptr) {
-        int error_code = fclose(log_file);
+    if (out_log_file != nullptr) {
+        int error_code = fclose(out_log_file);
     }
 }
 
@@ -112,6 +123,8 @@ void ococo::params_t::print_help() {
            "  -S, --stats-out FILE  output statistics\n"
            "  -V, --vcf-cons FILE   VCF file with updates of consensus (- for standard output)\n"
            "  -P, --pileup FILE     truncated pileup (- for standard output)\n"
+           "  -O, --output FILE     output SAM/BAM file for filtered algns (- for standard input)\n"
+           "  -C, --cov-filt INT    filter alignments when coverage is greater than INT [" << default_C << "]\n"
            //"  --log FILE            auxiliary log file\n"
            "  --verbose             verbose mode (report every update of a counter)\n\n"
         // "---------------------------------------------------------------------------------"
@@ -131,8 +144,8 @@ void ococo::params_t::print_help() {
            //"nucleotides.\n"
            "  -q, --min-MQ INT      skip alignments with mapping quality smaller than INT [" << default_q << "]\n"
            "  -Q, --min-BQ INT      skip bases with base quality smaller than INT [" << default_Q <<"]\n"
-           "  -w, --ref-weight INT  initial counter value for nucleotides from ref ["<< default_w <<"]\n"
            "  -c, --min-cov INT     minimum coverage required for update [" << default_c <<"]\n"
+           "  -w, --ref-weight INT  initial counter value for nucleotides from ref ["<< default_w <<"]\n"
            "  -M, --maj-thres FLOAT majority threshold [" << default_M << "]\n\n"
         // "---------------------------------------------------------------------------------"
            "Examples:\n"
@@ -155,8 +168,7 @@ void ococo::params_t::parse_commandline(int argc, const char **argv) {
             cmd << " ";
         }
     }
-    command=cmd.str();
-
+    command = cmd.str();
 
     if (argc == 1) {
         print_help();
@@ -175,6 +187,8 @@ void ococo::params_t::parse_commandline(int argc, const char **argv) {
         {"stats-out", required_argument, nullptr, 'S'},
         {"vcf-cons", required_argument, nullptr, 'V'},
         {"pileup", required_argument, nullptr, 'P'},
+        {"output", required_argument, nullptr, 'O'},
+        {"cov-filt", required_argument, nullptr, 'C'},
         {"log", required_argument, nullptr, 'L'},
         {"verbose", no_argument, nullptr, 'W'},
         //
@@ -194,7 +208,7 @@ void ococo::params_t::parse_commandline(int argc, const char **argv) {
     int c;
     using std::string;
     while ((c = getopt_long(argc, (char *const *)argv,
-                            "vhi:f:s:F:S:V:P:L:W:x:m:t:q:Q:w:c:M:", lopts,
+                            "vhi:f:s:F:S:V:P:L:W:x:m:t:q:Q:w:c:M:O:C:", lopts,
                             nullptr)) >= 0) {
         switch (c) {
             case 'v': {
@@ -208,35 +222,43 @@ void ococo::params_t::parse_commandline(int argc, const char **argv) {
                 break;
             }
             case 'i': {
-                sam_fn = optarg;
+                in_sam_fn = optarg;
                 break;
             }
             case 'f': {
-                fasta_in_fn = optarg;
+                in_fasta_fn = optarg;
                 break;
             }
             case 's': {
-                stats_in_fn = optarg;
+                in_stats_fn = optarg;
                 break;
             }
             case 'F': {
-                fasta_out_fn = optarg;
+                out_fasta_fn = optarg;
                 break;
             }
             case 'S': {
-                stats_out_fn = optarg;
+                out_stats_fn = optarg;
                 break;
             }
             case 'V': {
-                vcf_fn = optarg;
+                out_vcf_fn = optarg;
                 break;
             }
             case 'P': {
-                pileup_fn = optarg;
+                out_pileup_fn = optarg;
+                break;
+            }
+            case 'O': {
+                out_sam_fn = optarg;
+                break;
+            }
+            case 'C': {
+                coverage_filter = atoi(optarg);
                 break;
             }
             case 'L': {
-                log_fn = optarg;
+                out_log_fn = optarg;
                 break;
             }
             case 'W': {
@@ -335,13 +357,15 @@ void ococo::params_t::parse_commandline(int argc, const char **argv) {
             }
         }
     }
-    if (sam_fn.size()==0){
+    if (in_sam_fn.size() == 0) {
         ococo::error("SAM/BAM file must be specified (option '-i').\n");
         exit(1);
     }
 
-    if(pileup_fn.size()!=0 && pileup_fn.compare(vcf_fn)==0){
-        ococo::error("Pileup and VCF files cannot be the same (both currently '%s').\n", pileup_fn.c_str());
+    if (out_pileup_fn.size() != 0 && out_pileup_fn.compare(out_vcf_fn) == 0) {
+        ococo::error(
+            "Pileup and VCF files cannot be the same (both currently '%s').\n",
+            out_pileup_fn.c_str());
         exit(1);
     }
 

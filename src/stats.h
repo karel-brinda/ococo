@@ -50,8 +50,8 @@ struct stats_t {
     int export_stats(const std::string &stats_fn) const;
 
     // Call consensus probabilistically.
-    int call_consensus(FILE *vcf_file, FILE *pileup_file);
-    int call_consensus_position(FILE *vcf_file, FILE *pileup_file,
+    int call_consensus(FILE *vcf_file, FILE *out_pileup_file);
+    int call_consensus_position(FILE *vcf_file, FILE *out_pileup_file,
                                 int32_t seqid, int64_t pos);
 
     // Loader header from a BAM.
@@ -66,7 +66,7 @@ struct stats_t {
                                char old_base, char new_base,
                                const pos_stats_uncompr_t &psu) const;
 
-    int print_pileup_line(FILE *pileup_file, int32_t seqid, int64_t pos,
+    int print_pileup_line(FILE *out_pileup_file, int32_t seqid, int64_t pos,
                           const pos_stats_uncompr_t &psu) const;
 
     /*************************
@@ -78,7 +78,7 @@ struct stats_t {
 
     static T compress_position_stats(const pos_stats_uncompr_t &psu);
     static void decompress_position_stats(T psc, pos_stats_uncompr_t &psu);
-    static T increment(T psc, nt4_t nt4);
+    static T increment(T psc, nt4_t nt4, int32_t &cov_est);
 
     /***********************
      * Debuging & checking *
@@ -377,12 +377,12 @@ int stats_t<T, counter_size, refbase_size>::export_stats(
 
 template <typename T, int counter_size, int refbase_size>
 int stats_t<T, counter_size, refbase_size>::call_consensus(FILE *vcf_file,
-                                                           FILE *pileup_file) {
+                                                           FILE *out_pileup_file) {
     assert(check_allocation());
 
     for (int32_t seqid = 0; seqid < n_seqs; seqid++) {
         for (int64_t pos = 0; pos < seq_len[seqid]; pos++) {
-            call_consensus_position(vcf_file, pileup_file, seqid, pos);
+            call_consensus_position(vcf_file, out_pileup_file, seqid, pos);
         }
     }
 
@@ -391,7 +391,7 @@ int stats_t<T, counter_size, refbase_size>::call_consensus(FILE *vcf_file,
 
 template <typename T, int counter_size, int refbase_size>
 int stats_t<T, counter_size, refbase_size>::call_consensus_position(
-    FILE *vcf_file, FILE *pileup_file, int32_t seqid, int64_t pos) {
+    FILE *vcf_file, FILE *out_pileup_file, int32_t seqid, int64_t pos) {
     pos_stats_uncompr_t psu;
     decompress_position_stats(seq_stats[seqid][pos], psu);
 
@@ -420,8 +420,8 @@ int stats_t<T, counter_size, refbase_size>::call_consensus_position(
         }
     }
 
-    if (pileup_file != nullptr) {
-        print_pileup_line(pileup_file, seqid, pos, psu);
+    if (out_pileup_file != nullptr) {
+        print_pileup_line(out_pileup_file, seqid, pos, psu);
     }
 
     return 0;
@@ -524,10 +524,10 @@ int stats_t<T, counter_size, refbase_size>::print_vcf_substitution(
 
 template <typename T, int counter_size, int refbase_size>
 int stats_t<T, counter_size, refbase_size>::print_pileup_line(
-    FILE *pileup_file, int32_t seqid, int64_t pos,
+    FILE *out_pileup_file, int32_t seqid, int64_t pos,
     const pos_stats_uncompr_t &psu) const {
     assert(check_allocation());
-    assert(pileup_file != nullptr);
+    assert(out_pileup_file != nullptr);
 
     // todo: fix situation when depth is larger (use the printing buffer more
     // timess)
@@ -570,7 +570,7 @@ int stats_t<T, counter_size, refbase_size>::print_pileup_line(
     bases[j]     = '\0';
     qualities[j] = '\0';
 
-    fprintf(pileup_file, "%s\t%" PRId64 "\t%c\t%" PRId32 "\t%s\t%s\n",
+    fprintf(out_pileup_file, "%s\t%" PRId64 "\t%c\t%" PRId32 "\t%s\t%s\n",
             seq_name[seqid].c_str(), pos + 1, ref_nt256, psu.sum, bases,
             qualities);
 
@@ -623,11 +623,13 @@ inline int stats_t<T, counter_size, refbase_size>::get_nucl_nt256(
 }
 
 template <typename T, int counter_size, int refbase_size>
-T stats_t<T, counter_size, refbase_size>::increment(T psc, nt4_t nt4) {
-    assert(0 <= nt4 && nt4 < 4);
+T stats_t<T, counter_size, refbase_size>::increment(T psc, nt4_t nt4, int32_t &cov_est) {
+    assert(nt4 < 4);
 
     pos_stats_uncompr_t psu;
     decompress_position_stats(psc, psu);
+
+    cov_est=psu.counters[0]+psu.counters[1]+psu.counters[2]+psu.counters[3]+1;
 
     if (psu.counters[nt4] == right_full_mask<uint16_t, counter_size>()) {
         psu.counters[0] >>= 1;

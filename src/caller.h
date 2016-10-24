@@ -46,15 +46,15 @@ caller_t<T, counter_size, refbase_size>::caller_t(params_t *params_)
     header = nullptr;
     stats  = nullptr;
 
-    params->sam_file = sam_open(params->sam_fn.c_str(), "r");
-    if (params->sam_file == nullptr) {
+    params->in_sam_file = sam_open(params->in_sam_fn.c_str(), "r");
+    if (params->in_sam_file == nullptr) {
         ococo::fatal_error("Problem with opening SAM/BAM file ('%s').\n",
-                           params->sam_fn.c_str());
+                           params->in_sam_fn.c_str());
         correctly_initialized = false;
         return;
     }
 
-    if ((header = sam_hdr_read(params->sam_file)) == 0) {
+    if ((header = sam_hdr_read(params->in_sam_file)) == 0) {
         ococo::fatal_error("SAM/BAM headers are missing or corrupted.\n");
         correctly_initialized = false;
         return;
@@ -69,10 +69,25 @@ caller_t<T, counter_size, refbase_size>::caller_t(params_t *params_)
     }
 
     /*
+     * Open output SAM stream
+     */
+
+    if (params->out_sam_fn.size() > 0) {
+        params->out_sam_file = sam_open(params->out_sam_fn.c_str(), "w");
+        if (params->out_sam_file == nullptr) {
+            ococo::fatal_error("Problem with opening SAM/BAM file ('%s').\n",
+                                params->out_sam_fn.c_str());
+            correctly_initialized = false;
+            return;
+        }
+    }
+
+
+    /*
      * Load FASTA and stats.
      */
 
-    if (!params->stats_in_fn.empty() && !params->fasta_in_fn.empty()) {
+    if (!params->in_stats_fn.empty() && !params->in_fasta_fn.empty()) {
         ococo::fatal_error(
             "Initial FASTA reference and input statistics "
             "cannot be used at the same time.\n");
@@ -80,26 +95,26 @@ caller_t<T, counter_size, refbase_size>::caller_t(params_t *params_)
         return;
     }
 
-    if (!params->stats_in_fn.empty()) {
+    if (!params->in_stats_fn.empty()) {
         ococo::info("Loading statistics ('%s').\n",
-                    params->stats_in_fn.c_str());
+                    params->in_stats_fn.c_str());
 
-        int error_code = stats->import_stats(params->stats_in_fn);
+        int error_code = stats->import_stats(params->in_stats_fn);
         if (error_code != 0) {
             ococo::fatal_error("Import of statistics failed (file '%s').\n",
-                               params->stats_in_fn.c_str());
+                               params->in_stats_fn.c_str());
             correctly_initialized = false;
             return;
         }
     } else {
-        if (!params->fasta_in_fn.empty()) {
+        if (!params->in_fasta_fn.empty()) {
             ococo::info("Loading reference ('%s').\n",
-                        params->fasta_in_fn.c_str());
+                        params->in_fasta_fn.c_str());
 
-            int error_code = stats->load_fasta(params->fasta_in_fn);
+            int error_code = stats->load_fasta(params->in_fasta_fn);
             if (error_code != 0) {
                 ococo::fatal_error("Loading of FASTA failed (file '%s').\n",
-                                   params->fasta_in_fn.c_str());
+                                   params->in_fasta_fn.c_str());
                 correctly_initialized = false;
                 return;
             }
@@ -108,8 +123,7 @@ caller_t<T, counter_size, refbase_size>::caller_t(params_t *params_)
         else {
             ococo::info(
                 "Neither reference, nor statistics provided. Going "
-                "to "
-                "consider sequence of N's as a reference.\n");
+                "to consider sequence of N's as a reference.\n");
         }
     }
 
@@ -117,31 +131,31 @@ caller_t<T, counter_size, refbase_size>::caller_t(params_t *params_)
      * Open VCF file.
      */
 
-    if (params->vcf_fn.size() > 0) {
-        ococo::info("Opening VCF stream ('%s').\n", params->vcf_fn.c_str());
+    if (params->out_vcf_fn.size() > 0) {
+        ococo::info("Opening VCF stream ('%s').\n", params->out_vcf_fn.c_str());
 
-        if (params->vcf_fn == std::string("-")) {
-            params->vcf_file = stdout;
+        if (params->out_vcf_fn == std::string("-")) {
+            params->out_vcf_file = stdout;
         } else {
-            params->vcf_file = fopen(params->vcf_fn.c_str(), "w+");
-            if (params->vcf_file == nullptr) {
+            params->out_vcf_file = fopen(params->out_vcf_fn.c_str(), "w+");
+            if (params->out_vcf_file == nullptr) {
                 ococo::fatal_error("Problem with opening VCF file '%s'.\n",
-                                   params->vcf_fn.c_str());
+                                   params->out_vcf_fn.c_str());
                 correctly_initialized = false;
                 return;
             }
         }
 
         char buf[PATH_MAX + 1];
-        char *res = realpath(params->fasta_in_fn.c_str(), buf);
+        char *res = realpath(params->in_fasta_fn.c_str(), buf);
         std::string fasta_full_path;
         if (res) {
             fasta_full_path = std::string(buf);
         } else {
-            fasta_full_path = params->fasta_in_fn;
+            fasta_full_path = params->in_fasta_fn;
         }
 
-        stats->print_vcf_header(params->vcf_file, params->command,
+        stats->print_vcf_header(params->out_vcf_file, params->command,
                                 fasta_full_path);
     }
 
@@ -149,17 +163,17 @@ caller_t<T, counter_size, refbase_size>::caller_t(params_t *params_)
      * Open pileup file.
      */
 
-    if (params->pileup_fn.size() > 0) {
+    if (params->out_pileup_fn.size() > 0) {
         ococo::info("Opening pileup stream ('%s').\n",
-                    params->pileup_fn.c_str());
+                    params->out_pileup_fn.c_str());
 
-        if (params->pileup_fn == std::string("-")) {
-            params->pileup_file = stdout;
+        if (params->out_pileup_fn == std::string("-")) {
+            params->out_pileup_file = stdout;
         } else {
-            params->pileup_file = fopen(params->pileup_fn.c_str(), "w+");
-            if (params->pileup_file == nullptr) {
+            params->out_pileup_file = fopen(params->out_pileup_fn.c_str(), "w+");
+            if (params->out_pileup_file == nullptr) {
                 ococo::fatal_error("Problem with opening pileup file '%s'.\n",
-                                   params->pileup_fn.c_str());
+                                   params->out_pileup_fn.c_str());
                 correctly_initialized = false;
                 return;
             }
@@ -170,17 +184,17 @@ caller_t<T, counter_size, refbase_size>::caller_t(params_t *params_)
      * Open consensus FASTA file.
      */
 
-    if (params->fasta_out_fn.size() > 0) {
-        params->fasta_out_file = fopen(params->fasta_out_fn.c_str(), "w+");
+    if (params->out_fasta_fn.size() > 0) {
+        params->out_fasta_file = fopen(params->out_fasta_fn.c_str(), "w+");
 
         ococo::info("Opening consensus file ('%s').\n",
-                    params->fasta_out_fn.c_str());
-        params->fasta_out_file = fopen(params->fasta_out_fn.c_str(), "w+");
+                    params->out_fasta_fn.c_str());
+        params->out_fasta_file = fopen(params->out_fasta_fn.c_str(), "w+");
 
-        if (params->fasta_out_file == nullptr) {
+        if (params->out_fasta_file == nullptr) {
             ococo::fatal_error(
                 "Problem with opening FASTA for consensus: '%s'.\n",
-                params->fasta_out_fn.c_str());
+                params->out_fasta_fn.c_str());
             correctly_initialized = false;
             return;
         }
@@ -190,15 +204,15 @@ caller_t<T, counter_size, refbase_size>::caller_t(params_t *params_)
      * Open log file.
      */
 
-    if (params->log_fn.size() > 0) {
-        params->log_file = fopen(params->log_fn.c_str(), "w+");
+    if (params->out_log_fn.size() > 0) {
+        params->out_log_file = fopen(params->out_log_fn.c_str(), "w+");
 
-        ococo::info("Opening log file ('%s').\n", params->log_fn.c_str());
-        params->log_file = fopen(params->log_fn.c_str(), "w+");
+        ococo::info("Opening log file ('%s').\n", params->out_log_fn.c_str());
+        params->out_log_file = fopen(params->out_log_fn.c_str(), "w+");
 
-        if (params->log_file == nullptr) {
+        if (params->out_log_file == nullptr) {
             ococo::fatal_error("Problem with opening log file: '%s'.\n",
-                               params->log_fn.c_str());
+                               params->out_log_fn.c_str());
             correctly_initialized = false;
             return;
         }
@@ -241,7 +255,12 @@ void caller_t<T, counter_size, refbase_size>::run() {
     b              = bam_init1();
     int64_t n_upd0 = 0;
     int64_t i_read = 0;
-    while ((r = sam_read1(params->sam_file, header, b)) >= 0) {
+
+    if(stats->params->out_sam_file!=nullptr) {
+        sam_hdr_write(stats->params->out_sam_file, header);
+    }
+
+    while ((r = sam_read1(params->in_sam_file, header, b)) >= 0) {
         const char *rname          = bam_get_qname(b);
         const uint8_t *seq         = bam_get_seq(b);
         const uint8_t *qual        = bam_get_qual(b);
@@ -256,6 +275,9 @@ void caller_t<T, counter_size, refbase_size>::run() {
         if (!read_ok) {
             continue;
         }
+
+        int32_t pseudo_read_len=0;
+        int32_t cov_sum=0;
 
         int32_t ref_pos = mappping_pos;
         for (int32_t cigar_grp = 0, read_pos = 0; cigar_grp < n_cigar;
@@ -284,12 +306,16 @@ void caller_t<T, counter_size, refbase_size>::run() {
                             continue;
                         }
 
+                        int32_t cov_est=0;
                         stats->seq_stats[seqid][ref_pos] = stats->increment(
-                            stats->seq_stats[seqid][ref_pos], nt4);
+                            stats->seq_stats[seqid][ref_pos],nt4, cov_est);
+                        pseudo_read_len+=1;
+
+                        cov_sum+=cov_est;
 
                         if (stats->params->mode == ococo::mode_t::REALTIME) {
-                            stats->call_consensus_position(params->vcf_file,
-                                                           params->pileup_file,
+                            stats->call_consensus_position(params->out_vcf_file,
+                                                           params->out_pileup_file,
                                                            seqid, ref_pos);
                         }
                     }
@@ -316,45 +342,52 @@ void caller_t<T, counter_size, refbase_size>::run() {
                 case BAM_CPAD:
                 case BAM_CHARD_CLIP:
                     break;
-            }
+            } // switch (op)
 
+        } // for (int32_t cigar_grp
+
+        int32_t max_cov_sum = pseudo_read_len * stats->params->coverage_filter;
+        if(stats->params->out_sam_file!=nullptr) {
+            if(stats->params->coverage_filter<0 || cov_sum <= max_cov_sum){
+                sam_write1(stats->params->out_sam_file, header, b);
+            }
         }
 
-        if (stats->params->log_file != nullptr) {
-            fprintf(stats->params->log_file,
+        if (stats->params->out_log_file != nullptr) {
+            fprintf(stats->params->out_log_file,
                     "%" PRIu64 "\t%s\t%" PRIu64 "\n", i_read, rname,
                     stats->params->n_upd - n_upd0);
             n_upd0 = stats->params->n_upd;
         }
 
         i_read += 1;
-    }
+    } // while ((r = sam_read1
 
     /*
      * Call final consensus and export stats.
      */
 
     if (stats->params->mode == ococo::mode_t::BATCH) {
-        stats->call_consensus(params->vcf_file, params->pileup_file);
+        stats->call_consensus(params->out_vcf_file, params->out_pileup_file);
 
-        if (params->fasta_out_fn.size() > 0) {
-            int error_code = stats->save_fasta(params->fasta_out_fn);
+        if (params->out_fasta_fn.size() > 0) {
+            int error_code = stats->save_fasta(params->out_fasta_fn);
             if (error_code != 0) {
                 ococo::error("FASTA '%s' could not be saved.\n",
-                             params->fasta_out_fn.c_str());
+                             params->out_fasta_fn.c_str());
                 return_code = EXIT_FAILURE;
             }
         }
     }
 
-    if (params->stats_out_fn.size() > 0) {
+    if (params->out_stats_fn.size() > 0) {
         ococo::info("Saving statistics ('%s').\n",
-                    params->stats_out_fn.c_str());
+                    params->out_stats_fn.c_str());
 
-        int error_code = stats->export_stats(params->stats_out_fn);
+        int error_code = stats->export_stats(params->out_stats_fn);
         if (error_code != 0) {
             ococo::error("Statistics could not be saved ('%s').\n",
-                         params->stats_out_fn.c_str());
+                         params->out_stats_fn.c_str());
             return_code = EXIT_FAILURE;
         }
     }

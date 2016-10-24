@@ -26,6 +26,7 @@ const float default_M = 0.51;
 const int default_w   = 0;
 const int default_q   = 1;
 const int default_Q   = 13;
+const int default_C   = -1;
 
 enum mode_t { BATCH, REALTIME };
 
@@ -62,30 +63,36 @@ struct params_t {
     /*
      * Input parameters
      */
-    std::string sam_fn;
-    std::string fasta_in_fn;
-    std::string stats_in_fn;
+    std::string in_sam_fn;
+    std::string in_fasta_fn;
+    std::string in_stats_fn;
 
     /*
      * Output parameters
      */
     bool verbose;
 
-    std::string vcf_fn;
-    std::string fasta_out_fn;
-    std::string stats_out_fn;
-    std::string pileup_fn;
-    std::string log_fn;
+    std::string out_sam_fn;
+    std::string out_vcf_fn;
+    std::string out_fasta_fn;
+    std::string out_stats_fn;
+    std::string out_pileup_fn;
+    std::string out_log_fn;
+
+    /* filter alignments when coverage is greater than */
+    int coverage_filter;
 
     /*
      * Files
      */
+    FILE *out_vcf_file;
+    FILE *out_pileup_file;
+    FILE *out_fasta_file;
+    FILE *out_log_file;
+    samFile *out_sam_file;
 
-    FILE *vcf_file;
-    FILE *pileup_file;
-    FILE *fasta_out_file;
-    samFile *sam_file;
-    FILE *log_file;
+    samFile *in_sam_file;
+
 
     /*
      * Consensus calling parameters
