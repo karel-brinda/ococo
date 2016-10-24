@@ -123,7 +123,7 @@ void ococo::params_t::print_help() {
            "  -S, --stats-out FILE  output statistics\n"
            "  -V, --vcf-cons FILE   VCF file with updates of consensus (- for standard output)\n"
            "  -P, --pileup FILE     truncated pileup (- for standard output)\n"
-           "  -O, --output FILE     output SAM/BAM file for filtered algns (- for standard input)\n"
+           "  -O, --output FILE     output SAM/BAM file for filtered algns (- for standard output)\n"
            "  -C, --cov-filt INT    filter alignments when coverage is greater than INT [" << default_C << "]\n"
            //"  --log FILE            auxiliary log file\n"
            "  --verbose             verbose mode (report every update of a counter)\n\n"

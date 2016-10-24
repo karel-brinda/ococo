@@ -30,6 +30,12 @@ VCF file with updates of consensus (\- for standard output)
 \fB\-P\fR, \fB\-\-pileup\fR FILE
 Truncated pileup (\- for standard output).
 .TP
+\fB\-O\fR, \fB\-\-output\fR FILE
+Output SAM/BAM file for filtered alignments (- for standard output).
+.TP
+\fB\-C\fR, \fB\-\-cov\-filt\fR INT
+Filter alignments when coverage is greater than INT [-1].
+.TP
 \fB\-\-verbose\fR
 Verbose mode (report every update of a counter).
 .SS "Parameters for consensus calling:"
@@ -38,9 +44,10 @@ Verbose mode (report every update of a counter).
 Counter configuration [ococo16].
 
 .TS
-l	l	l	.
+l	|	l	|	l	.
 .B
 configuration	bits/counter	bits/position
+_
 ococo16	3	16
 ococo32	7	32
 ococo64	15	64
@@ -51,9 +58,10 @@ ococo64	15	64
 Mode [batch].
 
 .TS 
-l	l	.
+l	|	l	.
 .B
 mode	description
+_
 real\-time	updates reported immediately
 batch	updates reported after end of algn stream
 .TE
@@ -63,12 +71,13 @@ batch	updates reported after end of algn stream
 Strategy for updates [majority].
 
 .TS 
-l	l	l	.
+l	|	l	.
 .B
 strategy	description
+_
 majority	update to majority base
 stochastic	update to stochastically drawn base
-no-updates	no updates, only counters updated
+no\-updates	no updates, only counters updated
 .TE
 
 .TP
