@@ -22,10 +22,10 @@ matrix:
     - os: osx
       compiler: clang-3.7
       before_install:
-        - sudo brew update
-        - sudo brew tap homebrew/versions
-        - sudo brew install llvm37
-        - sudo brew install bats
+        - brew update
+        - brew tap homebrew/versions
+        - brew install llvm37
+        - brew install bats
       install:
         - export CXX="clang++-3.7" CC="clang-3.7"
       script:
