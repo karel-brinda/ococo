@@ -267,19 +267,30 @@ void caller_t<T, counter_size, refbase_size>::run() {
         const uint32_t *cigar      = bam_get_cigar(b);
         const int32_t n_cigar      = b->core.n_cigar;
         const int32_t seqid        = b->core.tid;
-        const int64_t mappping_pos = b->core.pos;
+        const int64_t mapping_pos = b->core.pos;
         const int32_t mapq         = b->core.qual;
         const int32_t flags        = b->core.flag;
+
+        //std::cerr << "read " << rname << " " << mapping_pos << std::endl;
+
 
         bool read_ok = check_read(seqid, flags, mapq);
         if (!read_ok) {
             continue;
         }
+        //std::cerr << "   ok " << rname << " " << mapping_pos << std::endl;
 
-        int32_t pseudo_read_len=0;
-        int32_t cov_sum=0;
 
-        int32_t ref_pos = mappping_pos;
+        int32_t low_cov_thres = stats->params->coverage_filter;
+        int32_t npos_low_cov  = 0;
+        int32_t npos_high_cov  = 0;
+        int32_t pseudo_rlen   = 0;
+
+        if (low_cov_thres<0){
+            low_cov_thres=424242;
+        }
+
+        int32_t ref_pos = mapping_pos;
         for (int32_t cigar_grp = 0, read_pos = 0; cigar_grp < n_cigar;
              cigar_grp++) {
             const int32_t op = bam_cigar_op(cigar[cigar_grp]);
@@ -291,7 +302,7 @@ void caller_t<T, counter_size, refbase_size>::run() {
                 case BAM_CDIFF:
                 case BAM_CEQUAL:
 
-                    for (; read_pos < next_read_pos; read_pos++, ref_pos++) {
+                    for (; read_pos < next_read_pos; ++read_pos, ++ref_pos) {
                         const uint8_t nt16 = bam_seqi(seq, read_pos);
                         const uint8_t nt4  = ococo::nt16_nt4[nt16];
                         // const char nt256 =
@@ -309,9 +320,15 @@ void caller_t<T, counter_size, refbase_size>::run() {
                         int32_t cov_est=0;
                         stats->seq_stats[seqid][ref_pos] = stats->increment(
                             stats->seq_stats[seqid][ref_pos],nt4, cov_est);
-                        pseudo_read_len+=1;
-
-                        cov_sum+=cov_est;
+                        // cov_est is already incremented for this read
+                        if (cov_est-1<low_cov_thres){
+                            ++npos_low_cov;
+                        } else{
+                            if ( 2* (cov_est-1) > 3 * low_cov_thres){
+                                ++npos_high_cov;
+                            }
+                        }
+                        ++pseudo_rlen;
 
                         if (stats->params->mode == ococo::mode_t::REALTIME) {
                             stats->call_consensus_position(params->out_vcf_file,
@@ -346,10 +363,17 @@ void caller_t<T, counter_size, refbase_size>::run() {
 
         } // for (int32_t cigar_grp
 
-        int32_t max_cov_sum = pseudo_read_len * stats->params->coverage_filter;
+        //std::cerr << "   ok2 " << rname << " " << mapping_pos << " " << npos_low_cov << " " << pseudo_rlen << std::endl;
+
         if(stats->params->out_sam_file!=nullptr) {
-            if(stats->params->coverage_filter<0 || cov_sum <= max_cov_sum){
+            // at least 5% pos. low coverage => print read
+            //if(npos_low_cov * 20 >= pseudo_rlen){
+            if(npos_low_cov > 0 && npos_high_cov < 0.5 * pseudo_rlen){
                 sam_write1(stats->params->out_sam_file, header, b);
+                //std::cerr << "   wrote " << rname << std::endl;
+            }
+            else {
+                //std::cerr << "  filtered out " << rname << std::endl;
             }
         }
 
