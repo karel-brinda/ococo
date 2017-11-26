@@ -73,6 +73,26 @@ Examples:
    ococo -x ococo64 -i test.bam -f test.fa -P - -V variants.vcf
 ```
 
+## Issues
+
+Please use [Github issues](https://github.com/karel-brinda/ococo/issues).
+
+
+## Changelog
+
+See [Releases](https://github.com/karel-brinda/ococo/releases).
+
+
+## Licence
+
+[MIT](https://github.com/karel-brinda/ococo/blob/master/LICENSE)
+
+
+## Author
+
+[Karel Brinda](http://brinda.cz) <kbrinda@hsph.harvard.edu>
+
+
 ## Citing OCOCO
 
 * K. Brinda, V. Boeva, G. Kucherov. **Dynamic read mapping and online consensus calling for better variant detection.** arXiv:1605.09070v1 [q-bio.GN], 2016. http://arxiv.org/abs/1605.09070
