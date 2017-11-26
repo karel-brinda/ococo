@@ -90,7 +90,7 @@ See [Releases](https://github.com/karel-brinda/ococo/releases).
 
 ## Author
 
-[Karel Brinda](http://brinda.cz) <kbrinda@hsph.harvard.edu>
+[Karel Brinda](http://brinda.cz) \<kbrinda@hsph.harvard.edu\>
 
 
 ## Citing OCOCO
