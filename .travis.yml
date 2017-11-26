@@ -28,7 +28,7 @@ matrix:
         - brew tap homebrew/versions
       install:
         - export CXX="clang++-3.7" CC="clang-3.7"
-        - sudo brew install llvm37
+        - brew install llvm37
       script:
         - make -j
         - ./run.sh
