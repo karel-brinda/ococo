@@ -33,7 +33,7 @@ $(HTSLIB): $(HTSLIBDIR)/Makefile
 	$(MAKE) -C $(HTSLIBDIR) lib-static
 
 $(HTSLIBDIR)/Makefile:
-	 cd $(HTSLIBDIR) && curl -L https://github.com/samtools/htslib/archive/$(HTSLIB_VERSION).tar.gz | tar xz --strip-components 1¬
+	 cd $(HTSLIBDIR) && curl -L https://github.com/samtools/htslib/archive/$(HTSLIB_VERSION).tar.gz | tar xz --strip-components 1
 
 clean:
 	$(MAKE) -C ext/htslib clean
