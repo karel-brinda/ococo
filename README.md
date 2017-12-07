@@ -1,7 +1,7 @@
 # OCOCO - Online Consensus Caller
 
 [![Build Status](https://travis-ci.org/karel-brinda/ococo.svg?branch=master)](https://travis-ci.org/karel-brinda/ococo)
-[![Arxiv](https://img.shields.io/badge/arXiv-1605.09070-green.svg?style=flat)](https://arxiv.org/abs/1605.09070)
+[![Arxiv](https://img.shields.io/badge/arXiv-1712.01146-green.svg?style=flat)](https://arxiv.org/abs/1712.01146)
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](https://anaconda.org/bioconda/ococo)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1066531.svg)](https://doi.org/10.5281/zenodo.1066531)
 
