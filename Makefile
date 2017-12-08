@@ -10,6 +10,7 @@ MANPAGE   = ococo.1
 HTSLIBDIR = ext/htslib
 HTSLIB    = $(HTSLIBDIR)/libhts.a
 HTSLIBINCLUDE = $(HTSLIBDIR)
+HTSLIB_VERSION = b6aa0e6
 
 ofiles    = src/main.cpp.o src/misc.cpp.o src/params.cpp.o
 hfiles    = $(wildcard src/*.h)
@@ -22,14 +23,17 @@ install: ococo
 	install  ococo $(BINDIR)/ococo
 	install  $(MANPAGE) $(MANDIR)/$(MANPAGE)
 
-ococo: $(HTSLIB) $(ofiles) 
+ococo: $(HTSLIB) $(ofiles)
 	$(CXX) $(CXXFLAGS) $(DFLAGS) $(ofiles) -o $@ -L. $(LIBS) $(HTSLIB)
 
 src/%.cpp.o: src/%.cpp $(hfiles)
 	$(CXX) $(CXXFLAGS) $(DFLAGS) -c $< -I $(HTSLIBINCLUDE) -o $@
 
-$(HTSLIB):
+$(HTSLIB): $(HTSLIBDIR)/Makefile
 	$(MAKE) -C $(HTSLIBDIR) lib-static
+
+$(HTSLIBDIR)/Makefile:
+	 cd $(HTSLIBDIR) && curl -L https://github.com/samtools/htslib/archive/$(HTSLIB_VERSION).tar.gz | tar xz --strip-components 1
 
 clean:
 	$(MAKE) -C ext/htslib clean

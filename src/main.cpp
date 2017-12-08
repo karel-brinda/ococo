@@ -1,7 +1,5 @@
 #include "ococo.h"
 
-#define BOOST_LOG_DYN_LINK
-
 #include <climits>
 #include <cstdio>
 #include <cstdlib>

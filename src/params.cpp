@@ -111,7 +111,7 @@ void ococo::params_t::print_help() {
            "Usage:   ococo -i <SAM/BAM file> [other options]\n\n"
         // "---------------------------------------------------------------------------------"
            //"Generic options:\n"
-           //"  -h, --help            print this message and exit\n\n"           
+           //"  -h, --help            print this message and exit\n\n"
         // "---------------------------------------------------------------------------------"
            "Input options:\n"
            "  -i, --input FILE      input SAM/BAM file (- for standard input)\n"
@@ -347,7 +347,6 @@ void ococo::params_t::parse_commandline(int argc, const char **argv) {
             }
             case 'M': {
                 majority_threshold = atof(optarg);
-                exit(0);
                 break;
             }
             case '?': {

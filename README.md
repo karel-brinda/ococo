@@ -1,8 +1,9 @@
 # OCOCO - Online Consensus Caller
 
 [![Build Status](https://travis-ci.org/karel-brinda/ococo.svg?branch=master)](https://travis-ci.org/karel-brinda/ococo)
-[![Arxiv](https://img.shields.io/badge/arXiv-1605.09070-green.svg?style=flat)](https://arxiv.org/abs/1605.09070)
-[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](http://bioconda.github.io/recipes/ococo/README.html)
+[![Arxiv](https://img.shields.io/badge/arXiv-1712.01146-green.svg?style=flat)](https://arxiv.org/abs/1712.01146)
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](https://anaconda.org/bioconda/ococo)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1066531.svg)](https://doi.org/10.5281/zenodo.1066531)
 
 Welcome to OCOCO, an online consensus caller.
 
@@ -73,6 +74,26 @@ Examples:
    ococo -x ococo64 -i test.bam -f test.fa -P - -V variants.vcf
 ```
 
+## Issues
+
+Please use [Github issues](https://github.com/karel-brinda/ococo/issues).
+
+
+## Changelog
+
+See [Releases](https://github.com/karel-brinda/ococo/releases).
+
+
+## Licence
+
+[MIT](https://github.com/karel-brinda/ococo/blob/master/LICENSE)
+
+
+## Author
+
+[Karel Brinda](http://brinda.cz) \<kbrinda@hsph.harvard.edu\>
+
+
 ## Citing OCOCO
 
-* K. Brinda, V. Boeva, G. Kucherov. **Dynamic read mapping and online consensus calling for better variant detection.** arXiv:1605.09070v1 [q-bio.GN], 2016. http://arxiv.org/abs/1605.09070
+* K. Brinda, V. Boeva, G. Kucherov. **Ococo: an online consensus caller.** arXiv:1712.01146 [q-bio.GN], 2016. https://arxiv.org/abs/1712.01146
