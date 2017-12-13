@@ -96,4 +96,4 @@ See [Releases](https://github.com/karel-brinda/ococo/releases).
 
 ## Citing OCOCO
 
-* K. Brinda, V. Boeva, G. Kucherov. **Ococo: an online consensus caller.** arXiv:1712.01146 [q-bio.GN], 2016. https://arxiv.org/abs/1712.01146
+* K. Brinda, V. Boeva, G. Kucherov. **Ococo: an online consensus caller.** arXiv:1712.01146 [q-bio.GN], 2017. https://arxiv.org/abs/1712.01146
