@@ -36,8 +36,10 @@ brew install ococo
 
 ## Command line parameters
 
-```
-Usage:   ococo -i <SAM/BAM file> [other options]
+<!---
+USAGE-BEGIN
+-->
+```Usage:   ococo -i <SAM/BAM file> [other options]
 
 Input options:
   -i, --input FILE      input SAM/BAM file (- for standard input)
@@ -72,7 +74,14 @@ Parameters for consensus calling:
 Examples:
    ococo -i test.bam -f test.fa -m real-time -V -
    ococo -x ococo64 -i test.bam -f test.fa -P - -V variants.vcf
+
+Note:
+   For more details, see the manual page 'man ./ococo.1'.
+
 ```
+<!---
+USAGE-END
+-->
 
 ## Issues
 
