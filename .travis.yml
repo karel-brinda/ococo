@@ -1,9 +1,5 @@
 language: cpp
 
-cache:
-  - apt: true
-  - brew
-
 matrix:
   include:
 
@@ -14,8 +10,6 @@ matrix:
         - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
         - sudo apt-get update
         - sudo apt-get install g++-4.8 zlib1g-dev
-        - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 90
-        - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 90
       script:
         - make -j
         - ./run.sh
@@ -23,12 +17,6 @@ matrix:
 
     - os: osx
       compiler: clang-3.7
-      before_install:
-        - brew update
-        - brew tap homebrew/versions
-      install:
-        - export CXX="clang++-3.7" CC="clang-3.7"
-        - brew install llvm37
       script:
         - make -j
         - ./run.sh
