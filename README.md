@@ -27,19 +27,19 @@ It is particularly advantageous when reads are sequenced or mapped
 progressively, or when available computational resources are at a premium.
 
 
-## Getting started
+## Citation
+
+> Brinda K, Boeva V, Kucherov G. **Ococo: an online variant and consensus
+> caller.** arXiv:1712.01146 [q-bio.GN], 2017. https://arxiv.org/abs/1712.01146
+
+
+## Quick example
 
 ```bash
 git clone --recursive https://github.com/karel-brinda/ococo
 cd ococo && make -j
 ./ococo -i test.bam -f test.fa --vcf-cons -
 ```
-
-## Citation
-
-> Brinda K, Boeva V, Kucherov G. **Ococo: an online variant and consensus
-> caller.** arXiv:1712.01146 [q-bio.GN], 2017. https://arxiv.org/abs/1712.01146
-
 
 ## Installation
 
