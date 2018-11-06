@@ -61,54 +61,78 @@ conda install -c bioconda ococo
 **Installation:** ``make install``
 
 
-## Command line parameters
+## How to use
 
-<!---
-USAGE-BEGIN
--->
-```Usage:   ococo -i <SAM/BAM file> [other options]
+```NAME
+       ococo - Online variant and consensus caller
 
-Input options:
-  -i, --input FILE      input SAM/BAM file (- for standard input)
-  -f, --fasta-ref FILE  initial FASTA reference (otherwise seq of N's is used)
-  -s, --stats-in FILE   input statistics
+SYNOPSIS
+       ococo -i <SAM/BAM file> [other options]
 
-Output options:
-  -F, --fasta-cons FILE FASTA file with consensus
-  -S, --stats-out FILE  output statistics
-  -V, --vcf-cons FILE   VCF file with updates of consensus (- for standard output)
-  -P, --pileup FILE     truncated pileup (- for standard output)
-  --verbose             verbose mode (report every update of a counter)
+DESCRIPTION
+       Ococo  is a program to call genomic consensus directly from an unsorted
+       SAM/BAM stream.
 
-Parameters for consensus calling:
-  -x, --counters STR    counter configuration: [ococo16]
-                           - ococo16 (3b/counter, 16b/position)
-                           - ococo32 (7b/counter, 32b/position)
-                           - ococo64 (15b/counter, 64b/position)
-  -m, --mode STR        mode: [batch]
-                           - real-time (updates reported immediately)
-                           - batch (updates reported after end of algn stream)
-  -t, --strategy STR    strategy for updates: [majority]
-                           - majority (update to majority base)
-                           - stochastic (update to stochastically drawn base)
-                           - no-updates (no updates, only counters updated)
-  -q, --min-MQ INT      skip alignments with mapping quality smaller than INT [1]
-  -Q, --min-BQ INT      skip bases with base quality smaller than INT [13]
-  -w, --ref-weight INT  initial counter value for nucleotides from ref [0]
-  -c, --min-cov INT     minimum coverage required for update [2]
-  -M, --maj-thres FLOAT majority threshold [0.51]
+   Input options:
+       -i, --input FILE
+              Input SAM/BAM file (- for standard input).
 
-Examples:
-   ococo -i test.bam -f test.fa -m real-time -V -
-   ococo -x ococo64 -i test.bam -f test.fa -P - -V variants.vcf
+       -f, --fasta-ref FILE
+              Initial FASTA reference (otherwise seq of N's is used).
 
-Note:
-   For more details, see the manual page 'man ./ococo.1'.
+       -s, --stats-in FILE
+              Input statistics.
 
+   Output options:
+       -F, --fasta-cons FILE FASTA file with consensus
+
+       -S, --stats-out FILE
+              Output statistics.
+
+       -V, --vcf-cons FILE
+              VCF file with updates of consensus (- for standard output)
+
+       -P, --pileup FILE
+              Truncated pileup (- for standard output).
+
+       --verbose
+              Verbose mode (report every update of a counter).
+
+   Parameters for consensus calling:
+       -x, --counters STR
+              Counter configuration [ococo16].
+
+
+              configuration   bits/counter   bits/position
+              ococo16         3              16
+              ococo32         7              32
+              ococo64         15             64
+
+
+       -m, --mode STR
+              Mode [batch].
+
+
+              mode        description
+              real-time   updates reported immediately
+              batch       updates reported after end of algn stream
+
+
+       -q, --min-MQ INT
+              Skip alignments with mapping quality smaller than INT [1].
+
+       -Q, --min-BQ INT
+              Skip bases with base quality smaller than INT [13].
+
+       -w, --ref-weight INT
+              Initial counter value for nucleotides from ref [0].
+
+       -c, --min-cov INT
+              Minimum coverage required for update [2].
+
+       -M, --maj-thres FLOAT
+              Majority threshold [0.51].
 ```
-<!---
-USAGE-END
--->
 
 
 ## Issues
