@@ -26,6 +26,8 @@ provides a fast and memory-efficient alternative to the usual variant calling.
 It is particularly advantageous when reads are sequenced or mapped
 progressively, or when available computational resources are at a premium.
 
+[![Several-bit Ococo counters](figures/Figure_1.png)](figures/Figure_1.pdf)
+
 
 ## Citation
 
