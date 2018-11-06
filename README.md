@@ -6,17 +6,9 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1066531.svg)](https://doi.org/10.5281/zenodo.1066531)
 
 
-## Getting started
-
-```bash
-git clone --recursive https://github.com/karel-brinda/ococo
-cd ococo && make -j
-./ococo -i test.bam -f test.fa --vcf-cons -
-```
-
 ## Abstract
 
-Identifying genomic variants is an essential step for connecting genotype and
+**Motivation:** Identifying genomic variants is an essential step for connecting genotype and
 phenotype. The usual approach consists of statistical inference of variants
 from alignments of sequencing reads. State-of-the-art variant callers can
 resolve a wide range of different variant types with high accuracy. However,
@@ -26,14 +18,22 @@ expensive, both memory- and speed-wise, and the resulting pipelines suffer from
 storing and retrieving large alignments files from external memory. Therefore,
 there is interest in developing methods for resource-efficient variant calling.
 
-We present OCOCO, the first program capable of inferring variants in a
-real-time, as read alignments are fed in. OCOCO inputs unsorted alignments from
+**Results:** We present Ococo, the first program capable of inferring variants in a
+real-time, as read alignments are fed in. Ococo inputs unsorted alignments from
 a stream and infers single-nucleotide variants, together with a genomic
-consensus, using statistics stored in compact several-bit counters. OCOCO
+consensus, using statistics stored in compact several-bit counters. Ococo
 provides a fast and memory-efficient alternative to the usual variant calling.
 It is particularly advantageous when reads are sequenced or mapped
 progressively, or when available computational resources are at a premium.
 
+
+## Getting started
+
+```bash
+git clone --recursive https://github.com/karel-brinda/ococo
+cd ococo && make -j
+./ococo -i test.bam -f test.fa --vcf-cons -
+```
 
 ## Citation
 
