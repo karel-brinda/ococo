@@ -64,8 +64,6 @@ conda install -c bioconda ococo
 ## How to use
 
 ```NAME
-       ococo - Online variant and consensus caller
-
 SYNOPSIS
        ococo -i <SAM/BAM file> [other options]
 
