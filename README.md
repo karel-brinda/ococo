@@ -73,33 +73,33 @@ SYNOPSIS
        ococo -i <SAM/BAM file> [other options]
 
 DESCRIPTION
-       Ococo  is a program to call genomic consensus directly from an unsorted
-       SAM/BAM stream.
+       Ococo  is  a  program to call variants and a genomic consensus directly
+       from an unsorted SAM/BAM stream.
 
    Input options:
        -i, --input FILE
 	      Input SAM/BAM file (- for standard input).
 
        -f, --fasta-ref FILE
-	      Initial FASTA reference (otherwise seq of N's is used).
+	      Initial FASTA reference (otherwise a seq of N's is used).
 
        -s, --stats-in FILE
 	      Input statistics.
 
    Output options:
-       -F, --fasta-cons FILE FASTA file with consensus
+       -F, --fasta-cons FILE Print consensus in FASTA.
 
        -S, --stats-out FILE
-	      Output statistics.
+	      Export statistics to a file.
 
        -V, --vcf-cons FILE
-	      VCF file with updates of consensus (- for standard output)
+	      Print inferred variants in VCF (- for standard output).
 
        -P, --pileup FILE
-	      Truncated pileup (- for standard output).
+	      Print SAMtools pileup (- for standard output).
 
        --verbose
-	      Verbose mode (report every update of a counter).
+	      Use the verbose mode (report every update of a counter).
 
    Parameters for consensus calling:
        -x, --counters STR
