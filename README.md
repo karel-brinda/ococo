@@ -32,7 +32,7 @@ progressively, or when available computational resources are at a premium.
 ## Citation
 
 > Brinda K, Boeva V, Kucherov G. **Ococo: an online variant and consensus
-> caller.** arXiv:1712.01146 [q-bio.GN], 2017. https://arxiv.org/abs/1712.01146
+> caller.** arXiv:1712.01146 [q-bio.GN], 2018. https://arxiv.org/abs/1712.01146
 
 
 ## Quick example
