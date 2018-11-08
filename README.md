@@ -68,8 +68,7 @@ conda install -c bioconda ococo
 <!---
 USAGE-BEGIN
 -->
-
-```NAME
+```
 SYNOPSIS
        ococo -i <SAM/BAM file> [other options]
 
@@ -79,63 +78,64 @@ DESCRIPTION
 
    Input options:
        -i, --input FILE
-              Input SAM/BAM file (- for standard input).
+	      Input SAM/BAM file (- for standard input).
 
        -f, --fasta-ref FILE
-              Initial FASTA reference (otherwise seq of N's is used).
+	      Initial FASTA reference (otherwise seq of N's is used).
 
        -s, --stats-in FILE
-              Input statistics.
+	      Input statistics.
 
    Output options:
        -F, --fasta-cons FILE FASTA file with consensus
 
        -S, --stats-out FILE
-              Output statistics.
+	      Output statistics.
 
        -V, --vcf-cons FILE
-              VCF file with updates of consensus (- for standard output)
+	      VCF file with updates of consensus (- for standard output)
 
        -P, --pileup FILE
-              Truncated pileup (- for standard output).
+	      Truncated pileup (- for standard output).
 
        --verbose
-              Verbose mode (report every update of a counter).
+	      Verbose mode (report every update of a counter).
 
    Parameters for consensus calling:
        -x, --counters STR
-              Counter configuration [ococo16].
+	      Counter configuration [ococo32].
 
 
-              configuration   bits/counter   bits/position
-              ococo16         3              16
-              ococo32         7              32
-              ococo64         15             64
+	      configuration   bits/counter   bits/position
+	      ococo16	      3 	     16
+	      ococo32	      7 	     32
+	      ococo64	      15	     64
 
 
        -m, --mode STR
-              Mode [batch].
+	      Mode [batch].
 
 
-              mode        description
-              real-time   updates reported immediately
-              batch       updates reported after end of algn stream
+	      mode	  description
+	      real-time   updates reported immediately
+	      batch	  updates reported after end of algn stream
 
 
        -q, --min-MQ INT
-              Skip alignments with mapping quality smaller than INT [1].
+	      Skip alignments with mapping quality smaller than INT [1].
 
        -Q, --min-BQ INT
-              Skip bases with base quality smaller than INT [13].
+	      Skip bases with base quality smaller than INT [13].
 
        -w, --ref-weight INT
-              Initial counter value for nucleotides from ref [0].
+	      Initial counter value for nucleotides from ref [0].
 
        -c, --min-cov INT
-              Minimum coverage required for update [2].
+	      Minimum coverage required for update [2].
 
        -M, --maj-thres FLOAT
-              Majority threshold [0.51].
+	      Majority threshold [0.51].
+
 ```
 <!---
 USAGE-END
