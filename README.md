@@ -65,6 +65,10 @@ conda install -c bioconda ococo
 
 ## How to use
 
+<!---
+USAGE-BEGIN
+-->
+
 ```NAME
 SYNOPSIS
        ococo -i <SAM/BAM file> [other options]
@@ -133,6 +137,9 @@ DESCRIPTION
        -M, --maj-thres FLOAT
               Majority threshold [0.51].
 ```
+<!---
+USAGE-END
+-->
 
 
 ## Issues

@@ -40,7 +40,7 @@ readme:
 	  echo $$f;\
 	  sed '/USAGE-BEGIN/q' README.md >> $$f; \
 	  printf -- '-->\n```' >> $$f; \
-	  ./ococo -h 2>&1 | sed -n '/Usage/,$$ p' | perl -pe 's/^(.*)$$/\1/g' >> $$f; \
+	  man ./ococo.1 | col -b | grep -A999999 SYNO | grep -B99999999 AUTH | ghead -n -1 >> $$f; \
 	  printf '```\n<!---\n' >> $$f; \
 	  sed -n '/USAGE-END/,$$ p' README.md >> $$f;\
 	  cat $$f \
