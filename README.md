@@ -68,74 +68,74 @@ conda install -c bioconda ococo
 <!---
 USAGE-BEGIN
 -->
-```
-   SYNOPSIS
-          ococo -i <SAM/BAM file> [other options]
 
-   DESCRIPTION
-          Ococo  is a program to call genomic consensus directly from an unsorted
-          SAM/BAM stream.
+```NAME
+SYNOPSIS
+       ococo -i <SAM/BAM file> [other options]
 
-      Input options:
-          -i, --input FILE
-   	      Input SAM/BAM file (- for standard input).
+DESCRIPTION
+       Ococo  is a program to call genomic consensus directly from an unsorted
+       SAM/BAM stream.
 
-          -f, --fasta-ref FILE
-   	      Initial FASTA reference (otherwise seq of N's is used).
+   Input options:
+       -i, --input FILE
+              Input SAM/BAM file (- for standard input).
 
-          -s, --stats-in FILE
-   	      Input statistics.
+       -f, --fasta-ref FILE
+              Initial FASTA reference (otherwise seq of N's is used).
 
-      Output options:
-          -F, --fasta-cons FILE FASTA file with consensus
+       -s, --stats-in FILE
+              Input statistics.
 
-          -S, --stats-out FILE
-   	      Output statistics.
+   Output options:
+       -F, --fasta-cons FILE FASTA file with consensus
 
-          -V, --vcf-cons FILE
-   	      VCF file with updates of consensus (- for standard output)
+       -S, --stats-out FILE
+              Output statistics.
 
-          -P, --pileup FILE
-   	      Truncated pileup (- for standard output).
+       -V, --vcf-cons FILE
+              VCF file with updates of consensus (- for standard output)
 
-          --verbose
-   	      Verbose mode (report every update of a counter).
+       -P, --pileup FILE
+              Truncated pileup (- for standard output).
 
-      Parameters for consensus calling:
-          -x, --counters STR
-   	      Counter configuration [ococo16].
+       --verbose
+              Verbose mode (report every update of a counter).
 
-
-   	      configuration   bits/counter   bits/position
-   	      ococo16	      3 	     16
-   	      ococo32	      7 	     32
-   	      ococo64	      15	     64
+   Parameters for consensus calling:
+       -x, --counters STR
+              Counter configuration [ococo16].
 
 
-          -m, --mode STR
-   	      Mode [batch].
+              configuration   bits/counter   bits/position
+              ococo16         3              16
+              ococo32         7              32
+              ococo64         15             64
 
 
-   	      mode	  description
-   	      real-time   updates reported immediately
-   	      batch	  updates reported after end of algn stream
+       -m, --mode STR
+              Mode [batch].
 
 
-          -q, --min-MQ INT
-   	      Skip alignments with mapping quality smaller than INT [1].
+              mode        description
+              real-time   updates reported immediately
+              batch       updates reported after end of algn stream
 
-          -Q, --min-BQ INT
-   	      Skip bases with base quality smaller than INT [13].
 
-          -w, --ref-weight INT
-   	      Initial counter value for nucleotides from ref [0].
+       -q, --min-MQ INT
+              Skip alignments with mapping quality smaller than INT [1].
 
-          -c, --min-cov INT
-   	      Minimum coverage required for update [2].
+       -Q, --min-BQ INT
+              Skip bases with base quality smaller than INT [13].
 
-          -M, --maj-thres FLOAT
-   	      Majority threshold [0.51].
+       -w, --ref-weight INT
+              Initial counter value for nucleotides from ref [0].
 
+       -c, --min-cov INT
+              Minimum coverage required for update [2].
+
+       -M, --maj-thres FLOAT
+              Majority threshold [0.51].
 ```
 <!---
 USAGE-END
