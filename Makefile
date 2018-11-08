@@ -39,8 +39,8 @@ readme:
 	f=$$(mktemp);\
 	  echo $$f;\
 	  sed '/USAGE-BEGIN/q' README.md >> $$f; \
-	  printf -- '-->\n```' >> $$f; \
-	  man ./ococo.1 | col -b | grep -A999999 SYNO | grep -B99999999 AUTH | ghead -n -1 >> $$f; \
+	  printf -- '-->\n```\n' >> $$f; \
+	  man ./ococo.1 | col -b | grep -A999999 SYNO | grep -B99999999 AUTH | ghead -n -1 | awk '{printf "   %s\n", $$0}' >> $$f; \
 	  printf '```\n<!---\n' >> $$f; \
 	  sed -n '/USAGE-END/,$$ p' README.md >> $$f;\
 	  cat $$f \
