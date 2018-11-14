@@ -34,6 +34,11 @@ progressively, or when available computational resources are at a premium.
 > Brinda K, Boeva V, Kucherov G. **Ococo: an online variant and consensus
 > caller.** arXiv:1712.01146 [q-bio.GN], 2018. https://arxiv.org/abs/1712.01146
 
+Results from the paper were generated using code in the following repository:
+https://github.com/karel-brinda/ococo-paper-analysis.  The entire computation
+is also available as a [CodeOcean
+capsule](https://codeocean.com/2018/11/14/ococo-colon-an-online-variant-and-consensus-caller).
+
 
 ## Quick example
 
