@@ -5,30 +5,31 @@ ococo \- Online variant and consensus caller
 .SH SYNOPSIS
 ococo -i <SAM/BAM file> [other options]
 .SH DESCRIPTION
-Ococo is a program to call genomic consensus directly from an unsorted
-SAM/BAM stream.
+Ococo is a program to call variants and a genomic consensus directly from an
+unsorted SAM/BAM stream.
 .SS "Input options:"
 .TP
 \fB\-i\fR, \fB\-\-input\fR FILE
 Input SAM/BAM file (\- for standard input).
 .TP
 \fB\-f\fR, \fB\-\-fasta\-ref\fR FILE
-Initial FASTA reference (otherwise seq of N's is used).
+Initial FASTA reference (otherwise a seq of N's is used).
 .TP
 \fB\-s\fR, \fB\-\-stats\-in\fR FILE
 Input statistics.
 .SS "Output options:"
 .HP
-\fB\-F\fR, \fB\-\-fasta\-cons\fR FILE FASTA file with consensus
+\fB\-F\fR, \fB\-\-fasta\-cons\fR FILE
+Print consensus in FASTA.
 .TP
 \fB\-S\fR, \fB\-\-stats\-out\fR FILE
-Output statistics.
+Export statistics to a file.
 .TP
 \fB\-V\fR, \fB\-\-vcf\-cons\fR FILE
-VCF file with updates of consensus (\- for standard output)
+Print inferred variants in VCF (\- for standard output).
 .TP
 \fB\-P\fR, \fB\-\-pileup\fR FILE
-Truncated pileup (\- for standard output).
+Print SAMtools pileup (\- for standard output).
 .TP
 \fB\-O\fR, \fB\-\-output\fR FILE
 Output SAM/BAM file for filtered alignments (- for standard output).
@@ -37,11 +38,11 @@ Output SAM/BAM file for filtered alignments (- for standard output).
 Filter alignments when coverage is greater than INT [-1].
 .TP
 \fB\-\-verbose\fR
-Verbose mode (report every update of a counter).
+Use the verbose mode (report every update of a counter).
 .SS "Parameters for consensus calling:"
 .TP
 \fB\-x\fR, \fB\-\-counters\fR STR
-Counter configuration [ococo16].
+Counter configuration [ococo32].
 
 .TS
 l	|	l	|	l	.
@@ -82,7 +83,7 @@ Minimum coverage required for update [2].
 \fB\-M\fR, \fB\-\-maj\-thres\fR FLOAT
 Majority threshold [0.51].
 .SH AUTHOR
-Written by Karel Brinda (kbrinda@hsph.harvard.edu).
+Karel Brinda (kbrinda@hsph.harvard.edu).
 .SH REPORTING BUGS
 Report bugs on https://github.com/karel-brinda/ococo/issues
 .SH EXAMPLES

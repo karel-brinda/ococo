@@ -9,8 +9,8 @@
 
 void ococo::params_t::init_default_values() {
     verbose               = false;
-    counters_str          = "ococo16";
-    counter_configuration = OCOCO16;
+    counters_str          = "ococo32";
+    counter_configuration = OCOCO32;
     mode                  = BATCH;
     mode_str              = "batch";
     strategy              = MAJORITY;

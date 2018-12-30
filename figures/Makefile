@@ -6,7 +6,10 @@ SHELL=/usr/bin/env bash -eo pipefail
 
 .SUFFIXES:
 
-all: Figure_1.png
+all: Figure_1.png Figure_1.svg
+
+Figure_1.svg: Figure_1.pdf Makefile
+	pdf2svg $< $@ 1
 
 Figure_1.png: Figure_1.pdf Makefile
 	convert -flatten -density 150 "$<" -resize 50% "$@"
