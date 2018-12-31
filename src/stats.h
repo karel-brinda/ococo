@@ -432,7 +432,7 @@ T stats_t<T, counter_size, refbase_size>::compress_position_stats(
     T psc = 0;
 
     // remove if you want to support ambiguous nucleotides
-    assert(bitsset_table256[psu.nt16] == 1 || psu.nt16 == 0x0f);
+    assert(bitsset_table256[psu.nt16] != 2);
 
     // 1. incorporate counters
     for (int32_t i = 0; i < 4; i++) {
@@ -461,13 +461,15 @@ void stats_t<T, counter_size, refbase_size>::decompress_position_stats(
 
     // 2. are the values exact?
     int nones = bitsset_table256[psu.nt16];
+    assert(nones != 2);
     if (nones == 1) {
         psu.bitshifted = false;
     } else {
-        assert(nones == 3);
-        psu.bitshifted = true;
-        // if not exact, invert base bits
-        psu.nt16 ^= right_full_mask<T, refbase_size>();
+        if (nones == 3) {
+            psu.bitshifted = true;
+            // if not exact, invert base bits
+            psu.nt16 ^= right_full_mask<T, refbase_size>();
+        }
     }
 
     // 3. count of individual nucleotides and the sum
