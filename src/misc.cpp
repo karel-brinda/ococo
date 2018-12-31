@@ -55,21 +55,20 @@ bool ococo::file_exists(const std::string &fn) {
     return false;
 }
 
-double ococo::realtime()
-{
-        struct timeval tp;
-        //struct timezone tzp;
-        //gettimeofday(&tp, &tzp);
-        gettimeofday(&tp, nullptr);
-        return tp.tv_sec + tp.tv_usec * 1e-6;
+double ococo::realtime() {
+    struct timeval tp;
+    // struct timezone tzp;
+    // gettimeofday(&tp, &tzp);
+    gettimeofday(&tp, nullptr);
+    return tp.tv_sec + tp.tv_usec * 1e-6;
 }
 
-double ococo::cputime()
-{
-        struct rusage r;
-        getrusage(RUSAGE_SELF, &r);
+double ococo::cputime() {
+    struct rusage r;
+    getrusage(RUSAGE_SELF, &r);
 
-        //todo: check also memory
-        //std::cerr << r.ru_maxrss << std::endl;
-        return r.ru_utime.tv_sec + r.ru_stime.tv_sec + 1e-6 * (r.ru_utime.tv_usec + r.ru_stime.tv_usec);
+    // todo: check also memory
+    // std::cerr << r.ru_maxrss << std::endl;
+    return r.ru_utime.tv_sec + r.ru_stime.tv_sec +
+           1e-6 * (r.ru_utime.tv_usec + r.ru_stime.tv_usec);
 }

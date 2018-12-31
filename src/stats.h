@@ -7,14 +7,13 @@
 #include <htslib/faidx.h>
 #include <htslib/khash.h>
 #include <htslib/kseq.h>
-#include <htslib/kseq.h>
 #include <htslib/kstring.h>
 #include <htslib/sam.h>
 
 #include <zlib.h>
 #include <cassert>
-#include <sstream>
 #include <cmath>
+#include <sstream>
 
 /***********************
  *** Main statistics ***
@@ -140,7 +139,7 @@ int stats_t<T, counter_size, refbase_size>::load_fasta(
     constexpr int32_t max_counter_value =
         ococo::right_full_mask<T, counter_size>();
 
-    //if (errno != 0 || fp == nullptr) {
+    // if (errno != 0 || fp == nullptr) {
     if (fp == nullptr) {
         ococo::error("File '%s' could not be opened.\n", fasta_fn.c_str());
         return -1;
@@ -376,8 +375,8 @@ int stats_t<T, counter_size, refbase_size>::export_stats(
 }
 
 template <typename T, int counter_size, int refbase_size>
-int stats_t<T, counter_size, refbase_size>::call_consensus(FILE *vcf_file,
-                                                           FILE *out_pileup_file) {
+int stats_t<T, counter_size, refbase_size>::call_consensus(
+    FILE *vcf_file, FILE *out_pileup_file) {
     assert(check_allocation());
 
     for (int32_t seqid = 0; seqid < n_seqs; seqid++) {
@@ -623,13 +622,15 @@ inline int stats_t<T, counter_size, refbase_size>::get_nucl_nt256(
 }
 
 template <typename T, int counter_size, int refbase_size>
-T stats_t<T, counter_size, refbase_size>::increment(T psc, nt4_t nt4, int32_t &cov_est) {
+T stats_t<T, counter_size, refbase_size>::increment(T psc, nt4_t nt4,
+                                                    int32_t &cov_est) {
     assert(nt4 < 4);
 
     pos_stats_uncompr_t psu;
     decompress_position_stats(psc, psu);
 
-    cov_est=psu.counters[0]+psu.counters[1]+psu.counters[2]+psu.counters[3]+1;
+    cov_est = psu.counters[0] + psu.counters[1] + psu.counters[2] +
+              psu.counters[3] + 1;
 
     if (psu.counters[nt4] == right_full_mask<uint16_t, counter_size>()) {
         psu.counters[0] >>= 1;
@@ -642,4 +643,4 @@ T stats_t<T, counter_size, refbase_size>::increment(T psc, nt4_t nt4, int32_t &c
 
     return compress_position_stats(psu);
 }
-}
+}  // namespace ococo

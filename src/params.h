@@ -11,7 +11,6 @@
 #include <htslib/faidx.h>
 #include <htslib/khash.h>
 #include <htslib/kseq.h>
-#include <htslib/kseq.h>
 #include <htslib/kstring.h>
 #include <htslib/sam.h>
 
@@ -93,7 +92,6 @@ struct params_t {
 
     samFile *in_sam_file;
 
-
     /*
      * Consensus calling parameters
      */
@@ -139,4 +137,4 @@ struct params_t {
 
     void init_default_values();
 };
-}
+}  // namespace ococo

@@ -3,9 +3,9 @@
 #include <unistd.h>
 
 #ifdef _LIBCPP_VERSION
-	#include <cinttypes>
+#include <cinttypes>
 #else
-	#include <tr1/cinttypes>
+#include <tr1/cinttypes>
 #endif
 
 namespace ococo {
@@ -89,4 +89,4 @@ static const uint8_t nt16_nt256[] = "=ACMGRSVTWYHKDBN";
 static const uint8_t nt4_nt256[] = "ACGTN";
 
 static const uint8_t nt4_nt16[] = {1, 2, 4, 8, 15};
-}
+}  // namespace ococo

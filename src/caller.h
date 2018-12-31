@@ -35,7 +35,7 @@ caller_t<T, counter_size, refbase_size>::caller_t(params_t *params_)
      * Read SAM headers.
      */
 
-	t_real = realtime();
+    t_real = realtime();
     ococo::info("Initializing the SAM/BAM reader.\n");
 
     correctly_initialized = true;
@@ -63,7 +63,8 @@ caller_t<T, counter_size, refbase_size>::caller_t(params_t *params_)
     stats = new (std::nothrow)
         stats_t<T, counter_size, refbase_size>(params, *header);
     if (stats == nullptr || !stats->check_allocation()) {
-        ococo::fatal_error("Allocation of the table for nucleotide statistics failed.\n");
+        ococo::fatal_error(
+            "Allocation of the table for nucleotide statistics failed.\n");
         correctly_initialized = false;
         return;
     }
@@ -75,13 +76,13 @@ caller_t<T, counter_size, refbase_size>::caller_t(params_t *params_)
     if (params->out_sam_fn.size() > 0) {
         params->out_sam_file = sam_open(params->out_sam_fn.c_str(), "w");
         if (params->out_sam_file == nullptr) {
-            ococo::fatal_error("Problem with opening the SAM/BAM file ('%s').\n",
-                                params->out_sam_fn.c_str());
+            ococo::fatal_error(
+                "Problem with opening the SAM/BAM file ('%s').\n",
+                params->out_sam_fn.c_str());
             correctly_initialized = false;
             return;
         }
     }
-
 
     /*
      * Load FASTA and stats.
@@ -132,7 +133,8 @@ caller_t<T, counter_size, refbase_size>::caller_t(params_t *params_)
      */
 
     if (params->out_vcf_fn.size() > 0) {
-        ococo::info("Opening the VCF stream ('%s').\n", params->out_vcf_fn.c_str());
+        ococo::info("Opening the VCF stream ('%s').\n",
+                    params->out_vcf_fn.c_str());
 
         if (params->out_vcf_fn == std::string("-")) {
             params->out_vcf_file = stdout;
@@ -170,10 +172,12 @@ caller_t<T, counter_size, refbase_size>::caller_t(params_t *params_)
         if (params->out_pileup_fn == std::string("-")) {
             params->out_pileup_file = stdout;
         } else {
-            params->out_pileup_file = fopen(params->out_pileup_fn.c_str(), "w+");
+            params->out_pileup_file =
+                fopen(params->out_pileup_fn.c_str(), "w+");
             if (params->out_pileup_file == nullptr) {
-                ococo::fatal_error("Problem with opening the pileup file '%s'.\n",
-                                   params->out_pileup_fn.c_str());
+                ococo::fatal_error(
+                    "Problem with opening the pileup file '%s'.\n",
+                    params->out_pileup_fn.c_str());
                 correctly_initialized = false;
                 return;
             }
@@ -207,7 +211,8 @@ caller_t<T, counter_size, refbase_size>::caller_t(params_t *params_)
     if (params->out_log_fn.size() > 0) {
         params->out_log_file = fopen(params->out_log_fn.c_str(), "w+");
 
-        ococo::info("Opening the log file ('%s').\n", params->out_log_fn.c_str());
+        ococo::info("Opening the log file ('%s').\n",
+                    params->out_log_fn.c_str());
         params->out_log_file = fopen(params->out_log_fn.c_str(), "w+");
 
         if (params->out_log_file == nullptr) {
@@ -256,38 +261,36 @@ void caller_t<T, counter_size, refbase_size>::run() {
     int64_t n_upd0 = 0;
     int64_t i_read = 0;
 
-    if(stats->params->out_sam_file!=nullptr) {
+    if (stats->params->out_sam_file != nullptr) {
         sam_hdr_write(stats->params->out_sam_file, header);
     }
 
     while ((r = sam_read1(params->in_sam_file, header, b)) >= 0) {
-        const char *rname          = bam_get_qname(b);
-        const uint8_t *seq         = bam_get_seq(b);
-        const uint8_t *qual        = bam_get_qual(b);
-        const uint32_t *cigar      = bam_get_cigar(b);
-        const int32_t n_cigar      = b->core.n_cigar;
-        const int32_t seqid        = b->core.tid;
+        const char *rname         = bam_get_qname(b);
+        const uint8_t *seq        = bam_get_seq(b);
+        const uint8_t *qual       = bam_get_qual(b);
+        const uint32_t *cigar     = bam_get_cigar(b);
+        const int32_t n_cigar     = b->core.n_cigar;
+        const int32_t seqid       = b->core.tid;
         const int64_t mapping_pos = b->core.pos;
-        const int32_t mapq         = b->core.qual;
-        const int32_t flags        = b->core.flag;
+        const int32_t mapq        = b->core.qual;
+        const int32_t flags       = b->core.flag;
 
-        //std::cerr << "read " << rname << " " << mapping_pos << std::endl;
-
+        // std::cerr << "read " << rname << " " << mapping_pos << std::endl;
 
         bool read_ok = check_read(seqid, flags, mapq);
         if (!read_ok) {
             continue;
         }
-        //std::cerr << "   ok " << rname << " " << mapping_pos << std::endl;
-
+        // std::cerr << "   ok " << rname << " " << mapping_pos << std::endl;
 
         int32_t low_cov_thres = stats->params->coverage_filter;
         int32_t npos_low_cov  = 0;
-        int32_t npos_high_cov  = 0;
+        int32_t npos_high_cov = 0;
         int32_t pseudo_rlen   = 0;
 
-        if (low_cov_thres<0){
-            low_cov_thres=424242;
+        if (low_cov_thres < 0) {
+            low_cov_thres = 424242;
         }
 
         int32_t ref_pos = mapping_pos;
@@ -317,23 +320,23 @@ void caller_t<T, counter_size, refbase_size>::run() {
                             continue;
                         }
 
-                        int32_t cov_est=0;
+                        int32_t cov_est                  = 0;
                         stats->seq_stats[seqid][ref_pos] = stats->increment(
-                            stats->seq_stats[seqid][ref_pos],nt4, cov_est);
+                            stats->seq_stats[seqid][ref_pos], nt4, cov_est);
                         // cov_est is already incremented for this read
-                        if (cov_est-1<low_cov_thres){
+                        if (cov_est - 1 < low_cov_thres) {
                             ++npos_low_cov;
-                        } else{
-                            if ( 2* (cov_est-1) > 3 * low_cov_thres){
+                        } else {
+                            if (2 * (cov_est - 1) > 3 * low_cov_thres) {
                                 ++npos_high_cov;
                             }
                         }
                         ++pseudo_rlen;
 
                         if (stats->params->mode == ococo::mode_t::REALTIME) {
-                            stats->call_consensus_position(params->out_vcf_file,
-                                                           params->out_pileup_file,
-                                                           seqid, ref_pos);
+                            stats->call_consensus_position(
+                                params->out_vcf_file, params->out_pileup_file,
+                                seqid, ref_pos);
                         }
                     }
 
@@ -359,21 +362,21 @@ void caller_t<T, counter_size, refbase_size>::run() {
                 case BAM_CPAD:
                 case BAM_CHARD_CLIP:
                     break;
-            } // switch (op)
+            }  // switch (op)
 
-        } // for (int32_t cigar_grp
+        }  // for (int32_t cigar_grp
 
-        //std::cerr << "   ok2 " << rname << " " << mapping_pos << " " << npos_low_cov << " " << pseudo_rlen << std::endl;
+        // std::cerr << "   ok2 " << rname << " " << mapping_pos << " " <<
+        // npos_low_cov << " " << pseudo_rlen << std::endl;
 
-        if(stats->params->out_sam_file!=nullptr) {
+        if (stats->params->out_sam_file != nullptr) {
             // at least 5% pos. low coverage => print read
-            //if(npos_low_cov * 20 >= pseudo_rlen){
-            if(npos_low_cov > 0 && npos_high_cov < 0.5 * pseudo_rlen){
+            // if(npos_low_cov * 20 >= pseudo_rlen){
+            if (npos_low_cov > 0 && npos_high_cov < 0.5 * pseudo_rlen) {
                 sam_write1(stats->params->out_sam_file, header, b);
-                //std::cerr << "   wrote " << rname << std::endl;
-            }
-            else {
-                //std::cerr << "  filtered out " << rname << std::endl;
+                // std::cerr << "   wrote " << rname << std::endl;
+            } else {
+                // std::cerr << "  filtered out " << rname << std::endl;
             }
         }
 
@@ -385,7 +388,7 @@ void caller_t<T, counter_size, refbase_size>::run() {
         }
 
         i_read += 1;
-    } // while ((r = sam_read1
+    }  // while ((r = sam_read1
 
     /*
      * Call final consensus and export stats.
@@ -435,7 +438,8 @@ caller_t<T, counter_size, refbase_size>::~caller_t() {
 
     if (return_code == EXIT_SUCCESS && correctly_initialized == true) {
         ococo::info("Ococo successfully finished. Bye.\n");
-        ococo::info("%.3f sec; CPU: %.3f sec\n", realtime() - t_real, cputime());
+        ococo::info("%.3f sec; CPU: %.3f sec\n", realtime() - t_real,
+                    cputime());
     }
 }
-}
+}  // namespace ococo

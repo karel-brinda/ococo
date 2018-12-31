@@ -129,4 +129,4 @@ inline char cons_call_maj_amb(const pos_stats_uncompr_t &psu,
 
     return nt16_nt256[static_cast<int32_t>(nucl_nt16)];
 }
-}
+}  // namespace ococo
