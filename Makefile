@@ -15,7 +15,7 @@ HTSLIB_VERSION = b6aa0e6
 ofiles    = src/main.cpp.o src/misc.cpp.o src/params.cpp.o
 hfiles    = $(wildcard src/*.h)
 
-.PHONY: all clean install ococo readme
+.PHONY: all clean install ococo readme format
 
 all: ococo
 
@@ -48,6 +48,9 @@ readme:
 	  | perl -pe 's/[\s]+$$/\n/g' \
 	  > README.md
 	markdown_py README.md > README.html
+
+format:
+	clang-format -i src/*.cpp src/*.h
 
 clean:
 	$(MAKE) -C ext/htslib clean
