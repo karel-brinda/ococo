@@ -431,13 +431,23 @@ T stats_t<T, counter_size, refbase_size>::compress_position_stats(
     const pos_stats_uncompr_t &psu) {
     T psc = 0;
 
+    // remove if you want to support ambiguous nucleotides
+    assert(bitsset_table256[psu.nt16] == 1 || psu.nt16 == 0x0f);
+
+    // 1. incorporate counters
     for (int32_t i = 0; i < 4; i++) {
         psc <<= counter_size;
         psc |= psu.counters[i] & right_full_mask<T, counter_size>();
     }
 
+    // 2. incorporate ref base
     psc <<= refbase_size;
-    psc |= psu.nt16;
+    psc |= psu.nt16 & right_full_mask<T, refbase_size>();
+
+    // 3. if not exact, invert the base bits
+    if (!psu.exact) {
+        psc ^= right_full_mask<T, refbase_size>();
+    }
 
     return psc;
 }
@@ -445,9 +455,22 @@ T stats_t<T, counter_size, refbase_size>::compress_position_stats(
 template <typename T, int counter_size, int refbase_size>
 void stats_t<T, counter_size, refbase_size>::decompress_position_stats(
     T psc, pos_stats_uncompr_t &psu) {
+    // 1. reference base(s) (before correction)
     psu.nt16 = psc & right_full_mask<T, refbase_size>();
     psc >>= refbase_size;
 
+    // 2. are the values exact?
+    int nones = bitsset_table256[psu.nt16];
+    if (nones == 1) {
+        psu.exact = true;
+    } else {
+        assert(nones == 3);
+        psu.exact = false;
+        // if not exact, invert base bits
+        psu.nt16 ^= right_full_mask<T, refbase_size>();
+    }
+
+    // 3. count of individual nucleotides and the sum
     psu.sum = 0;
     for (int32_t i = 3; i >= 0; i--) {
         psu.counters[i] = psc & right_full_mask<T, counter_size>();
@@ -494,8 +517,11 @@ int stats_t<T, counter_size, refbase_size>::print_vcf_header(
             "\"Values of A,C,G,T counters.\">\n");
     fprintf(vcf_file,
             "##INFO=<ID=COV,Number=1,Type=Integer,Description="
-            "\"Coverage (correct if no shift has been performed so far and "
-            "reference nucleotide was unambiguous).\">\n");
+            "\"Coverage\">\n");
+    fprintf(
+        vcf_file,
+        "##INFO=<ID=CEX,Number=1,Type=Integer,Description="
+        "\"1 if the coverage is exact (no bitshift made), 0 otherwise\">\n");
     fprintf(vcf_file, "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n");
 
     return 0;
@@ -513,10 +539,10 @@ int stats_t<T, counter_size, refbase_size>::print_vcf_substitution(
 
     fprintf(vcf_file,
             "%s\t%" PRId64 "\t.\t%c\t%c\t100\tPASS\tAF=%.2f;CS=%" PRId32
-            ",%" PRId32 ",%" PRId32 ",%" PRId32 ";COV=%" PRId32 "\n",
+            ",%" PRId32 ",%" PRId32 ",%" PRId32 ";COV=%" PRId32 ";EX=%d\n",
             seq_name[seqid].c_str(), pos + 1, old_base, new_base,
             round(alt_freq * 100.0) / 100, psu.counters[0], psu.counters[1],
-            psu.counters[2], psu.counters[3], psu.sum);
+            psu.counters[2], psu.counters[3], psu.sum, psu.exact);
 
     return 0;
 }
@@ -601,20 +627,19 @@ void stats_t<T, counter_size, refbase_size>::debug_print_counters() const {
 template <typename T, int counter_size, int refbase_size>
 inline int stats_t<T, counter_size, refbase_size>::set_nucl_nt256(
     int32_t seqid, int64_t pos, const char &nt256) {
-    nt16_t nt16 = nt256_nt16[static_cast<int>(nt256)];
-    T n_psc     = seq_stats[seqid][pos];
-    n_psc >>= refbase_size;
-    n_psc <<= refbase_size;
-    n_psc |= nt16 & right_full_mask<T, refbase_size>();
-    seq_stats[seqid][pos] = n_psc;
+    pos_stats_uncompr_t psu;
+    decompress_position_stats(seq_stats[seqid][pos], psu);
+    psu.nt16              = nt256_nt16[static_cast<int16_t>(nt256)];
+    seq_stats[seqid][pos] = compress_position_stats(psu);
     return 0;
 }
 
 template <typename T, int counter_size, int refbase_size>
 inline int stats_t<T, counter_size, refbase_size>::get_nucl_nt256(
     int32_t seqid, int64_t pos, char &nt256) const {
-    nt256 =
-        nt16_nt256[seq_stats[seqid][pos] & right_full_mask<T, refbase_size>()];
+    pos_stats_uncompr_t psu;
+    decompress_position_stats(seq_stats[seqid][pos], psu);
+    nt256 = nt16_nt256[psu.nt16];
     if (nt256 == '=') {
         nt256 = 'N';
     }
@@ -629,17 +654,19 @@ T stats_t<T, counter_size, refbase_size>::increment(T psc, nt4_t nt4,
     pos_stats_uncompr_t psu;
     decompress_position_stats(psc, psu);
 
-    cov_est = psu.counters[0] + psu.counters[1] + psu.counters[2] +
-              psu.counters[3] + 1;
-
     if (psu.counters[nt4] == right_full_mask<uint16_t, counter_size>()) {
         psu.counters[0] >>= 1;
         psu.counters[1] >>= 1;
         psu.counters[2] >>= 1;
         psu.counters[3] >>= 1;
+        psu.exact = false;
     }
 
     psu.counters[nt4]++;
+
+    psu.sum =
+        psu.counters[0] + psu.counters[1] + psu.counters[2] + psu.counters[3];
+    cov_est = psu.sum;
 
     return compress_position_stats(psu);
 }
