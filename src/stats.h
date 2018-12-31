@@ -445,7 +445,7 @@ T stats_t<T, counter_size, refbase_size>::compress_position_stats(
     psc |= psu.nt16 & right_full_mask<T, refbase_size>();
 
     // 3. if not exact, invert the base bits
-    if (!psu.exact) {
+    if (psu.bitshifted) {
         psc ^= right_full_mask<T, refbase_size>();
     }
 
@@ -462,10 +462,10 @@ void stats_t<T, counter_size, refbase_size>::decompress_position_stats(
     // 2. are the values exact?
     int nones = bitsset_table256[psu.nt16];
     if (nones == 1) {
-        psu.exact = true;
+        psu.bitshifted = false;
     } else {
         assert(nones == 3);
-        psu.exact = false;
+        psu.bitshifted = true;
         // if not exact, invert base bits
         psu.nt16 ^= right_full_mask<T, refbase_size>();
     }
@@ -542,7 +542,7 @@ int stats_t<T, counter_size, refbase_size>::print_vcf_substitution(
             ",%" PRId32 ",%" PRId32 ",%" PRId32 ";COV=%" PRId32 ";EX=%d\n",
             seq_name[seqid].c_str(), pos + 1, old_base, new_base,
             round(alt_freq * 100.0) / 100, psu.counters[0], psu.counters[1],
-            psu.counters[2], psu.counters[3], psu.sum, psu.exact);
+            psu.counters[2], psu.counters[3], psu.sum, !psu.bitshifted);
 
     return 0;
 }
@@ -659,7 +659,7 @@ T stats_t<T, counter_size, refbase_size>::increment(T psc, nt4_t nt4,
         psu.counters[1] >>= 1;
         psu.counters[2] >>= 1;
         psu.counters[3] >>= 1;
-        psu.exact = false;
+        psu.bitshifted = true;
     }
 
     psu.counters[nt4]++;

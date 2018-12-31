@@ -42,7 +42,7 @@ struct pos_stats_uncompr_t {
     nt16_t nt16;          // consensus base
     int32_t counters[4];  // nucleotide counters
     int32_t sum;          // sum of the nucleotide counters
-    bool exact;           // exact values (no bit-shift yet)
+    bool bitshifted;      // already bit-shifted? (i.e., in-exact)
 };
 
 /**************************
