@@ -97,6 +97,9 @@ ococo::params_t::~params_t() {
 
     if (out_log_file != nullptr) {
         int error_code = fclose(out_log_file);
+        if (error_code != 0) {
+            ococo::warning("Log file could not be closed.\n");
+        }
     }
 }
 

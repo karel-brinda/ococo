@@ -253,6 +253,11 @@ template <typename T, int counter_size, int refbase_size>
 void caller_t<T, counter_size, refbase_size>::run() {
     /*
      * Process alignments.
+	 *
+	 * Notes
+	 * - if reading bam fails - a critical error
+	 * - if writing bam header fails - a critical error
+	 * - if writing bam fails - a non-critical error
      */
     ococo::info("Starting the main loop.\n");
 
@@ -262,7 +267,12 @@ void caller_t<T, counter_size, refbase_size>::run() {
     int64_t i_read = 0;
 
     if (stats->params->out_sam_file != nullptr) {
-        sam_hdr_write(stats->params->out_sam_file, header);
+		int error_code = sam_hdr_write(stats->params->out_sam_file, header);
+		if(error_code!=0){
+			return_code = EXIT_FAILURE;
+			ococo::error("Construction of the SAM header failed (error %d)", error_code);
+			return;
+		}
     }
 
     while ((r = sam_read1(params->in_sam_file, header, b)) >= 0) {
@@ -373,7 +383,12 @@ void caller_t<T, counter_size, refbase_size>::run() {
             // at least 5% pos. low coverage => print read
             // if(npos_low_cov * 20 >= pseudo_rlen){
             if (npos_low_cov > 0 && npos_high_cov < 0.5 * pseudo_rlen) {
-                sam_write1(stats->params->out_sam_file, header, b);
+				int error_code = sam_write1(stats->params->out_sam_file, header, b);
+				if(error_code!=0){
+					return_code = EXIT_FAILURE;
+					ococo::error("Writing SAM failed (error %d)", error_code);
+					break;
+				}
                 // std::cerr << "   wrote " << rname << std::endl;
             } else {
                 // std::cerr << "  filtered out " << rname << std::endl;
