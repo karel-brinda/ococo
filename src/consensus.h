@@ -10,6 +10,7 @@ namespace ococo {
 
 inline char cons_call_no_updates(const pos_stats_uncompr_t &psu,
                                  const params_t &params) {
+    (void)(params);  // suppress warnings
     return nt16_nt256[psu.nt16];
 }
 
