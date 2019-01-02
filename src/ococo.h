@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include "caller.h"
 #include "consensus.h"
+#include "caller.h"
 #include "misc.h"
 #include "params.h"
 #include "stats.h"

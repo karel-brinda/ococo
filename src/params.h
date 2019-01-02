@@ -142,12 +142,6 @@ struct params_t {
     std::string mode_str;
     int64_t n_upd;
 
-    /*
-     * Array of consensus calling functions
-     */
-    char (*cons_alg[strategy_t::count])(const pos_stats_uncompr_t &psu,
-                                        const params_t &params);
-
     params_t();
 
     params_t(int argc, const char **argv);

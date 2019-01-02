@@ -412,14 +412,12 @@ int stats_t<T, counter_size, refbase_size>::call_consensus(
 template <typename T, int counter_size, int refbase_size>
 int stats_t<T, counter_size, refbase_size>::call_consensus_position(
     FILE *vcf_file, FILE *out_pileup_file, int32_t seqid, int64_t pos) {
+
     pos_stats_uncompr_t psu;
     decompress_position_stats(seq_stats[seqid][pos], psu);
 
-    char old_base_nt256;
-    get_nucl_nt256(seqid, pos, old_base_nt256);
-    // const char new_base_nt256=cons_call_maj(psu);
-    const char new_base_nt256 =
-        (params->cons_alg[params->strategy])(psu, *params);
+    const char old_base_nt256=nt16_nt256[psu.nt16];
+    char new_base_nt256 = cons_call_maj(psu, *params);
 
     if (old_base_nt256 != new_base_nt256) {
         if (vcf_file != nullptr) {
@@ -427,8 +425,7 @@ int stats_t<T, counter_size, refbase_size>::call_consensus_position(
                                    new_base_nt256, psu);
         }
         params->n_upd += 1;
-
-        set_nucl_nt256(seqid, pos, new_base_nt256);
+        psu.nt16 = nt256_nt16[static_cast<int16_t>(new_base_nt256)];
     }
 
     if (params->verbose) {

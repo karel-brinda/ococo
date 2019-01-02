@@ -45,12 +45,6 @@ void ococo::params_t::init_default_values() {
     majority_threshold    = default_M;
     coverage_filter       = default_C;
 
-    cons_alg[strategy_t::NO_UPDATES]     = &cons_call_no_updates;
-    cons_alg[strategy_t::STOCHASTIC]     = &cons_call_stoch;
-    cons_alg[strategy_t::STOCHASTIC_AMB] = &cons_call_stoch_amb;
-    cons_alg[strategy_t::MAJORITY]       = &cons_call_maj;
-    cons_alg[strategy_t::MAJORITY_AMB]   = &cons_call_maj_amb;
-
     in_sam_file = nullptr;
 
     out_vcf_file    = nullptr;
@@ -102,10 +96,6 @@ void ococo::params_t::print_help() {
            "  -m, --mode STR        mode: [batch]\n"
            "                           - real-time (updates reported immediately)\n"
            "                           - batch (updates reported after end of algn stream)\n"
-        //    "  -t, --strategy STR    strategy for updates: [majority]\n"
-        //    "                           - majority (update to majority base)\n"
-        //    "                           - stochastic (update to stochastically drawn base)\n"
-        //    "                           - no-updates (no updates, only counters updated)\n"
            "  -c, --min-cov INT     minimum coverage required for an update [" << default_c <<"]\n"
            "  -w, --ref-weight INT  initial counter value for nucleotides from the ref ["<< default_w <<"]\n"
            "  -M, --maj-thres FLOAT majority threshold [" << default_M << "]\n\n"
