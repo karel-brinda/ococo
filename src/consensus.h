@@ -46,7 +46,7 @@ inline char cons_call_maj(const pos_stats_uncompr_t &psu,
     /* 2. If not N and insufficient vote for an update, return the current
      * consensus. */
     if (cons != 'N') {
-        if (psu.sum < params.min_coverage + params.init_ref_weight) {
+        if (psu.sum < params.min_coverage_upd + params.init_ref_weight) {
             return nt16_nt256[psu.nt16];
         }
     }

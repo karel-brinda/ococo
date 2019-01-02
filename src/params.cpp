@@ -36,12 +36,10 @@ void ococo::params_t::init_default_values() {
     counter_configuration = OCOCO32;
     mode                  = BATCH;
     mode_str              = "batch";
-    strategy              = MAJORITY;
-    strategy_str          = "majority";
     min_mapq              = default_q;
     min_baseq             = default_Q;
     init_ref_weight       = default_w;
-    min_coverage          = default_c;
+    min_coverage_upd      = default_c;
     majority_threshold    = default_M;
     coverage_filter       = default_C;
 
@@ -157,7 +155,6 @@ void ococo::params_t::parse_commandline(int argc, const char **argv) {
         //
         {"counters", required_argument, nullptr, 'x'},
         {"mode", required_argument, nullptr, 'm'},
-        {"strategy", required_argument, nullptr, 't'},
         {"min-MQ", required_argument, nullptr, 'q'},
         {"min-BQ", required_argument, nullptr, 'Q'},
         {"ref-weight", required_argument, nullptr, 'w'},
@@ -273,25 +270,6 @@ void ococo::params_t::parse_commandline(int argc, const char **argv) {
 
                 break;
             }
-            case 't': {
-                strategy_str = optarg;
-
-                if (strategy_str.compare("stochastic") == 0) {
-                    strategy = ococo::strategy_t::STOCHASTIC;
-                } else if (strategy_str.compare("no-updates") == 0) {
-                    strategy = ococo::strategy_t::NO_UPDATES;
-                } else if (strategy_str.compare("majority") == 0) {
-                    strategy = ococo::strategy_t::MAJORITY;
-                } else {
-                    ococo::error(
-                        "Unknown strategy '%s'. Possible strategies are "
-                        "'majority', 'stochastic', and 'no-updates'.\n",
-                        strategy_str.c_str());
-                    exit(1);
-                }
-
-                break;
-            }
             case 'q': {
                 min_mapq = atoi(optarg);
                 break;
@@ -305,7 +283,7 @@ void ococo::params_t::parse_commandline(int argc, const char **argv) {
                 break;
             }
             case 'c': {
-                min_coverage = atoi(optarg);
+                min_coverage_upd = atoi(optarg);
                 break;
             }
             case 'M': {

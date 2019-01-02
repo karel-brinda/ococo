@@ -52,15 +52,6 @@ const int default_C   = -1;
 
 enum mode_t { BATCH, REALTIME };
 
-enum strategy_t {
-    NO_UPDATES,
-    STOCHASTIC,
-    STOCHASTIC_AMB,
-    MAJORITY,
-    MAJORITY_AMB,
-    count
-};
-
 enum counter_configuration_t {
     OCOCO16,
     OCOCO32,
@@ -102,7 +93,7 @@ struct params_t {
     std::string out_log_fn;
 
     /* Filter alignments when coverage is greater than */
-    int coverage_filter;
+    int32_t coverage_filter;
 
     /*
      * Files
@@ -120,7 +111,6 @@ struct params_t {
      */
 
     mode_t mode;
-    strategy_t strategy;
 
     /* minimum mapping quality for update */
     int32_t min_mapq;
@@ -132,13 +122,12 @@ struct params_t {
     int32_t init_ref_weight;
 
     /* minimum coverage for update (does not include init_ref_weight */
-    int32_t min_coverage;
+    int32_t min_coverage_upd;
 
     /* threshold for having majority */
     double majority_threshold;
 
     /* auxiliary */
-    std::string strategy_str;
     std::string mode_str;
     int64_t n_upd;
 
