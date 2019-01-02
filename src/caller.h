@@ -24,6 +24,7 @@
 #pragma once
 
 #include <cstdlib>
+#include "consensus.h"
 #include "params.h"
 #include "stats.h"
 

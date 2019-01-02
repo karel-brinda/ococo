@@ -23,10 +23,6 @@
 
 #pragma once
 
-#include <ctime>
-
-#include "ococo.h"
-
 #include <htslib/faidx.h>
 #include <htslib/khash.h>
 #include <htslib/kseq.h>
@@ -36,6 +32,7 @@
 #include <zlib.h>
 #include <cassert>
 #include <cmath>
+#include <ctime>
 #include <sstream>
 
 /***********************
@@ -412,12 +409,11 @@ int stats_t<T, counter_size, refbase_size>::call_consensus(
 template <typename T, int counter_size, int refbase_size>
 int stats_t<T, counter_size, refbase_size>::call_consensus_position(
     FILE *vcf_file, FILE *out_pileup_file, int32_t seqid, int64_t pos) {
-
     pos_stats_uncompr_t psu;
     decompress_position_stats(seq_stats[seqid][pos], psu);
 
-    const char old_base_nt256=nt16_nt256[psu.nt16];
-    char new_base_nt256 = cons_call_maj(psu, *params);
+    const char old_base_nt256 = nt16_nt256[psu.nt16];
+    char new_base_nt256       = cons_call_maj(psu, *params);
 
     if (old_base_nt256 != new_base_nt256) {
         if (vcf_file != nullptr) {

@@ -21,7 +21,8 @@
    SOFTWARE.
 */
 
-#include "ococo.h"
+#include "caller.h"
+#include "params.h"
 
 #include <climits>
 #include <cstdio>
