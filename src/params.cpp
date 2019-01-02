@@ -38,7 +38,6 @@ void ococo::params_t::init_default_values() {
     mode_str              = "batch";
     min_mapq              = default_q;
     min_baseq             = default_Q;
-    init_ref_weight       = default_w;
     min_coverage_upd      = default_c;
     majority_threshold    = default_M;
     coverage_filter       = default_C;
@@ -95,7 +94,6 @@ void ococo::params_t::print_help() {
            "                           - real-time (updates reported immediately)\n"
            "                           - batch (updates reported after end of algn stream)\n"
            "  -c, --min-cov INT     minimum coverage required for an update [" << default_c <<"]\n"
-           "  -w, --ref-weight INT  initial counter value for nucleotides from the ref ["<< default_w <<"]\n"
            "  -M, --maj-thres FLOAT majority threshold [" << default_M << "]\n\n"
        // "---------------------------------------------------------------------------------"
            "Filtering and coverage normalization:\n"
@@ -276,10 +274,6 @@ void ococo::params_t::parse_commandline(int argc, const char **argv) {
             }
             case 'Q': {
                 min_baseq = atoi(optarg);
-                break;
-            }
-            case 'w': {
-                init_ref_weight = atoi(optarg);
                 break;
             }
             case 'c': {

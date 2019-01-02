@@ -159,10 +159,6 @@ int stats_t<T, counter_size, refbase_size>::load_fasta(
     fp  = gzopen(fasta_fn.c_str(), "r");
     seq = kseq_init(fp);
 
-    constexpr int32_t max_counter_value =
-        ococo::right_full_mask<T, counter_size>();
-
-    // if (errno != 0 || fp == nullptr) {
     if (fp == nullptr) {
         ococo::error("File '%s' could not be opened.\n", fasta_fn.c_str());
         return -1;
@@ -192,26 +188,13 @@ int stats_t<T, counter_size, refbase_size>::load_fasta(
 
         for (int64_t pos = 0; pos < static_cast<int64_t>(seq->seq.l); pos++) {
             assert(seq_stats[seqid][pos] == 0);
-
-            pos_stats_uncompr_t psu = {0, {0, 0, 0, 0}, 0};
+            pos_stats_uncompr_t psu;
             psu.nt16 = nt256_nt16[static_cast<int32_t>(seq->seq.s[pos])];
-
-            if (psu.nt16 != nt256_nt16[static_cast<int32_t>('N')]) {
-                for (int32_t i = 0; i < 4; i++) {
-                    psu.counters[i] = ((0x1 << i) & psu.nt16)
-                                          ? std::min(params->init_ref_weight,
-                                                     max_counter_value)
-                                          : 0;
-                }
-            }
-
-            psu.sum = psu.counters[0] + psu.counters[1] + psu.counters[2] +
-                      psu.counters[3];
             seq_stats[seqid][pos] = compress_position_stats(psu);
         }
     }
-    kseq_destroy(seq);  // STEP 5: destroy seq
-    gzclose(fp);        // STEP 6: close the file handler
+    kseq_destroy(seq);
+    gzclose(fp);
     return 0;
 }
 

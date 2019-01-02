@@ -39,7 +39,7 @@ inline char cons_call_maj(const pos_stats_uncompr_t &psu,
     char cons = nt16_nt256[psu.nt16];  // initial consensus
 
     /* Has sufficiently many alignments been collected? */
-    if (psu.sum - params.init_ref_weight >= params.min_coverage_upd) {
+    if (psu.sum >= params.min_coverage_upd) {
         /* Calculate the minimal required counter value for an
          * update. */
         int32_t required_min =

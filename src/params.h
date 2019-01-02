@@ -118,10 +118,7 @@ struct params_t {
     /* minimum base quality for update */
     int32_t min_baseq;
 
-    /* initial values for counters corresponding to ref */
-    int32_t init_ref_weight;
-
-    /* minimum coverage for update (does not include init_ref_weight */
+    /* minimum coverage for update */
     int32_t min_coverage_upd;
 
     /* threshold for having majority */
