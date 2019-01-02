@@ -76,8 +76,6 @@ struct stats_t {
     int call_consensus_position(FILE *vcf_file, FILE *out_pileup_file,
                                 int32_t seqid, int64_t pos);
 
-    // Loader header from a BAM.
-    int load_headers_bam_hdr(const bam_hdr_t &h);
     // Load header and data from a FASTA file and initialize statistics.
     int load_fasta(const std::string &fasta_fn);
     int save_fasta(const std::string &fasta_fn) const;

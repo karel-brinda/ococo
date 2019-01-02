@@ -133,6 +133,9 @@ static const uint8_t nt4_nt256[] = "ACGTN";
 static const uint8_t nt4_nt16[] = {1, 2, 4, 8, 15};
 }  // namespace ococo
 
+/*
+ * Number of bits in an integer.
+ */
 static const uint8_t bitsset_table256[256] = {
 #define B2(n) n, n + 1, n + 1, n + 2
 #define B4(n) B2(n), B2(n + 1), B2(n + 1), B2(n + 2)

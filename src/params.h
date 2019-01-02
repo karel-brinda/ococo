@@ -101,7 +101,7 @@ struct params_t {
     std::string out_pileup_fn;
     std::string out_log_fn;
 
-    /* filter alignments when coverage is greater than */
+    /* Filter alignments when coverage is greater than */
     int coverage_filter;
 
     /*

@@ -29,12 +29,20 @@
 
 namespace ococo {
 
+/*! @struct
+    @abstract                      Structure for metadata for 1 sequence.
+    @field correctly_initialized   Flag for a correct initialization from the input files.
+    @field return_code             Return code of the caller. 0 if everything ok.
+    @field b                       Structure for one alignment.
+    @field header                  SAM/BAM header.
+    @field stats                   Pileup statistics.
+    @field params                  Program arguments.
+    @field t_real                  Initial timestamp.
+*/
 template <typename T, int counter_size, int refbase_size>
 struct caller_t {
     bool correctly_initialized;
     int return_code;
-
-    hts_itr_t *iter;
 
     bam1_t *b;
     bam_hdr_t *header;
@@ -44,10 +52,20 @@ struct caller_t {
     params_t *params;
     double t_real;
 
+    /*! @func
+        @abstract  Open all files and load headers.
+    */
     caller_t(params_t *params_);
     ~caller_t();
 
+    /*! @func
+        @abstract  Check whether the alignment passes filters.
+    */
     bool check_read(int32_t seqid, int32_t flags, int32_t mapq);
+
+    /*! @func
+        @abstract  Run calling.
+    */
     void run();
 };
 
@@ -64,7 +82,6 @@ caller_t<T, counter_size, refbase_size>::caller_t(params_t *params_)
     correctly_initialized = true;
     return_code           = EXIT_SUCCESS;
 
-    iter   = nullptr;
     b      = nullptr;
     header = nullptr;
     stats  = nullptr;
@@ -475,7 +492,6 @@ void caller_t<T, counter_size, refbase_size>::run() {
 
 template <typename T, int counter_size, int refbase_size>
 caller_t<T, counter_size, refbase_size>::~caller_t() {
-    hts_itr_destroy(iter);
     bam_destroy1(b);
     bam_hdr_destroy(header);
 
