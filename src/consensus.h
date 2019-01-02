@@ -31,33 +31,45 @@
 
 namespace ococo {
 
+/*
+ * Call consensus using the majority rule.
+ */
 inline char cons_call_maj(const pos_stats_uncompr_t &psu,
                           const params_t &params) {
+    char cons = nt16_nt256[psu.nt16];  // initial consensus
+
+    /* 1. If zero coverage, return the current consensus (possibly N). */
     if (psu.sum == 0) {
-        return nt16_nt256[psu.nt16];
+        return cons;
     }
 
-    if (psu.nt16 != nt256_nt16[static_cast<uint32_t>('N')]) {
+    /* 2. If not N and insufficient vote for an update, return the current
+     * consensus. */
+    if (cons != 'N') {
         if (psu.sum < params.min_coverage + params.init_ref_weight) {
             return nt16_nt256[psu.nt16];
         }
     }
 
-    char nucl_nt256 = nt16_nt256[psu.nt16];
+    /* 3. Recompute consensus. */
 
+    /*    3a. Calculate the minimal required counter value for an update. If the
+     * counters were initialized with a non-zero value, this is not compensated
+     * here. */
     int32_t required_min =
         static_cast<int32_t>(ceil(params.majority_threshold * psu.sum));
+
+    /*    3b. Find the maximal counter with such a value. */
     int32_t max = 0;
     for (int32_t i = 0; i < 4; i++) {
         if (psu.counters[i] >= required_min) {
             if (psu.counters[i] > max) {
-                max        = psu.counters[i];
-                nucl_nt256 = nt4_nt256[i];
+                max  = psu.counters[i];
+                cons = nt4_nt256[i];
             }
         }
     }
-
-    return nucl_nt256;
+    return cons;
 }
 
 }  // namespace ococo
