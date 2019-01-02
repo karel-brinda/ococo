@@ -9,8 +9,8 @@
    copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
 
-   The above copyright notice and this permission notice shall be included in all
-   copies or substantial portions of the Software.
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
 
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -46,10 +46,17 @@ typedef uint8_t nt256_t;
  *                *
  ******************/
 
-/*****************
- *** Auxiliary ***
- *****************/
+/*************
+ *** Ococo ***
+ *************/
 
+/*! @struct
+    @abstract           Structure for metadata for 1 sequence.
+    @field seq_active   Active.
+    @field seq_len      Sequence length.
+    @field seq_name     Name of the sequence.
+    @field seq_comment  Comment of the sequence.
+*/
 struct single_seq_serial_t {
     bool seq_active;
     int64_t seq_len;
@@ -57,15 +64,21 @@ struct single_seq_serial_t {
     char seq_comment[1000];
 };
 
-/************************************
- *** Single position uncompressed ***
- ************************************/
-
+/*! @struct
+    @abstract          Structure for uncompressed pileup statistics for 1 position.
+    @field nt16        Consensus base.
+                       0x00 and 0x0f = N
+                       0x01, 0x02, 0x04, 0x08 = bases
+                       other values: error
+    @field counters    Nucleotide counters.
+    @field sum         Sum of the nucleotide counters.
+    @field bitshifted  Already bit-shifted? (i.e., in-exact).
+*/
 struct pos_stats_uncompr_t {
-    nt16_t nt16;          // consensus base
-    int32_t counters[4];  // nucleotide counters
-    int32_t sum;          // sum of the nucleotide counters
-    bool bitshifted;      // already bit-shifted? (i.e., in-exact)
+    nt16_t nt16;
+    int32_t counters[4];
+    int32_t sum;
+    bool bitshifted;
 };
 
 /**************************
