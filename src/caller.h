@@ -31,8 +31,10 @@ namespace ococo {
 
 /*! @struct
     @abstract                      Structure for metadata for 1 sequence.
-    @field correctly_initialized   Flag for a correct initialization from the input files.
-    @field return_code             Return code of the caller. 0 if everything ok.
+    @field correctly_initialized   Flag for a correct initialization from the
+                                   input files.
+    @field return_code             Return code of the caller. 0 if everything
+                                   ok.
     @field b                       Structure for one alignment.
     @field header                  SAM/BAM header.
     @field stats                   Pileup statistics.
@@ -229,8 +231,6 @@ caller_t<T, counter_size, refbase_size>::caller_t(params_t *params_)
      */
 
     if (params->out_fasta_fn.size() > 0) {
-        params->out_fasta_file = fopen(params->out_fasta_fn.c_str(), "w+");
-
         ococo::info("Opening the consensus FASTA file ('%s').\n",
                     params->out_fasta_fn.c_str());
         params->out_fasta_file = fopen(params->out_fasta_fn.c_str(), "w+");
@@ -249,8 +249,6 @@ caller_t<T, counter_size, refbase_size>::caller_t(params_t *params_)
      */
 
     if (params->out_log_fn.size() > 0) {
-        params->out_log_file = fopen(params->out_log_fn.c_str(), "w+");
-
         ococo::info("Opening the log file ('%s').\n",
                     params->out_log_fn.c_str());
         params->out_log_file = fopen(params->out_log_fn.c_str(), "w+");
@@ -494,6 +492,54 @@ template <typename T, int counter_size, int refbase_size>
 caller_t<T, counter_size, refbase_size>::~caller_t() {
     bam_destroy1(b);
     bam_hdr_destroy(header);
+
+    if (params->in_sam_file != nullptr) {
+        int error_code = sam_close(params->in_sam_file);
+        if (error_code != 0) {
+            ococo::error("Input SAM file could not be closed.\n");
+            return_code = -1;
+        }
+    }
+
+    if (params->out_sam_file != nullptr) {
+        int error_code = sam_close(params->out_sam_file);
+        if (error_code != 0) {
+            ococo::error("Output SAM file could not be closed.\n");
+            return_code = -1;
+        }
+    }
+
+    if (params->out_vcf_file != nullptr) {
+        int error_code = fclose(params->out_vcf_file);
+        if (error_code != 0) {
+            ococo::error("Output VCF file could not be closed.\n");
+            return_code = -1;
+        }
+    }
+
+    if (params->out_pileup_file != nullptr) {
+        int error_code = fclose(params->out_pileup_file);
+        if (error_code != 0) {
+            return_code = error_code;
+            ococo::error("Output pileup file could not be closed.\n");
+            return_code = -1;
+        }
+    }
+
+    if (params->out_fasta_file != nullptr) {
+        int error_code = fclose(params->out_fasta_file);
+        if (error_code != 0) {
+            ococo::error("Output FASTA consensus file could not be closed.\n");
+            return_code = -1;
+        }
+    }
+
+    if (params->out_log_file != nullptr) {
+        int error_code = fclose(params->out_log_file);
+        if (error_code != 0) {
+            ococo::warning("Log file could not be closed.\n");
+        }
+    }
 
     if (stats != nullptr) {
         delete stats;

@@ -72,60 +72,6 @@ ococo::params_t::params_t(int argc, const char **argv) {
     parse_commandline(argc, argv);
 }
 
-ococo::params_t::~params_t() {
-    /*
-     * Close files.
-     */
-
-    if (in_sam_file != nullptr) {
-        int error_code = sam_close(in_sam_file);
-        if (error_code != 0) {
-            ococo::error("Input SAM file could not be closed.\n");
-            return_code = -1;
-        }
-    }
-
-    if (out_sam_file != nullptr) {
-        int error_code = sam_close(out_sam_file);
-        if (error_code != 0) {
-            ococo::error("Output SAM file could not be closed.\n");
-            return_code = -1;
-        }
-    }
-
-    if (out_vcf_file != nullptr) {
-        int error_code = fclose(out_vcf_file);
-        if (error_code != 0) {
-            ococo::error("Output VCF file could not be closed.\n");
-            return_code = -1;
-        }
-    }
-
-    if (out_pileup_file != nullptr) {
-        int error_code = fclose(out_pileup_file);
-        if (error_code != 0) {
-            return_code = error_code;
-            ococo::error("Output pileup file could not be closed.\n");
-            return_code = -1;
-        }
-    }
-
-    if (out_fasta_file != nullptr) {
-        int error_code = fclose(out_fasta_file);
-        if (error_code != 0) {
-            ococo::error("Output FASTA consensus file could not be closed.\n");
-            return_code = -1;
-        }
-    }
-
-    if (out_log_file != nullptr) {
-        int error_code = fclose(out_log_file);
-        if (error_code != 0) {
-            ococo::warning("Log file could not be closed.\n");
-        }
-    }
-}
-
 void ococo::params_t::print_help() {
     print_version();
 

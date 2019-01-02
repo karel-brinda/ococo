@@ -152,8 +152,6 @@ struct params_t {
 
     params_t(int argc, const char **argv);
 
-    ~params_t();
-
     void parse_commandline(int argc, const char **argv);
 
     void print_help();
