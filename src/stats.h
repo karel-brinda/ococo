@@ -72,6 +72,10 @@ struct stats_t {
     int call_consensus(FILE *vcf_file, FILE *out_pileup_file);
     int call_consensus_position(FILE *vcf_file, FILE *out_pileup_file,
                                 int32_t seqid, int64_t pos);
+    int call_consensus_position_uncompressed(FILE *vcf_file,
+                                             FILE *out_pileup_file,
+                                             int32_t seqid, int64_t pos,
+                                             pos_stats_uncompr_t &psu);
 
     // Load header and data from a FASTA file and initialize statistics.
     int load_fasta(const std::string &fasta_fn);
@@ -96,6 +100,7 @@ struct stats_t {
     static T compress_position_stats(const pos_stats_uncompr_t &psu);
     static void decompress_position_stats(T psc, pos_stats_uncompr_t &psu);
     static T increment(T psc, nt4_t nt4, int32_t &cov_est);
+    static void increment_uncompressed(nt4_t nt4, pos_stats_uncompr_t &psu);
 
     /***********************
      * Debuging & checking *
@@ -407,35 +412,40 @@ int stats_t<T, counter_size, refbase_size>::call_consensus(
 }
 
 template <typename T, int counter_size, int refbase_size>
-int stats_t<T, counter_size, refbase_size>::call_consensus_position(
-    FILE *vcf_file, FILE *out_pileup_file, int32_t seqid, int64_t pos) {
-    pos_stats_uncompr_t psu;
-    decompress_position_stats(seq_stats[seqid][pos], psu);
-
+int stats_t<T, counter_size, refbase_size>::
+    call_consensus_position_uncompressed(FILE *vcf_file, FILE *out_pileup_file,
+                                         int32_t seqid, int64_t pos,
+                                         pos_stats_uncompr_t &psu) {
     const char old_base_nt256 = nt16_nt256[psu.nt16];
-    char new_base_nt256       = cons_call_maj(psu, *params);
+    const char new_base_nt256 = cons_call_maj(psu, *params);
 
     if (old_base_nt256 != new_base_nt256) {
-        if (vcf_file != nullptr) {
-            print_vcf_substitution(vcf_file, seqid, pos, old_base_nt256,
-                                   new_base_nt256, psu);
-        }
         params->n_upd += 1;
         psu.nt16 = nt256_nt16[static_cast<int16_t>(new_base_nt256)];
     }
 
-    if (params->verbose) {
-        if (old_base_nt256 == new_base_nt256) {
-            if (vcf_file != nullptr) {
-                print_vcf_substitution(vcf_file, seqid, pos, old_base_nt256,
-                                       new_base_nt256, psu);
-            }
+    if (vcf_file != nullptr) {
+        if (old_base_nt256 != new_base_nt256 || params->verbose) {
+            print_vcf_substitution(vcf_file, seqid, pos, old_base_nt256,
+                                   new_base_nt256, psu);
         }
     }
 
     if (out_pileup_file != nullptr) {
         print_pileup_line(out_pileup_file, seqid, pos, psu);
     }
+
+    return 0;
+}
+
+template <typename T, int counter_size, int refbase_size>
+int stats_t<T, counter_size, refbase_size>::call_consensus_position(
+    FILE *vcf_file, FILE *out_pileup_file, int32_t seqid, int64_t pos) {
+    pos_stats_uncompr_t psu;
+    decompress_position_stats(seq_stats[seqid][pos], psu);
+    call_consensus_position_uncompressed(vcf_file, out_pileup_file, seqid, pos,
+                                         psu);
+    seq_stats[seqid][pos] = compress_position_stats(psu);
 
     return 0;
 }
@@ -666,6 +676,17 @@ T stats_t<T, counter_size, refbase_size>::increment(T psc, nt4_t nt4,
     pos_stats_uncompr_t psu;
     decompress_position_stats(psc, psu);
 
+    increment_uncompressed(nt4, psu);
+    cov_est = psu.sum;
+
+    return compress_position_stats(psu);
+}
+
+template <typename T, int counter_size, int refbase_size>
+void stats_t<T, counter_size, refbase_size>::increment_uncompressed(
+    nt4_t nt4, pos_stats_uncompr_t &psu) {
+    assert(nt4 < 4);
+
     if (psu.counters[nt4] == right_full_mask<uint16_t, counter_size>()) {
         psu.counters[0] >>= 1;
         psu.counters[1] >>= 1;
@@ -678,8 +699,5 @@ T stats_t<T, counter_size, refbase_size>::increment(T psc, nt4_t nt4,
 
     psu.sum =
         psu.counters[0] + psu.counters[1] + psu.counters[2] + psu.counters[3];
-    cov_est = psu.sum;
-
-    return compress_position_stats(psu);
 }
 }  // namespace ococo

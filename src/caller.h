@@ -316,6 +316,7 @@ void caller_t<T, counter_size, refbase_size>::run() {
     }
 
     while ((return_value = sam_read1(params->in_sam_file, header, b)) >= 0) {
+        /* SAM/BAM variables */
         const char *rname         = bam_get_qname(b);
         const uint8_t *seq        = bam_get_seq(b);
         const uint8_t *qual       = bam_get_qual(b);
@@ -326,14 +327,13 @@ void caller_t<T, counter_size, refbase_size>::run() {
         const int32_t mapq        = b->core.qual;
         const int32_t flags       = b->core.flag;
 
-        // std::cerr << "read " << rname << " " << mapping_pos << std::endl;
-
+        /* filtration on the alignment level */
         bool read_ok = check_read(seqid, flags, mapq);
         if (!read_ok) {
             continue;
         }
-        // std::cerr << "   ok " << rname << " " << mapping_pos << std::endl;
 
+        /* coverage statistics for the region of the alignment */
         int32_t low_cov_thres = stats->params->coverage_filter;
         int32_t npos_low_cov  = 0;
         int32_t npos_high_cov = 0;
@@ -343,6 +343,7 @@ void caller_t<T, counter_size, refbase_size>::run() {
             low_cov_thres = 424242;
         }
 
+        /* iteration over individual bases */
         int32_t ref_pos = mapping_pos;
         for (int32_t cigar_grp = 0, read_pos = 0; cigar_grp < n_cigar;
              cigar_grp++) {
@@ -356,11 +357,10 @@ void caller_t<T, counter_size, refbase_size>::run() {
                 case BAM_CEQUAL:
 
                     for (; read_pos < next_read_pos; ++read_pos, ++ref_pos) {
+                        /* filtration on the level of base */
                         const uint8_t nt16 = bam_seqi(seq, read_pos);
                         const uint8_t nt4  = ococo::nt16_nt4[nt16];
-                        // const char nt256 =
-                        // ococo::nt16_nt256[nt16];
-                        const int32_t bq = qual[read_pos];
+                        const int32_t bq   = qual[read_pos];
 
                         if (bq != 0xff && bq < (stats->params->min_baseq)) {
                             continue;
@@ -370,24 +370,33 @@ void caller_t<T, counter_size, refbase_size>::run() {
                             continue;
                         }
 
-                        int32_t cov_est                  = 0;
-                        stats->seq_stats[seqid][ref_pos] = stats->increment(
-                            stats->seq_stats[seqid][ref_pos], nt4, cov_est);
-                        // cov_est is already incremented for this read
-                        if (cov_est - 1 < low_cov_thres) {
+                        /* updating counters */
+                        pos_stats_uncompr_t psu;
+                        stats->decompress_position_stats(
+                            stats->seq_stats[seqid][ref_pos], psu);
+                        stats->increment_uncompressed(nt4, psu);
+
+                        /* updating coverage statistics */
+                        if (psu.sum - 1 < low_cov_thres) {
                             ++npos_low_cov;
                         } else {
-                            if (2 * (cov_est - 1) > 3 * low_cov_thres) {
+                            if (2 * (psu.sum - 1) > 3 * low_cov_thres) {
                                 ++npos_high_cov;
                             }
                         }
                         ++pseudo_rlen;
 
+                        /* consensus calling for the current position */
                         if (stats->params->mode == ococo::mode_t::REALTIME) {
-                            stats->call_consensus_position(
+                            stats->call_consensus_position_uncompressed(
                                 params->out_vcf_file, params->out_pileup_file,
-                                seqid, ref_pos);
+                                seqid, ref_pos, psu);
                         }
+
+                        /* compressing the counters a putting them back to the
+                         * statistics */
+                        stats->seq_stats[seqid][ref_pos] =
+                            stats->compress_position_stats(psu);
                     }
 
                     break;
@@ -416,9 +425,7 @@ void caller_t<T, counter_size, refbase_size>::run() {
 
         }  // for (int32_t cigar_grp
 
-        // std::cerr << "   ok2 " << rname << " " << mapping_pos << " " <<
-        // npos_low_cov << " " << pseudo_rlen << std::endl;
-
+        /* Filtering the alignment based on coverage. */
         if (stats->params->out_sam_file != nullptr) {
             // at least 5% pos. low coverage => print read
             // if(npos_low_cov * 20 >= pseudo_rlen){
@@ -430,12 +437,10 @@ void caller_t<T, counter_size, refbase_size>::run() {
                     ococo::error("Writing SAM failed (error %d)", error_code);
                     break;
                 }
-                // std::cerr << "   wrote " << rname << std::endl;
-            } else {
-                // std::cerr << "  filtered out " << rname << std::endl;
             }
         }
 
+        /* Logging the number of updates from this alignment. */
         if (stats->params->out_log_file != nullptr) {
             fprintf(stats->params->out_log_file,
                     "%" PRIu64 "\t%s\t%" PRIu64 "\n", i_read, rname,
