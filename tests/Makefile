@@ -4,7 +4,7 @@ SHELL=/usr/bin/env bash -eo pipefail
 
 .SECONDARY:
 
-all: unaligned aligned1 aligned2 noparams import_export
+all: unaligned aligned_AA aligned_A_A noparams import_export
 
 OCOCO=../ococo
 
@@ -13,42 +13,63 @@ noparams:
 	$(OCOCO) -v
 
 
+# NN
+# ++
+#      AA
+#      AA
+# ==
+# NN
 unaligned:
+	@printf "\n\n\n===== $@\n\n\n"
 	$(OCOCO) \
 		-m batch \
-		-i data/alignment_AA_unm.sam \
 		-f data/fasta_NN.fa \
+		-i data/alignment_AA_unm.sam \
 		-F output/fasta_NN.fa \
 		-V -
 	diff output/fasta_NN.fa data/fasta_NN.fa
 
 
-aligned1:
+# NN
+# ++
+#  A
+#  A
+# ==
+# NA
+aligned_A_A:
+	@printf "\n\n\n===== $@\n\n\n"
 	$(OCOCO) \
 		-m batch \
-		-i data/alignment_A_2.sam \
 		-f data/fasta_NN.fa \
+		-i data/alignment_A_2.sam \
 		-F output/fasta_NA.fa \
 		-V -
 	diff output/fasta_NA.fa data/fasta_NA.fa
 
 
-aligned2:
+# NN
+# ++
+# AA
+# ==
+# AA
+aligned_AA:
+	@printf "\n\n\n===== $@\n\n\n"
 	$(OCOCO) \
 		-m batch \
-		-i data/alignment_AA_1.sam \
 		-f data/fasta_NN.fa \
+		-i data/alignment_AA_1.sam \
 		-F output/fasta_AA.fa \
 		-V -
 	diff output/fasta_AA.fa data/fasta_AA.fa
 
 
 import_export:
+	@printf "\n\n\n===== $@\n\n\n"
 	rm -f output/stats.ococo
 	$(OCOCO) \
 		-m batch \
-		-i data/alignment_C_2.sam \
 		-f data/fasta_NN.fa \
+		-i data/alignment_C_2.sam \
 		-F output/fasta_NA.fa \
 		-S output/stats.ococo \
 		-V -
