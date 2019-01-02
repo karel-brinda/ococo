@@ -408,7 +408,9 @@ void caller_t<T, counter_size, refbase_size>::run() {
     }  // while ((r = sam_read1
 
     if (return_code < 0) {
-        ococo::error("Truncated bam stream.\n");
+        ococo::warning(
+            "Truncated BAM stream. Since the truncation might be "
+            "intentional, this won't cause any error.\n");
         return_code = EXIT_FAILURE;
     }
 
