@@ -541,10 +541,11 @@ int stats_t<T, counter_size, refbase_size>::print_vcf_substitution(
 
     fprintf(vcf_file,
             "%s\t%" PRId64 "\t.\t%c\t%c\t100\tPASS\tAF=%.2f;CS=%" PRId32
-            ",%" PRId32 ",%" PRId32 ",%" PRId32 ";COV=%" PRId32 ";EX=%d\n",
+            ",%" PRId32 ",%" PRId32 ",%" PRId32 ";COV=%" PRId32 ";EX=%s\n",
             seq_name[seqid].c_str(), pos + 1, old_base, new_base,
             round(alt_freq * 100.0) / 100, psu.counters[0], psu.counters[1],
-            psu.counters[2], psu.counters[3], psu.sum, !psu.bitshifted);
+            psu.counters[2], psu.counters[3], psu.sum,
+            (psu.bitshifted ? "0" : "1"));
 
     return 0;
 }
