@@ -88,7 +88,7 @@ static const uint8_t nt256_nt16[] = {
 
 // clang-format on
 
-static const uint8_t nt16_nt256[] = "=ACMGRSVTWYHKDBN";
+static const uint8_t nt16_nt256[] = "NACMGRSVTWYHKDBN"; // modified, the first character is usually '='
 
 static const uint8_t nt4_nt256[] = "ACGTN";
 
