@@ -17,7 +17,11 @@ hfiles    = $(wildcard src/*.h)
 
 .PHONY: all clean install readme format
 
-all: ococo
+.SUFFIXES:
+
+.SECONDARY:
+
+all: ococo $(ofiles)
 
 install: ococo
 	install  ococo $(BINDIR)/ococo
