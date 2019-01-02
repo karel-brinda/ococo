@@ -63,6 +63,17 @@ aligned_AA:
 	diff output/fasta_AA.fa data/fasta_AA.fa
 
 
+# NN
+# ++
+#  C
+#    save&load
+#  A
+#  A
+#    save&load
+#  A
+#  A
+# ==
+# AA
 import_export:
 	@printf "\n\n\n===== $@\n\n\n"
 	rm -f output/stats.ococo
