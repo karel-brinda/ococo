@@ -15,7 +15,7 @@ HTSLIB_VERSION = b6aa0e6
 ofiles    = src/main.cpp.o src/misc.cpp.o src/params.cpp.o
 hfiles    = $(wildcard src/*.h)
 
-.PHONY: all clean install readme format test
+.PHONY: all clean cleanall install readme format test
 
 .SUFFIXES:
 
@@ -57,10 +57,12 @@ format:
 	clang-format -i src/*.cpp src/*.h
 
 clean:
-	$(MAKE) -C ext/htslib clean
 	$(MAKE) -C tests clean
 	rm -f src/*.o
 	rm -f ococo
+
+cleanall: clean
+	$(MAKE) -C ext/htslib clean
 
 test: ococo
 	$(MAKE) -C tests
