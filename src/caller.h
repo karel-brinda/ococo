@@ -261,7 +261,7 @@ void caller_t<T, counter_size, refbase_size>::run() {
      */
     ococo::info("Starting the main loop.\n");
 
-    int32_t return_code;
+    int32_t return_value;
     b              = bam_init1();
     int64_t n_upd0 = 0;
     int64_t i_read = 0;
@@ -276,7 +276,7 @@ void caller_t<T, counter_size, refbase_size>::run() {
         }
     }
 
-    while ((return_code = sam_read1(params->in_sam_file, header, b)) >= 0) {
+    while ((return_value = sam_read1(params->in_sam_file, header, b)) >= 0) {
         const char *rname         = bam_get_qname(b);
         const uint8_t *seq        = bam_get_seq(b);
         const uint8_t *qual       = bam_get_qual(b);
@@ -407,10 +407,10 @@ void caller_t<T, counter_size, refbase_size>::run() {
         i_read += 1;
     }  // while ((r = sam_read1
 
-    if (return_code < 0) {
-        ococo::warning(
-            "Truncated BAM stream. Since the truncation might be "
-            "intentional, this won't cause any error.\n");
+    if (return_value < -1) {
+        ococo::error("Truncated BAM stream (error %" PRId32
+                     "). Ococo will still try to print results.\n",
+                     return_value);
         return_code = EXIT_FAILURE;
     }
 
