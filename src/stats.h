@@ -583,7 +583,14 @@ int stats_t<T, counter_size, refbase_size>::print_pileup_line(
 
     const int32_t max_depth = 1000;
 
-    assert(psu.sum < max_depth);
+    if (psu.sum >= max_depth) {
+        ococo::error("Too high coverage at position %" PRId64
+                     ". Pileup does not support coverage higher than %" PRId32
+                     ".",
+                     pos, max_depth);
+        return -1;
+    }
+
     char bases[max_depth];
     char qualities[max_depth];
 
@@ -591,10 +598,6 @@ int stats_t<T, counter_size, refbase_size>::print_pileup_line(
 
     if (psu.sum == 0) {
         return 0;
-    }
-
-    if (ref_nt256 == '=') {
-        ref_nt256 = 'N';
     }
 
     int32_t j = 0;
@@ -606,14 +609,6 @@ int stats_t<T, counter_size, refbase_size>::print_pileup_line(
             bases[j]     = filling_char;
             qualities[j] = '~';
         }
-    }
-
-    if (psu.sum >= max_depth) {
-        ococo::error("Too high coverage at position %" PRId64
-                     ". Pileup does not support coverage higher than %" PRId32
-                     ".",
-                     pos, max_depth);
-        return -1;
     }
 
     bases[j]     = '\0';
