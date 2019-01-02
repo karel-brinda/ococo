@@ -529,8 +529,8 @@ int stats_t<T, counter_size, refbase_size>::print_vcf_header(
             "\"Coverage\">\n");
     fprintf(
         vcf_file,
-        "##INFO=<ID=CEX,Number=1,Type=Integer,Description="
-        "\"1 if the coverage is exact (no bitshift made), 0 otherwise\">\n");
+        "##INFO=<ID=EX,Number=1,Type=Integer,Description="
+        "\"1 if the coverage and counter values are exact (no bitshift made), 0 otherwise\">\n");
     fprintf(vcf_file, "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n");
 
     return 0;
