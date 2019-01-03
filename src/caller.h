@@ -25,6 +25,7 @@
 
 #include <cstdlib>
 #include "consensus.h"
+#include "io.h"
 #include "params.h"
 #include "stats.h"
 
@@ -200,8 +201,7 @@ caller_t<T, counter_size, refbase_size>::caller_t(params_t *params_)
             fasta_full_path = params->in_fasta_fn;
         }
 
-        stats->print_vcf_header(params->out_vcf_file, params->command,
-                                fasta_full_path);
+        print_vcf_header(params->out_vcf_file);
     }
 
     /*

@@ -32,8 +32,9 @@
 #include <zlib.h>
 #include <cassert>
 #include <cmath>
-#include <ctime>
 #include <sstream>
+
+#include "io.h"
 
 /***********************
  *** Main statistics ***
@@ -81,14 +82,6 @@ struct stats_t {
     int load_fasta(const std::string &fasta_fn);
     int save_fasta(const std::string &fasta_fn) const;
 
-    int print_vcf_header(FILE *vcf_file, std::string cmd,
-                         std::string fasta) const;
-    int print_vcf_substitution(FILE *vcf_file, int32_t seqid, int64_t pos,
-                               char old_base, char new_base,
-                               const pos_stats_uncompr_t &psu) const;
-
-    int print_pileup_line(FILE *out_pileup_file, int32_t seqid, int64_t pos,
-                          const pos_stats_uncompr_t &psu) const;
 
     /*************************
      * Statistics & counters *
@@ -419,13 +412,13 @@ int stats_t<T, counter_size, refbase_size>::
 
     if (vcf_file != nullptr) {
         if (old_base_nt256 != new_base_nt256 || params->verbose) {
-            print_vcf_substitution(vcf_file, seqid, pos, old_base_nt256,
+            print_vcf_substitution(vcf_file, seq_name[seqid], pos, old_base_nt256,
                                    new_base_nt256, psu);
         }
     }
 
     if (out_pileup_file != nullptr) {
-        print_pileup_line(out_pileup_file, seqid, pos, psu);
+        print_pileup_line(out_pileup_file, seq_name[seqid], pos, psu);
     }
 
     return 0;
@@ -496,125 +489,6 @@ void stats_t<T, counter_size, refbase_size>::decompress_position_stats(
         psu.sum += psu.counters[i];
         psc >>= counter_size;
     }
-}
-
-template <typename T, int counter_size, int refbase_size>
-int stats_t<T, counter_size, refbase_size>::print_vcf_header(
-    FILE *vcf_file, std::string cmd, std::string fasta) const {
-    assert(check_allocation());
-    assert(vcf_file != nullptr);
-
-    std::time_t tt = std::time(nullptr);
-    tm *tm         = localtime(&tt);
-
-    fprintf(vcf_file,
-            "##fileformat=VCFv4.3\n"
-            "##fileDate=%04d%02d%02d\n"
-            "##source=Ococo\n",
-            tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday);
-
-    if (!cmd.empty()) {
-        fprintf(vcf_file, "##ococo_command=%s\n", cmd.c_str());
-    }
-    fprintf(vcf_file, "##ococo_stats_datatype_size=%zubits\n", 8 * sizeof(T));
-    fprintf(vcf_file, "##ococo_counter_size=%dbits\n", counter_size);
-
-    if (!fasta.empty()) {
-        fprintf(vcf_file, "##reference=%s\n", fasta.c_str());
-    }
-
-    for (int seqid = 0; seqid < n_seqs; seqid++) {
-        fprintf(vcf_file, "##contig=<ID=%s,length=%" PRId64 ">\n",
-                seq_name[seqid].c_str(), seq_len[seqid]);
-    }
-
-    fprintf(vcf_file,
-            "##INFO=<ID=AF,Number=A,Type=Float,Description="
-            "\"Allele frequency for the ALT allele.\">\n");
-    fprintf(vcf_file,
-            "##INFO=<ID=CS,Number=4,Type=Integer,Description="
-            "\"Values of A,C,G,T counters.\">\n");
-    fprintf(vcf_file,
-            "##INFO=<ID=COV,Number=1,Type=Integer,Description="
-            "\"Coverage\">\n");
-    fprintf(vcf_file,
-            "##INFO=<ID=EX,Number=1,Type=Integer,Description="
-            "\"1 if the coverage and counter values are exact (no bitshift "
-            "made), 0 otherwise\">\n");
-    fprintf(vcf_file, "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n");
-
-    return 0;
-}
-
-template <typename T, int counter_size, int refbase_size>
-int stats_t<T, counter_size, refbase_size>::print_vcf_substitution(
-    FILE *vcf_file, int32_t seqid, int64_t pos, char old_base, char new_base,
-    const pos_stats_uncompr_t &psu) const {
-    assert(check_allocation());
-    assert(vcf_file != nullptr);
-
-    float alt_freq =
-        1.0 * psu.counters[nt256_nt4[static_cast<int16_t>(new_base)]] / psu.sum;
-
-    fprintf(vcf_file,
-            "%s\t%" PRId64 "\t.\t%c\t%c\t100\tPASS\tAF=%.2f;CS=%" PRId32
-            ",%" PRId32 ",%" PRId32 ",%" PRId32 ";COV=%" PRId32 ";EX=%s\n",
-            seq_name[seqid].c_str(), pos + 1, old_base, new_base,
-            round(alt_freq * 100.0) / 100, psu.counters[0], psu.counters[1],
-            psu.counters[2], psu.counters[3], psu.sum,
-            (psu.bitshifted ? "0" : "1"));
-
-    return 0;
-}
-
-template <typename T, int counter_size, int refbase_size>
-int stats_t<T, counter_size, refbase_size>::print_pileup_line(
-    FILE *out_pileup_file, int32_t seqid, int64_t pos,
-    const pos_stats_uncompr_t &psu) const {
-    assert(check_allocation());
-    assert(out_pileup_file != nullptr);
-
-    // todo: fix situation when depth is larger (use the printing buffer more
-    // timess)
-
-    const int32_t max_depth = 1000;
-
-    if (psu.sum >= max_depth) {
-        ococo::error("Too high coverage at position %" PRId64
-                     ". Pileup does not support coverage higher than %" PRId32
-                     ".",
-                     pos, max_depth);
-        return -1;
-    }
-
-    char bases[max_depth];
-    char qualities[max_depth];
-
-    char ref_nt256 = nt16_nt256[psu.nt16];
-
-    if (psu.sum == 0) {
-        return 0;
-    }
-
-    int32_t j = 0;
-
-    for (int32_t nt4 = 0; nt4 < 4; nt4++) {
-        const char filling_char =
-            nt4_nt16[nt4] == psu.nt16 ? '.' : nt4_nt256[nt4];
-        for (int32_t i = 0; i < psu.counters[nt4]; i++, j++) {
-            bases[j]     = filling_char;
-            qualities[j] = '~';
-        }
-    }
-
-    bases[j]     = '\0';
-    qualities[j] = '\0';
-
-    fprintf(out_pileup_file, "%s\t%" PRId64 "\t%c\t%" PRId32 "\t%s\t%s\n",
-            seq_name[seqid].c_str(), pos + 1, ref_nt256, psu.sum, bases,
-            qualities);
-
-    return 0;
 }
 
 template <typename T, int counter_size, int refbase_size>
