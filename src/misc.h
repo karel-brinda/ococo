@@ -57,9 +57,8 @@ double cputime();
  * T - type
  * size - number of 1's
  */
-template <typename T, int size>
-constexpr T right_full_mask() {
-    static_assert(size <= 8 * sizeof(T), "Exceeding data type borders.");
+template <typename T>
+constexpr T right_full_mask(int size) {
     return (size == 0) ? 0
                        : (((static_cast<T>(0x1) << (size - 1)) - 1) << 1) | 1;
 }

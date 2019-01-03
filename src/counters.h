@@ -28,6 +28,11 @@
 
 namespace ococo {
 
+template <typename T>
+constexpr int counter_size() {
+    return (8 * sizeof(T) - 4) / 8;
+}
+
 /*! @struct
     @abstract          Structure for uncompressed pileup statistics for
                        1 position.
@@ -49,7 +54,7 @@ struct pos_stats_uncompr_t {
         : nt16(0), counters{0, 0, 0, 0}, sum(0), bitshifted(false) {}
 
     void increment(nt4_t nt4) {
-        // if (psu.counters[nt4] == right_full_mask<uint16_t, C>()) {
+        // if (psu.counters[nt4] == right_full_mask<uint16_t>(C)) {
         //     bitshift(1);
         // }
 
@@ -57,10 +62,12 @@ struct pos_stats_uncompr_t {
         sum = counters[0] + counters[1] + counters[2] + counters[3];
     }
 
-    template <typename T, int C>
+    template <typename T>
     void decompress(T psc) {
+        const int C = counter_size<T>();
+
         // 1. reference base(s) (before correction)
-        nt16 = psc & right_full_mask<T, 4>();
+        nt16 = psc & right_full_mask<T>(4);
         psc >>= 4;
 
         // 2. are the values exact?
@@ -72,24 +79,25 @@ struct pos_stats_uncompr_t {
             if (nones == 3) {
                 bitshifted = true;
                 // if not exact, invert base bits
-                nt16 ^= right_full_mask<T, 4>();
+                nt16 ^= right_full_mask<T>(4);
             }
         }
 
         // 3. count of individual nucleotides and the sum
         sum = 0;
         for (int32_t i = 3; i >= 0; i--) {
-            counters[i] = psc & right_full_mask<T, C>();
+            counters[i] = psc & right_full_mask<T>(C);
             sum += counters[i];
             psc >>= C;
         }
     }
 
-    template <typename T, int C>
-    T compress() {
+    template <typename T>
+    void compress(T psc) {
         // todo: bitshift before compression
 
-        T psc = 0;
+        const int C = counter_size<T>();
+        psc         = 0;
 
         // remove if you want to support ambiguous nucleotides
         assert(bitsset_table256[nt16] != 2);
@@ -97,19 +105,17 @@ struct pos_stats_uncompr_t {
         // 1. incorporate counters
         for (int32_t i = 0; i < 4; i++) {
             psc <<= C;
-            psc |= counters[i] & right_full_mask<T, C>();
+            psc |= counters[i] & right_full_mask<T>(C);
         }
 
         // 2. incorporate ref base
         psc <<= 4;
-        psc |= nt16 & right_full_mask<T, 4>();
+        psc |= nt16 & right_full_mask<T>(4);
 
         // 3. if not exact, invert the base bits
         if (bitshifted) {
-            psc ^= right_full_mask<T, 4>();
+            psc ^= right_full_mask<T>(4);
         }
-
-        return psc;
     }
 
     void bitshift(int n) {

@@ -43,7 +43,7 @@ namespace ococo {
     @field params                  Program arguments.
     @field t_real                  Initial timestamp.
 */
-template <typename T, int C>
+template <typename T>
 struct ococo_t {
     bool correctly_initialized;
     int return_code;
@@ -51,7 +51,7 @@ struct ococo_t {
     bam1_t *b;
     bam_hdr_t *header;
 
-    stats_t<T, C> *stats;
+    stats_t<T> *stats;
 
     params_t *params;
     double t_real;
@@ -73,8 +73,8 @@ struct ococo_t {
     void run();
 };
 
-template <typename T, int C>
-ococo_t<T, C>::ococo_t(params_t *params_) : params(params_) {
+template <typename T>
+ococo_t<T>::ococo_t(params_t *params_) : params(params_) {
     /*
      * Read SAM headers.
      */
@@ -103,7 +103,7 @@ ococo_t<T, C>::ococo_t(params_t *params_) : params(params_) {
         return;
     }
 
-    stats = new (std::nothrow) stats_t<T, C>(params, *header);
+    stats = new (std::nothrow) stats_t<T>(params, *header);
     if (stats == nullptr || !stats->check_allocation()) {
         ococo::fatal_error(
             "Allocation of the table for nucleotide statistics failed.\n");
@@ -267,8 +267,8 @@ ococo_t<T, C>::ococo_t(params_t *params_) : params(params_) {
 //////////////////////////////////////////////////////
 */
 
-template <typename T, int C>
-bool ococo_t<T, C>::check_read(int32_t seqid, int32_t flags, int32_t mapq) {
+template <typename T>
+bool ococo_t<T>::check_read(int32_t seqid, int32_t flags, int32_t mapq) {
     if ((flags & BAM_FUNMAP) != 0) {
         return false;
     }
@@ -284,8 +284,8 @@ bool ococo_t<T, C>::check_read(int32_t seqid, int32_t flags, int32_t mapq) {
     return true;
 }
 
-template <typename T, int C>
-void ococo_t<T, C>::run() {
+template <typename T>
+void ococo_t<T>::run() {
     /*
      * Process alignments.
      *
@@ -368,7 +368,7 @@ void ococo_t<T, C>::run() {
 
                         /* updating counters */
                         pos_stats_uncompr_t psu;
-                        psu.decompress<T, C>(stats->seq_stats[seqid][ref_pos]);
+                        psu.decompress(stats->seq_stats[seqid][ref_pos]);
                         psu.increment(nt4);
 
                         /* updating coverage statistics */
@@ -390,7 +390,7 @@ void ococo_t<T, C>::run() {
 
                         /* compressing the counters a putting them back to the
                          * statistics */
-                        stats->seq_stats[seqid][ref_pos] = psu.compress<T, C>();
+                        psu.compress(stats->seq_stats[seqid][ref_pos]);
                     }
 
                     break;
@@ -488,8 +488,8 @@ void ococo_t<T, C>::run() {
 //////////////////////////////////////////////////////
 */
 
-template <typename T, int C>
-ococo_t<T, C>::~ococo_t() {
+template <typename T>
+ococo_t<T>::~ococo_t() {
     bam_destroy1(b);
     bam_hdr_destroy(header);
 
