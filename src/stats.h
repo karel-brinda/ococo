@@ -94,9 +94,6 @@ struct stats_t {
      * Statistics & counters *
      *************************/
 
-    inline int set_nucl_nt256(int32_t seqid, int64_t pos, const char &nt256);
-    inline int get_nucl_nt256(int32_t seqid, int64_t pos, char &nt256) const;
-
     static T compress_position_stats(const pos_stats_uncompr_t &psu);
     static void decompress_position_stats(T psc, pos_stats_uncompr_t &psu);
     static T increment(T psc, nt4_t nt4, int32_t &cov_est);
@@ -205,8 +202,15 @@ int stats_t<T, counter_size, refbase_size>::save_fasta(
 
     FILE *fasta_file = nullptr;
     fasta_file       = fopen(fasta_fn.c_str(), "w+");
+    if (fasta_file == nullptr) {
+        ococo::error("Problem with opening the FASTA file: '%s'.\n",
+                     fasta_fn.c_str());
+        return -1;
+    }
 
     char fasta_buffer[fasta_line_l];
+    pos_stats_uncompr_t psu;
+
     for (int s = 0; s < n_seqs; s++) {
         // printf("%s\n",seq_name[s]);
         if (!seq_comment[s].empty()) {
@@ -217,7 +221,8 @@ int stats_t<T, counter_size, refbase_size>::save_fasta(
         }
 
         for (int64_t i = 0, j = 0; i < seq_len[s]; i++, j++) {
-            get_nucl_nt256(s, i, fasta_buffer[j]);
+            decompress_position_stats(seq_stats[s][i], psu);
+            fasta_buffer[j] = nt16_nt256[psu.nt16];
 
             if (j == fasta_line_l - 1 || i == seq_len[s] - 1) {
                 fwrite(fasta_buffer, 1, j + 1, fasta_file);
@@ -227,7 +232,12 @@ int stats_t<T, counter_size, refbase_size>::save_fasta(
         }
     }
 
-    fclose(fasta_file);
+    error_code = fclose(fasta_file);
+    if (error_code != 0) {
+        ococo::error("File with consensus could not be closed ('%s').\n",
+                     stats_fn.c_str());
+        return -1;
+    }
 
     return 0;
 }
@@ -527,10 +537,10 @@ int stats_t<T, counter_size, refbase_size>::print_vcf_header(
     fprintf(vcf_file,
             "##INFO=<ID=COV,Number=1,Type=Integer,Description="
             "\"Coverage\">\n");
-    fprintf(
-        vcf_file,
-        "##INFO=<ID=EX,Number=1,Type=Integer,Description="
-        "\"1 if the coverage and counter values are exact (no bitshift made), 0 otherwise\">\n");
+    fprintf(vcf_file,
+            "##INFO=<ID=EX,Number=1,Type=Integer,Description="
+            "\"1 if the coverage and counter values are exact (no bitshift "
+            "made), 0 otherwise\">\n");
     fprintf(vcf_file, "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n");
 
     return 0;
@@ -627,28 +637,6 @@ void stats_t<T, counter_size, refbase_size>::debug_print_counters() const {
             fprintf(stderr, "%8" PRId64 " %04x \n", pos, seq_stats[seqid][pos]);
         }
     }
-}
-
-template <typename T, int counter_size, int refbase_size>
-inline int stats_t<T, counter_size, refbase_size>::set_nucl_nt256(
-    int32_t seqid, int64_t pos, const char &nt256) {
-    pos_stats_uncompr_t psu;
-    decompress_position_stats(seq_stats[seqid][pos], psu);
-    psu.nt16              = nt256_nt16[static_cast<int16_t>(nt256)];
-    seq_stats[seqid][pos] = compress_position_stats(psu);
-    return 0;
-}
-
-template <typename T, int counter_size, int refbase_size>
-inline int stats_t<T, counter_size, refbase_size>::get_nucl_nt256(
-    int32_t seqid, int64_t pos, char &nt256) const {
-    pos_stats_uncompr_t psu;
-    decompress_position_stats(seq_stats[seqid][pos], psu);
-    nt256 = nt16_nt256[psu.nt16];
-    if (nt256 == '=') {
-        nt256 = 'N';
-    }
-    return 0;
 }
 
 template <typename T, int counter_size, int refbase_size>
