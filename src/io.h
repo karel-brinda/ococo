@@ -25,8 +25,8 @@
 
 #include <cassert>
 
-#include "types.h"
 #include <ctime>
+#include "types.h"
 
 namespace ococo {
 

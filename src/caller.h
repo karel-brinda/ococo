@@ -372,9 +372,8 @@ void caller_t<T, counter_size, refbase_size>::run() {
 
                         /* updating counters */
                         pos_stats_uncompr_t psu;
-                        stats->decompress_position_stats(
-                            stats->seq_stats[seqid][ref_pos], psu);
-                        stats->increment_uncompressed(nt4, psu);
+                        psu.decompress<T, counter_size, refbase_size>(stats->seq_stats[seqid][ref_pos]);
+                        psu.increment(nt4);
 
                         /* updating coverage statistics */
                         if (psu.sum - 1 < low_cov_thres) {

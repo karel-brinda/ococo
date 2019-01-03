@@ -64,27 +64,6 @@ struct single_seq_serial_t {
     char seq_comment[1000];
 };
 
-/*! @struct
-    @abstract          Structure for uncompressed pileup statistics for
-                       1 position.
-    @field nt16        Consensus base.
-                       0x00 and 0x0f = N
-                       0x01, 0x02, 0x04, 0x08 = bases
-                       other values: error
-    @field counters    Nucleotide counters.
-    @field sum         Sum of the nucleotide counters.
-    @field bitshifted  Already bit-shifted? (i.e., in-exact).
-*/
-struct pos_stats_uncompr_t {
-    nt16_t nt16;
-    int32_t counters[4];
-    int32_t sum;
-    bool bitshifted;
-
-    pos_stats_uncompr_t()
-        : nt16(0), counters{0, 0, 0, 0}, sum(0), bitshifted(false) {}
-};
-
 /**************************
  *** Translation tables ***
  **************************/

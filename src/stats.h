@@ -34,6 +34,7 @@
 #include <cmath>
 #include <sstream>
 
+#include "counters.h"
 #include "io.h"
 
 /***********************
@@ -82,15 +83,12 @@ struct stats_t {
     int load_fasta(const std::string &fasta_fn);
     int save_fasta(const std::string &fasta_fn) const;
 
-
     /*************************
      * Statistics & counters *
      *************************/
 
     static T compress_position_stats(const pos_stats_uncompr_t &psu);
-    static void decompress_position_stats(T psc, pos_stats_uncompr_t &psu);
     static T increment(T psc, nt4_t nt4, int32_t &cov_est);
-    static void increment_uncompressed(nt4_t nt4, pos_stats_uncompr_t &psu);
 
     /***********************
      * Debuging & checking *
@@ -214,7 +212,7 @@ int stats_t<T, counter_size, refbase_size>::save_fasta(
         }
 
         for (int64_t i = 0, j = 0; i < seq_len[s]; i++, j++) {
-            decompress_position_stats(seq_stats[s][i], psu);
+            psu.decompress<T, counter_size, refbase_size>(seq_stats[s][i]);
             fasta_buffer[j] = nt16_nt256[psu.nt16];
 
             if (j == fasta_line_l - 1 || i == seq_len[s] - 1) {
@@ -412,8 +410,8 @@ int stats_t<T, counter_size, refbase_size>::
 
     if (vcf_file != nullptr) {
         if (old_base_nt256 != new_base_nt256 || params->verbose) {
-            print_vcf_substitution(vcf_file, seq_name[seqid], pos, old_base_nt256,
-                                   new_base_nt256, psu);
+            print_vcf_substitution(vcf_file, seq_name[seqid], pos,
+                                   old_base_nt256, new_base_nt256, psu);
         }
     }
 
@@ -428,7 +426,7 @@ template <typename T, int counter_size, int refbase_size>
 int stats_t<T, counter_size, refbase_size>::call_consensus_position(
     FILE *vcf_file, FILE *out_pileup_file, int32_t seqid, int64_t pos) {
     pos_stats_uncompr_t psu;
-    decompress_position_stats(seq_stats[seqid][pos], psu);
+    psu.decompress<T, counter_size, refbase_size>(seq_stats[seqid][pos]);
     call_consensus_position_uncompressed(vcf_file, out_pileup_file, seqid, pos,
                                          psu);
     seq_stats[seqid][pos] = compress_position_stats(psu);
@@ -463,39 +461,10 @@ T stats_t<T, counter_size, refbase_size>::compress_position_stats(
 }
 
 template <typename T, int counter_size, int refbase_size>
-void stats_t<T, counter_size, refbase_size>::decompress_position_stats(
-    T psc, pos_stats_uncompr_t &psu) {
-    // 1. reference base(s) (before correction)
-    psu.nt16 = psc & right_full_mask<T, refbase_size>();
-    psc >>= refbase_size;
-
-    // 2. are the values exact?
-    int nones = bitsset_table256[psu.nt16];
-    assert(nones != 2);
-    if (nones == 1) {
-        psu.bitshifted = false;
-    } else {
-        if (nones == 3) {
-            psu.bitshifted = true;
-            // if not exact, invert base bits
-            psu.nt16 ^= right_full_mask<T, refbase_size>();
-        }
-    }
-
-    // 3. count of individual nucleotides and the sum
-    psu.sum = 0;
-    for (int32_t i = 3; i >= 0; i--) {
-        psu.counters[i] = psc & right_full_mask<T, counter_size>();
-        psu.sum += psu.counters[i];
-        psc >>= counter_size;
-    }
-}
-
-template <typename T, int counter_size, int refbase_size>
 std::string stats_t<T, counter_size, refbase_size>::debug_str_counters(
     int32_t seqid, int64_t pos) const {
     pos_stats_uncompr_t psu;
-    decompress_position_stats(seq_stats[seqid][pos], psu);
+    psu.decompress<T, counter_size, refbase_size>(seq_stats[seqid][pos]);
     std::stringstream ss;
     ss << "[" << nt16_nt256[psu.nt16] << "]"
        << "(" << psu.counters[0] << "," << psu.counters[1] << ","
@@ -519,30 +488,12 @@ T stats_t<T, counter_size, refbase_size>::increment(T psc, nt4_t nt4,
     assert(nt4 < 4);
 
     pos_stats_uncompr_t psu;
-    decompress_position_stats(psc, psu);
+    psu.decompress<T, counter_size, refbase_size>(psc);
 
-    increment_uncompressed(nt4, psu);
+    psu.increment(nt4);
     cov_est = psu.sum;
 
     return compress_position_stats(psu);
 }
 
-template <typename T, int counter_size, int refbase_size>
-void stats_t<T, counter_size, refbase_size>::increment_uncompressed(
-    nt4_t nt4, pos_stats_uncompr_t &psu) {
-    assert(nt4 < 4);
-
-    if (psu.counters[nt4] == right_full_mask<uint16_t, counter_size>()) {
-        psu.counters[0] >>= 1;
-        psu.counters[1] >>= 1;
-        psu.counters[2] >>= 1;
-        psu.counters[3] >>= 1;
-        psu.bitshifted = true;
-    }
-
-    psu.counters[nt4]++;
-
-    psu.sum =
-        psu.counters[0] + psu.counters[1] + psu.counters[2] + psu.counters[3];
-}
 }  // namespace ococo
