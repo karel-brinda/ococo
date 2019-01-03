@@ -44,7 +44,7 @@ namespace ococo {
     @field t_real                  Initial timestamp.
 */
 template <typename T, int counter_size, int refbase_size>
-struct caller_t {
+struct ococo_t {
     bool correctly_initialized;
     int return_code;
 
@@ -59,8 +59,8 @@ struct caller_t {
     /*! @func
         @abstract  Open all files and load headers.
     */
-    caller_t(params_t *params_);
-    ~caller_t();
+    ococo_t(params_t *params_);
+    ~ococo_t();
 
     /*! @func
         @abstract  Check whether the alignment passes filters.
@@ -74,7 +74,7 @@ struct caller_t {
 };
 
 template <typename T, int counter_size, int refbase_size>
-caller_t<T, counter_size, refbase_size>::caller_t(params_t *params_)
+ococo_t<T, counter_size, refbase_size>::ococo_t(params_t *params_)
     : params(params_) {
     /*
      * Read SAM headers.
@@ -270,9 +270,9 @@ caller_t<T, counter_size, refbase_size>::caller_t(params_t *params_)
 */
 
 template <typename T, int counter_size, int refbase_size>
-bool caller_t<T, counter_size, refbase_size>::check_read(int32_t seqid,
-                                                         int32_t flags,
-                                                         int32_t mapq) {
+bool ococo_t<T, counter_size, refbase_size>::check_read(int32_t seqid,
+                                                        int32_t flags,
+                                                        int32_t mapq) {
     if ((flags & BAM_FUNMAP) != 0) {
         return false;
     }
@@ -289,7 +289,7 @@ bool caller_t<T, counter_size, refbase_size>::check_read(int32_t seqid,
 }
 
 template <typename T, int counter_size, int refbase_size>
-void caller_t<T, counter_size, refbase_size>::run() {
+void ococo_t<T, counter_size, refbase_size>::run() {
     /*
      * Process alignments.
      *
@@ -495,7 +495,7 @@ void caller_t<T, counter_size, refbase_size>::run() {
 */
 
 template <typename T, int counter_size, int refbase_size>
-caller_t<T, counter_size, refbase_size>::~caller_t() {
+ococo_t<T, counter_size, refbase_size>::~ococo_t() {
     bam_destroy1(b);
     bam_hdr_destroy(header);
 

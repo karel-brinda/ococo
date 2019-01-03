@@ -87,7 +87,7 @@ struct pos_stats_uncompr_t {
 
     template <typename T, int counter_size, int refbase_size>
     T compress() {
-        //todo: bitshift before compression
+        // todo: bitshift before compression
 
         T psc = 0;
 

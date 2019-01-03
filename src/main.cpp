@@ -21,46 +21,47 @@
    SOFTWARE.
 */
 
-#include "caller.h"
-#include "params.h"
+#include "ococo.h"
 
 #include <climits>
 #include <cstdio>
 #include <cstdlib>
 
+using namespace ococo;
+
 int main(int argc, const char **argv) {
     /* Use the default configuration */
-    ococo::params_t params = ococo::params_t(argc, argv);
+    params_t params = params_t(argc, argv);
     if (!params.correctly_initialized) {
         return EXIT_FAILURE;
     }
 
     switch (params.counter_configuration) {
-        case ococo::OCOCO16: {
-            ococo::caller_t<uint16_t, 3, 4> caller(&params);
-            if (!caller.correctly_initialized) {
+        case OCOCO16: {
+            ococo_t<uint16_t, 3, 4> ococo(&params);
+            if (!ococo.correctly_initialized) {
                 return EXIT_FAILURE;
             }
-            caller.run();
-            return caller.return_code;
+            ococo.run();
+            return ococo.return_code;
         }
 
-        case ococo::OCOCO32: {
-            ococo::caller_t<uint32_t, 7, 4> caller(&params);
-            if (!caller.correctly_initialized) {
+        case OCOCO32: {
+            ococo_t<uint32_t, 7, 4> ococo(&params);
+            if (!ococo.correctly_initialized) {
                 return EXIT_FAILURE;
             }
-            caller.run();
-            return caller.return_code;
+            ococo.run();
+            return ococo.return_code;
         }
 
-        case ococo::OCOCO64: {
-            ococo::caller_t<uint64_t, 15, 4> caller(&params);
-            if (!caller.correctly_initialized) {
+        case OCOCO64: {
+            ococo_t<uint64_t, 15, 4> ococo(&params);
+            if (!ococo.correctly_initialized) {
                 return EXIT_FAILURE;
             }
-            caller.run();
-            return caller.return_code;
+            ococo.run();
+            return ococo.return_code;
         }
     }
 
