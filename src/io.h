@@ -54,7 +54,7 @@ int print_vcf_header(FILE *file) {
         fprintf(file, "##ococo_command=%s\n", cmd.c_str());
     }
     fprintf(file, "##ococo_stats_datatype_size=%zubits\n", 8 * sizeof(T));
-    fprintf(file, "##ococo_counter_size=%dbits\n", counter_size);
+    fprintf(file, "##ococo_C=%dbits\n", C);
 
     if (!fasta.empty()) {
         fprintf(file, "##reference=%s\n", fasta.c_str());

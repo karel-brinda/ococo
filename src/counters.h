@@ -49,7 +49,7 @@ struct pos_stats_uncompr_t {
         : nt16(0), counters{0, 0, 0, 0}, sum(0), bitshifted(false) {}
 
     void increment(nt4_t nt4) {
-        // if (psu.counters[nt4] == right_full_mask<uint16_t, counter_size>()) {
+        // if (psu.counters[nt4] == right_full_mask<uint16_t, C>()) {
         //     bitshift(1);
         // }
 
@@ -57,11 +57,11 @@ struct pos_stats_uncompr_t {
         sum = counters[0] + counters[1] + counters[2] + counters[3];
     }
 
-    template <typename T, int counter_size, int refbase_size>
+    template <typename T, int C>
     void decompress(T psc) {
         // 1. reference base(s) (before correction)
-        nt16 = psc & right_full_mask<T, refbase_size>();
-        psc >>= refbase_size;
+        nt16 = psc & right_full_mask<T, 4>();
+        psc >>= 4;
 
         // 2. are the values exact?
         int nones = bitsset_table256[nt16];
@@ -72,20 +72,20 @@ struct pos_stats_uncompr_t {
             if (nones == 3) {
                 bitshifted = true;
                 // if not exact, invert base bits
-                nt16 ^= right_full_mask<T, refbase_size>();
+                nt16 ^= right_full_mask<T, 4>();
             }
         }
 
         // 3. count of individual nucleotides and the sum
         sum = 0;
         for (int32_t i = 3; i >= 0; i--) {
-            counters[i] = psc & right_full_mask<T, counter_size>();
+            counters[i] = psc & right_full_mask<T, C>();
             sum += counters[i];
-            psc >>= counter_size;
+            psc >>= C;
         }
     }
 
-    template <typename T, int counter_size, int refbase_size>
+    template <typename T, int C>
     T compress() {
         // todo: bitshift before compression
 
@@ -96,17 +96,17 @@ struct pos_stats_uncompr_t {
 
         // 1. incorporate counters
         for (int32_t i = 0; i < 4; i++) {
-            psc <<= counter_size;
-            psc |= counters[i] & right_full_mask<T, counter_size>();
+            psc <<= C;
+            psc |= counters[i] & right_full_mask<T, C>();
         }
 
         // 2. incorporate ref base
-        psc <<= refbase_size;
-        psc |= nt16 & right_full_mask<T, refbase_size>();
+        psc <<= 4;
+        psc |= nt16 & right_full_mask<T, 4>();
 
         // 3. if not exact, invert the base bits
         if (bitshifted) {
-            psc ^= right_full_mask<T, refbase_size>();
+            psc ^= right_full_mask<T, 4>();
         }
 
         return psc;

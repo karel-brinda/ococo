@@ -45,9 +45,9 @@ namespace ococo {
 
 KSEQ_INIT(gzFile, gzread);
 
-template <typename T, int counter_size, int refbase_size>
+template <typename T, int C>
 struct stats_t {
-    static_assert(8 * sizeof(T) >= 4 * counter_size + refbase_size,
+    static_assert(8 * sizeof(T) >= 4 * C + 4,
                   "Too large counter size (does not fit into the main type).");
 
     int32_t n_seqs;
@@ -104,9 +104,8 @@ struct stats_t {
     std::string debug_str_counters(int32_t seqid, int64_t pos) const;
 };
 
-template <typename T, int counter_size, int refbase_size>
-stats_t<T, counter_size, refbase_size>::stats_t(ococo::params_t *params,
-                                                bam_hdr_t &h)
+template <typename T, int C>
+stats_t<T, C>::stats_t(ococo::params_t *params, bam_hdr_t &h)
     : n_seqs(h.n_targets),
       seq_active(new (std::nothrow) bool[n_seqs]()),
       seq_len(new (std::nothrow) int64_t[n_seqs]()),
@@ -123,8 +122,8 @@ stats_t<T, counter_size, refbase_size>::stats_t(ococo::params_t *params,
     }
 }
 
-template <typename T, int counter_size, int refbase_size>
-stats_t<T, counter_size, refbase_size>::~stats_t() {
+template <typename T, int C>
+stats_t<T, C>::~stats_t() {
     if (seq_stats != nullptr) {
         for (int32_t seqid = 0; seqid < n_seqs; seqid++) {
             delete[] seq_stats[seqid];
@@ -137,9 +136,8 @@ stats_t<T, counter_size, refbase_size>::~stats_t() {
     delete[] seq_stats;
 }
 
-template <typename T, int counter_size, int refbase_size>
-int stats_t<T, counter_size, refbase_size>::load_fasta(
-    const std::string &fasta_fn) {
+template <typename T, int C>
+int stats_t<T, C>::load_fasta(const std::string &fasta_fn) {
     gzFile fp;
     kseq_t *seq;
     int l;
@@ -177,8 +175,7 @@ int stats_t<T, counter_size, refbase_size>::load_fasta(
             assert(seq_stats[seqid][pos] == 0);
             pos_stats_uncompr_t psu;
             psu.nt16 = nt256_nt16[static_cast<int32_t>(seq->seq.s[pos])];
-            seq_stats[seqid][pos] =
-                psu.compress<T, counter_size, refbase_size>();
+            seq_stats[seqid][pos] = psu.compress<T, C>();
         }
     }
     kseq_destroy(seq);
@@ -186,9 +183,8 @@ int stats_t<T, counter_size, refbase_size>::load_fasta(
     return 0;
 }
 
-template <typename T, int counter_size, int refbase_size>
-int stats_t<T, counter_size, refbase_size>::save_fasta(
-    const std::string &fasta_fn) const {
+template <typename T, int C>
+int stats_t<T, C>::save_fasta(const std::string &fasta_fn) const {
     assert(check_allocation());
 
     FILE *fasta_file = nullptr;
@@ -212,7 +208,7 @@ int stats_t<T, counter_size, refbase_size>::save_fasta(
         }
 
         for (int64_t i = 0, j = 0; i < seq_len[s]; i++, j++) {
-            psu.decompress<T, counter_size, refbase_size>(seq_stats[s][i]);
+            psu.decompress<T, C>(seq_stats[s][i]);
             fasta_buffer[j] = nt16_nt256[psu.nt16];
 
             if (j == fasta_line_l - 1 || i == seq_len[s] - 1) {
@@ -233,8 +229,8 @@ int stats_t<T, counter_size, refbase_size>::save_fasta(
     return 0;
 }
 
-template <typename T, int counter_size, int refbase_size>
-bool stats_t<T, counter_size, refbase_size>::check_allocation() const {
+template <typename T, int C>
+bool stats_t<T, C>::check_allocation() const {
     if (seq_active == nullptr || seq_len == nullptr || seq_stats == nullptr ||
         seq_name == nullptr || seq_comment == nullptr) {
         return false;
@@ -249,9 +245,8 @@ bool stats_t<T, counter_size, refbase_size>::check_allocation() const {
     return true;
 }
 
-template <typename T, int counter_size, int refbase_size>
-bool stats_t<T, counter_size, refbase_size>::check_headers_bam_hdr(
-    const bam_hdr_t &h) const {
+template <typename T, int C>
+bool stats_t<T, C>::check_headers_bam_hdr(const bam_hdr_t &h) const {
     if (!check_allocation()) {
         return false;
     }
@@ -268,9 +263,8 @@ bool stats_t<T, counter_size, refbase_size>::check_headers_bam_hdr(
     return true;
 }
 
-template <typename T, int counter_size, int refbase_size>
-int stats_t<T, counter_size, refbase_size>::import_stats(
-    const std::string &stats_fn) {
+template <typename T, int C>
+int stats_t<T, C>::import_stats(const std::string &stats_fn) {
     assert(check_allocation());
 
     int error_code = 0;
@@ -337,9 +331,8 @@ int stats_t<T, counter_size, refbase_size>::import_stats(
     return 0;
 }
 
-template <typename T, int counter_size, int refbase_size>
-int stats_t<T, counter_size, refbase_size>::export_stats(
-    const std::string &stats_fn) const {
+template <typename T, int C>
+int stats_t<T, C>::export_stats(const std::string &stats_fn) const {
     assert(check_allocation());
 
     int error_code = 0;
@@ -381,9 +374,8 @@ int stats_t<T, counter_size, refbase_size>::export_stats(
     return 0;
 }
 
-template <typename T, int counter_size, int refbase_size>
-int stats_t<T, counter_size, refbase_size>::call_consensus(
-    FILE *vcf_file, FILE *out_pileup_file) {
+template <typename T, int C>
+int stats_t<T, C>::call_consensus(FILE *vcf_file, FILE *out_pileup_file) {
     assert(check_allocation());
 
     for (int32_t seqid = 0; seqid < n_seqs; seqid++) {
@@ -395,11 +387,10 @@ int stats_t<T, counter_size, refbase_size>::call_consensus(
     return 0;
 }
 
-template <typename T, int counter_size, int refbase_size>
-int stats_t<T, counter_size, refbase_size>::
-    call_consensus_position_uncompressed(FILE *vcf_file, FILE *out_pileup_file,
-                                         int32_t seqid, int64_t pos,
-                                         pos_stats_uncompr_t &psu) {
+template <typename T, int C>
+int stats_t<T, C>::call_consensus_position_uncompressed(
+    FILE *vcf_file, FILE *out_pileup_file, int32_t seqid, int64_t pos,
+    pos_stats_uncompr_t &psu) {
     const char old_base_nt256 = nt16_nt256[psu.nt16];
     const char new_base_nt256 = cons_call_maj(psu, *params);
 
@@ -422,23 +413,24 @@ int stats_t<T, counter_size, refbase_size>::
     return 0;
 }
 
-template <typename T, int counter_size, int refbase_size>
-int stats_t<T, counter_size, refbase_size>::call_consensus_position(
-    FILE *vcf_file, FILE *out_pileup_file, int32_t seqid, int64_t pos) {
+template <typename T, int C>
+int stats_t<T, C>::call_consensus_position(FILE *vcf_file,
+                                           FILE *out_pileup_file, int32_t seqid,
+                                           int64_t pos) {
     pos_stats_uncompr_t psu;
-    psu.decompress<T, counter_size, refbase_size>(seq_stats[seqid][pos]);
+    psu.decompress<T, C>(seq_stats[seqid][pos]);
     call_consensus_position_uncompressed(vcf_file, out_pileup_file, seqid, pos,
                                          psu);
-    seq_stats[seqid][pos] = psu.compress<T, counter_size, refbase_size>();
+    seq_stats[seqid][pos] = psu.compress<T, C>();
 
     return 0;
 }
 
-template <typename T, int counter_size, int refbase_size>
-std::string stats_t<T, counter_size, refbase_size>::debug_str_counters(
-    int32_t seqid, int64_t pos) const {
+template <typename T, int C>
+std::string stats_t<T, C>::debug_str_counters(int32_t seqid,
+                                              int64_t pos) const {
     pos_stats_uncompr_t psu;
-    psu.decompress<T, counter_size, refbase_size>(seq_stats[seqid][pos]);
+    psu.decompress<T, C>(seq_stats[seqid][pos]);
     std::stringstream ss;
     ss << "[" << nt16_nt256[psu.nt16] << "]"
        << "(" << psu.counters[0] << "," << psu.counters[1] << ","
@@ -446,8 +438,8 @@ std::string stats_t<T, counter_size, refbase_size>::debug_str_counters(
     return ss.str();
 }
 
-template <typename T, int counter_size, int refbase_size>
-void stats_t<T, counter_size, refbase_size>::debug_print_counters() const {
+template <typename T, int C>
+void stats_t<T, C>::debug_print_counters() const {
     for (int seqid = 0; seqid < n_seqs; seqid++) {
         fprintf(stderr, "%s\n", seq_name[seqid]);
         for (int64_t pos = 0; pos < seq_len[seqid]; pos++) {
@@ -456,18 +448,17 @@ void stats_t<T, counter_size, refbase_size>::debug_print_counters() const {
     }
 }
 
-template <typename T, int counter_size, int refbase_size>
-T stats_t<T, counter_size, refbase_size>::increment(T psc, nt4_t nt4,
-                                                    int32_t &cov_est) {
+template <typename T, int C>
+T stats_t<T, C>::increment(T psc, nt4_t nt4, int32_t &cov_est) {
     assert(nt4 < 4);
 
     pos_stats_uncompr_t psu;
-    psu.decompress<T, counter_size, refbase_size>(psc);
+    psu.decompress<T, C>(psc);
 
     psu.increment(nt4);
     cov_est = psu.sum;
 
-    return psu.compress<T, counter_size, refbase_size>();
+    return psu.compress<T, C>();
 }
 
 }  // namespace ococo
