@@ -232,10 +232,10 @@ int stats_t<T, counter_size, refbase_size>::save_fasta(
         }
     }
 
-    error_code = fclose(fasta_file);
+    int error_code = fclose(fasta_file);
     if (error_code != 0) {
         ococo::error("File with consensus could not be closed ('%s').\n",
-                     stats_fn.c_str());
+                     fasta_fn.c_str());
         return -1;
     }
 
