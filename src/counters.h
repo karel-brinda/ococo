@@ -85,6 +85,33 @@ struct pos_stats_uncompr_t {
         }
     }
 
+    template <typename T, int counter_size, int refbase_size>
+    T compress() {
+        //todo: bitshift before compression
+
+        T psc = 0;
+
+        // remove if you want to support ambiguous nucleotides
+        assert(bitsset_table256[nt16] != 2);
+
+        // 1. incorporate counters
+        for (int32_t i = 0; i < 4; i++) {
+            psc <<= counter_size;
+            psc |= counters[i] & right_full_mask<T, counter_size>();
+        }
+
+        // 2. incorporate ref base
+        psc <<= refbase_size;
+        psc |= nt16 & right_full_mask<T, refbase_size>();
+
+        // 3. if not exact, invert the base bits
+        if (bitshifted) {
+            psc ^= right_full_mask<T, refbase_size>();
+        }
+
+        return psc;
+    }
+
     void bitshift(int n) {
         if (n > 0) {
             counters[0] >>= n;

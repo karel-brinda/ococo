@@ -87,7 +87,6 @@ struct stats_t {
      * Statistics & counters *
      *************************/
 
-    static T compress_position_stats(const pos_stats_uncompr_t &psu);
     static T increment(T psc, nt4_t nt4, int32_t &cov_est);
 
     /***********************
@@ -178,7 +177,8 @@ int stats_t<T, counter_size, refbase_size>::load_fasta(
             assert(seq_stats[seqid][pos] == 0);
             pos_stats_uncompr_t psu;
             psu.nt16 = nt256_nt16[static_cast<int32_t>(seq->seq.s[pos])];
-            seq_stats[seqid][pos] = compress_position_stats(psu);
+            seq_stats[seqid][pos] =
+                psu.compress<T, counter_size, refbase_size>();
         }
     }
     kseq_destroy(seq);
@@ -429,35 +429,9 @@ int stats_t<T, counter_size, refbase_size>::call_consensus_position(
     psu.decompress<T, counter_size, refbase_size>(seq_stats[seqid][pos]);
     call_consensus_position_uncompressed(vcf_file, out_pileup_file, seqid, pos,
                                          psu);
-    seq_stats[seqid][pos] = compress_position_stats(psu);
+    seq_stats[seqid][pos] = psu.compress<T, counter_size, refbase_size>();
 
     return 0;
-}
-
-template <typename T, int counter_size, int refbase_size>
-T stats_t<T, counter_size, refbase_size>::compress_position_stats(
-    const pos_stats_uncompr_t &psu) {
-    T psc = 0;
-
-    // remove if you want to support ambiguous nucleotides
-    assert(bitsset_table256[psu.nt16] != 2);
-
-    // 1. incorporate counters
-    for (int32_t i = 0; i < 4; i++) {
-        psc <<= counter_size;
-        psc |= psu.counters[i] & right_full_mask<T, counter_size>();
-    }
-
-    // 2. incorporate ref base
-    psc <<= refbase_size;
-    psc |= psu.nt16 & right_full_mask<T, refbase_size>();
-
-    // 3. if not exact, invert the base bits
-    if (psu.bitshifted) {
-        psc ^= right_full_mask<T, refbase_size>();
-    }
-
-    return psc;
 }
 
 template <typename T, int counter_size, int refbase_size>
@@ -493,7 +467,7 @@ T stats_t<T, counter_size, refbase_size>::increment(T psc, nt4_t nt4,
     psu.increment(nt4);
     cov_est = psu.sum;
 
-    return compress_position_stats(psu);
+    return psu.compress<T, counter_size, refbase_size>();
 }
 
 }  // namespace ococo

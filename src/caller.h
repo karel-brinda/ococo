@@ -372,7 +372,8 @@ void caller_t<T, counter_size, refbase_size>::run() {
 
                         /* updating counters */
                         pos_stats_uncompr_t psu;
-                        psu.decompress<T, counter_size, refbase_size>(stats->seq_stats[seqid][ref_pos]);
+                        psu.decompress<T, counter_size, refbase_size>(
+                            stats->seq_stats[seqid][ref_pos]);
                         psu.increment(nt4);
 
                         /* updating coverage statistics */
@@ -395,7 +396,7 @@ void caller_t<T, counter_size, refbase_size>::run() {
                         /* compressing the counters a putting them back to the
                          * statistics */
                         stats->seq_stats[seqid][ref_pos] =
-                            stats->compress_position_stats(psu);
+                            psu.compress<T, counter_size, refbase_size>();
                     }
 
                     break;
