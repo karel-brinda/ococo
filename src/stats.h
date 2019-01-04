@@ -70,11 +70,8 @@ struct stats_t {
     // Call consensus probabilistically.
     int call_consensus(FILE *vcf_file, FILE *out_pileup_file);
     int call_consensus_position(FILE *vcf_file, FILE *out_pileup_file,
-                                int32_t seqid, int64_t pos);
-    int call_consensus_position_uncompressed(FILE *vcf_file,
-                                             FILE *out_pileup_file,
-                                             int32_t seqid, int64_t pos,
-                                             pos_stats_uncompr_t &psu);
+                                int32_t seqid, int64_t pos,
+                                pos_stats_uncompr_t &psu);
 
     // Load header and data from a FASTA file and initialize statistics.
     int load_fasta(const std::string &fasta_fn);
@@ -369,9 +366,13 @@ template <typename T>
 int stats_t<T>::call_consensus(FILE *vcf_file, FILE *out_pileup_file) {
     assert(check_allocation());
 
+    pos_stats_uncompr_t psu;
+
     for (int32_t seqid = 0; seqid < n_seqs; seqid++) {
         for (int64_t pos = 0; pos < seq_len[seqid]; pos++) {
-            call_consensus_position(vcf_file, out_pileup_file, seqid, pos);
+            psu.decompress(seq_stats[seqid][pos]);
+            call_consensus_position(vcf_file, out_pileup_file, seqid, pos, psu);
+            psu.compress(seq_stats[seqid][pos]);
         }
     }
 
@@ -379,12 +380,12 @@ int stats_t<T>::call_consensus(FILE *vcf_file, FILE *out_pileup_file) {
 }
 
 template <typename T>
-int stats_t<T>::call_consensus_position_uncompressed(FILE *vcf_file,
-                                                     FILE *out_pileup_file,
-                                                     int32_t seqid, int64_t pos,
-                                                     pos_stats_uncompr_t &psu) {
+int stats_t<T>::call_consensus_position(FILE *vcf_file, FILE *out_pileup_file,
+                                        int32_t seqid, int64_t pos,
+                                        pos_stats_uncompr_t &psu) {
     const char old_base_nt256 = nt16_nt256[psu.nt16];
-    const char new_base_nt256 = cons_call_maj(psu, *params);
+    const char new_base_nt256 = cons_call_maj(psu, params->min_coverage_upd,
+                                              params->majority_threshold);
 
     if (old_base_nt256 != new_base_nt256) {
         params->n_upd += 1;
@@ -401,18 +402,6 @@ int stats_t<T>::call_consensus_position_uncompressed(FILE *vcf_file,
     if (out_pileup_file != nullptr) {
         print_pileup_line(out_pileup_file, seq_name[seqid], pos, psu);
     }
-
-    return 0;
-}
-
-template <typename T>
-int stats_t<T>::call_consensus_position(FILE *vcf_file, FILE *out_pileup_file,
-                                        int32_t seqid, int64_t pos) {
-    pos_stats_uncompr_t psu;
-    psu.decompress(seq_stats[seqid][pos]);
-    call_consensus_position_uncompressed(vcf_file, out_pileup_file, seqid, pos,
-                                         psu);
-    psu.compress(seq_stats[seqid][pos]);
 
     return 0;
 }

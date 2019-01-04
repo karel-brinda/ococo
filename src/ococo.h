@@ -392,7 +392,7 @@ void ococo_t<T>::run() {
 
                         /* consensus calling for the current position */
                         if (stats->params->mode == ococo::mode_t::REALTIME) {
-                            stats->call_consensus_position_uncompressed(
+                            stats->call_consensus_position(
                                 params->out_vcf_file, params->out_pileup_file,
                                 seqid, ref_pos, psu);
                         }

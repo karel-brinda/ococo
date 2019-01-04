@@ -24,7 +24,6 @@
 #pragma once
 
 #include "counters.h"
-#include "params.h"
 #include "types.h"
 
 #include <cassert>
@@ -36,15 +35,15 @@ namespace ococo {
  * Call consensus using the majority rule.
  */
 inline char cons_call_maj(const pos_stats_uncompr_t &psu,
-                          const params_t &params) {
+                          int32_t min_coverage_upd, double majority_threshold) {
     char cons = nt16_nt256[psu.nt16];  // initial consensus
 
     /* Has sufficiently many alignments been collected? */
-    if (psu.sum >= params.min_coverage_upd) {
+    if (psu.sum >= min_coverage_upd) {
         /* Calculate the minimal required counter value for an
          * update. */
         int32_t required_min =
-            static_cast<int32_t>(ceil(params.majority_threshold * psu.sum));
+            static_cast<int32_t>(ceil(majority_threshold * psu.sum));
 
         /* Find the maximal counter with such a value. */
         int32_t max = 0;
