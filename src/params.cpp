@@ -22,7 +22,6 @@
 */
 
 #include "params.h"
-#include "consensus.h"
 
 #include <getopt.h>
 

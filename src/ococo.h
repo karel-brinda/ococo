@@ -339,6 +339,8 @@ void ococo_t<T>::run() {
             low_cov_thres = 424242;
         }
 
+        std::cerr << __PRETTY_FUNCTION__ << *rname << std::endl;
+
         /* iteration over individual bases */
         int32_t ref_pos = mapping_pos;
         for (int32_t cigar_grp = 0, read_pos = 0; cigar_grp < n_cigar;
@@ -368,8 +370,13 @@ void ococo_t<T>::run() {
 
                         /* updating counters */
                         pos_stats_uncompr_t psu;
+
+                        std::cerr << "\n" << read_pos << std::endl;
+                        _print_pos_stats(stats->seq_stats[seqid][ref_pos]);
                         psu.decompress(stats->seq_stats[seqid][ref_pos]);
                         psu.increment(nt4);
+                        std::cerr << "       incr " << nt4_nt256[nt4]
+                                  << " at position " << ref_pos << std::endl;
 
                         /* updating coverage statistics */
                         if (psu.sum - 1 < low_cov_thres) {
@@ -391,6 +398,7 @@ void ococo_t<T>::run() {
                         /* compressing the counters a putting them back to the
                          * statistics */
                         psu.compress(stats->seq_stats[seqid][ref_pos]);
+                        _print_pos_stats(stats->seq_stats[seqid][ref_pos]);
                     }
 
                     break;

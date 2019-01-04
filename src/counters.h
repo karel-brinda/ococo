@@ -23,8 +23,14 @@
 
 #pragma once
 
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+
 #include "misc.h"
 #include "types.h"
+
+using namespace std;
 
 namespace ococo {
 
@@ -54,16 +60,15 @@ struct pos_stats_uncompr_t {
         : nt16(0), counters{0, 0, 0, 0}, sum(0), bitshifted(false) {}
 
     void increment(nt4_t nt4) {
-        // if (psu.counters[nt4] == right_full_mask<uint16_t>(C)) {
-        //     bitshift(1);
-        // }
-
         counters[nt4]++;
-        sum = counters[0] + counters[1] + counters[2] + counters[3];
+        sum++;
     }
 
     template <typename T>
     void decompress(T psc) {
+        // std::cerr << "     " << __PRETTY_FUNCTION__ << " " << psc <<
+        // std::endl;
+
         const int C = counter_size<T>();
 
         // 1. reference base(s) (before correction)
@@ -94,6 +99,9 @@ struct pos_stats_uncompr_t {
 
     template <typename T>
     void compress(T psc) {
+        // std::cerr << "     " << __PRETTY_FUNCTION__ << " " << psc <<
+        // std::endl;
+
         // todo: bitshift before compression
 
         const int C = counter_size<T>();
@@ -130,5 +138,32 @@ struct pos_stats_uncompr_t {
         }
     }
 };
+
+/*
+string _pos_stats_uncompr(pos_stats_uncompr_t psu) {
+    stringstream ss;
+    ss << showbase << internal << setfill('0');
+    ss << "[" << nt16_nt256[psu.nt16] << "]"
+       << "(" << psu.counters[0] << "," << psu.counters[1] << ","
+       << psu.counters[2] << "," << psu.counters[3] << ")";
+
+    return ss.str();
+}
+
+template <typename T>
+string _pos_stats_compr(T psc) {
+    stringstream ss;
+    ss << showbase << internal << setfill('0');
+    ss << psc;
+
+    return ss.str();
+}
+*/
+template <typename T>
+void _print_pos_stats(T psc) {
+    // pos_stats_uncompr_t psu;
+    // psu.decompress(psc);
+    // cerr << _pos_stats_compr(psc) << " " << _pos_stats_uncompr(psu) << endl;
+}
 
 }  // namespace ococo
