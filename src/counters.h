@@ -59,13 +59,30 @@ struct pos_stats_uncompr_t {
     pos_stats_uncompr_t()
         : nt16(0), counters{0, 0, 0, 0}, sum(0), bitshifted(false) {}
 
-    void increment(nt4_t nt4) {
+    inline void increment(nt4_t nt4) {
         counters[nt4]++;
         sum++;
     }
 
+    inline void normalize(int nbits) {
+        int32_t mask =
+            (counters[0] | counters[1] | counters[2] | counters[3]) >> nbits;
+        int32_t shifts = 0;
+        while (mask > 0) {
+            shifts++;
+            mask >>= 1;
+        }
+
+        for (int i = 0; i < 4; i++) {
+            counters[i] >>= shifts;
+        }
+
+        sum        = counters[0] + counters[1] + counters[2] + counters[3];
+        bitshifted = (bitshifted > 0) ? true : bitshifted;
+    }
+
     template <typename T>
-    void decompress(T psc) {
+    inline void decompress(T psc) {
         // std::cerr << "     " << __PRETTY_FUNCTION__ << " " << psc <<
         // std::endl;
 
@@ -98,43 +115,29 @@ struct pos_stats_uncompr_t {
     }
 
     template <typename T>
-    void compress(T &psc) const {
+    inline void compress(T &psc) {
         // std::cerr << "     " << __PRETTY_FUNCTION__ << " " << psc <<
         // std::endl;
-
-        // todo: bitshift before compression
 
         const int C = counter_size<T>();
         psc         = 0;
 
-        // remove if you want to support ambiguous nucleotides
-        assert(bitsset_table256[nt16] != 2);
+        // 1. bitshift counters if necessary
+        normalize(C);
 
-        // 1. incorporate counters
+        // 2. incorporate counters
         for (int32_t i = 0; i < 4; i++) {
             psc <<= C;
             psc |= counters[i] & right_full_mask<T>(C);
         }
 
-        // 2. incorporate ref base
+        // 3. incorporate ref base
         psc <<= 4;
         psc |= nt16 & right_full_mask<T>(4);
 
-        // 3. if not exact, invert the base bits
+        // 4. if not exact, invert the base bits
         if (bitshifted) {
             psc ^= right_full_mask<T>(4);
-        }
-    }
-
-    void bitshift(int n) {
-        if (n > 0) {
-            counters[0] >>= n;
-            counters[1] >>= n;
-            counters[2] >>= n;
-            counters[3] >>= n;
-
-            sum        = counters[0] + counters[1] + counters[2] + counters[3];
-            bitshifted = true;
         }
     }
 };
