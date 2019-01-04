@@ -56,17 +56,8 @@ int print_vcf_header(FILE *file) {
     }*/
 
     fprintf(file,
-            "##INFO=<ID=A,Number=1,Type=Integer,Description="
-            "\"Value of the A counter.\">\n");
-    fprintf(file,
-            "##INFO=<ID=C,Number=1,Type=Integer,Description="
-            "\"Value of the C counter.\">\n");
-    fprintf(file,
-            "##INFO=<ID=G,Number=1,Type=Integer,Description="
-            "\"Value of the G counter.\">\n");
-    fprintf(file,
-            "##INFO=<ID=T,Number=1,Type=Integer,Description="
-            "\"Value of the T counter.\">\n");
+            "##INFO=<ID=C,Number=4,Type=Integer,Description="
+            "\"A,C,G,T counters.\">\n");
     fprintf(file,
             "##INFO=<ID=COV,Number=1,Type=Integer,Description="
             "\"Coverage\">\n");
@@ -95,12 +86,13 @@ int print_vcf_substitution(FILE *file, const std::string &seq_name, int64_t pos,
     );
 
     fprintf(file,
-            "A=%" PRId32     //
-            ";C=%" PRId32    //
-            ";G=%" PRId32    //
-            ";T=%" PRId32    //
+            "C="
+            "%" PRId32       //
+            ",%" PRId32      //
+            ",%" PRId32      //
+            ",%" PRId32      //
             ";COV=%" PRId32  //
-            ";AF=%.2f;"      //
+            ";AF=%.2f"       //
             ";EX=%s\n",
             //
             psu.counters[0],                //
