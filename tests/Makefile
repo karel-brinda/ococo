@@ -73,7 +73,7 @@ aligned_AA:
 #  A
 #  A
 # ==
-# AA
+# NA
 import_export:
 	@printf "\n\n\n===== $@\n\n\n"
 	rm -f output/stats.ococo
