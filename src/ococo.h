@@ -372,7 +372,7 @@ void ococo_t<T>::run() {
                         /* updating counters */
                         pos_stats_uncompr_t psu;
 
-                        //std::cerr << "\n" << read_pos << std::endl;
+                        // std::cerr << "\n" << read_pos << std::endl;
                         //_print_pos_stats(stats->seq_stats[seqid][ref_pos]);
                         psu.decompress(stats->seq_stats[seqid][ref_pos]);
                         //_print_pos_stats<T>(psu);

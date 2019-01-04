@@ -56,18 +56,26 @@ int print_vcf_header(FILE *file) {
     }*/
 
     fprintf(file,
-            "##INFO=<ID=AF,Number=A,Type=Float,Description="
-            "\"Allele frequency for the ALT allele.\">\n");
+            "##INFO=<ID=A,Number=1,Type=Integer,Description="
+            "\"Value of the A counter.\">\n");
     fprintf(file,
-            "##INFO=<ID=CS,Number=4,Type=Integer,Description="
-            "\"Values of A,C,G,T counters.\">\n");
+            "##INFO=<ID=C,Number=1,Type=Integer,Description="
+            "\"Value of the C counter.\">\n");
+    fprintf(file,
+            "##INFO=<ID=G,Number=1,Type=Integer,Description="
+            "\"Value of the G counter.\">\n");
+    fprintf(file,
+            "##INFO=<ID=T,Number=1,Type=Integer,Description="
+            "\"Value of the T counter.\">\n");
     fprintf(file,
             "##INFO=<ID=COV,Number=1,Type=Integer,Description="
             "\"Coverage\">\n");
     fprintf(file,
+            "##INFO=<ID=AF,Number=A,Type=Float,Description="
+            "\"Allele frequency for the ALT allele.\">\n");
+    fprintf(file,
             "##INFO=<ID=EX,Number=1,Type=Integer,Description="
-            "\"1 if the coverage and counter values are exact (no bitshift "
-            "made), 0 otherwise\">\n");
+            "\"Values are exact (1=yes, 0=no), i.e., no bitshift made\">\n");
     fprintf(file, "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n");
 
     return 0;
@@ -79,13 +87,30 @@ int print_vcf_substitution(FILE *file, const std::string &seq_name, int64_t pos,
     const float alt_freq =
         1.0 * psu.counters[nt256_nt4[static_cast<int16_t>(new_base)]] / psu.sum;
 
+    fprintf(file, "%s\t%" PRId64 "\t.\t%c\t%c\t100\tPASS\t",
+            seq_name.c_str(),  //
+            pos + 1,           //
+            old_base,          //
+            new_base           //
+    );
+
     fprintf(file,
-            "%s\t%" PRId64 "\t.\t%c\t%c\t100\tPASS\tAF=%.2f;CS=%" PRId32
-            ",%" PRId32 ",%" PRId32 ",%" PRId32 ";COV=%" PRId32 ";EX=%s\n",
-            seq_name.c_str(), pos + 1, old_base, new_base,
-            round(alt_freq * 100.0) / 100, psu.counters[0], psu.counters[1],
-            psu.counters[2], psu.counters[3], psu.sum,
-            (psu.bitshifted ? "0" : "1"));
+            "A=%" PRId32     //
+            ";C=%" PRId32    //
+            ";G=%" PRId32    //
+            ";T=%" PRId32    //
+            ";COV=%" PRId32  //
+            ";AF=%.2f;"      //
+            ";EX=%s\n",
+            //
+            psu.counters[0],                //
+            psu.counters[1],                //
+            psu.counters[2],                //
+            psu.counters[3],                //
+            psu.sum,                        //
+            round(alt_freq * 100.0) / 100,  //
+            (psu.bitshifted ? "0" : "1")    //
+    );
 
     return 0;
 }
