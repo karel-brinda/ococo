@@ -78,7 +78,7 @@ struct pos_stats_uncompr_t {
         }
 
         sum        = counters[0] + counters[1] + counters[2] + counters[3];
-        bitshifted = (bitshifted > 0) ? true : bitshifted;
+        bitshifted = (shifts > 0) ? true : bitshifted;
     }
 
     template <typename T>
