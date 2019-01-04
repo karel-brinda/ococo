@@ -60,4 +60,11 @@ void _print_pos_stats(T psc) {
     cerr << _pos_stats_compr(psc) << " " << _pos_stats_uncompr(psu) << endl;
 }
 
+template <typename T>
+void _print_pos_stats(const pos_stats_uncompr_t &psu) {
+    T psc;
+    psu.compress<T>(psc);
+    cerr << _pos_stats_compr(psc) << " " << _pos_stats_uncompr(psu) << endl;
+}
+
 }  // namespace ococo

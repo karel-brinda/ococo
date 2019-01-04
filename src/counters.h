@@ -98,7 +98,7 @@ struct pos_stats_uncompr_t {
     }
 
     template <typename T>
-    void compress(T psc) {
+    void compress(T &psc) const {
         // std::cerr << "     " << __PRETTY_FUNCTION__ << " " << psc <<
         // std::endl;
 
