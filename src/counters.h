@@ -139,31 +139,4 @@ struct pos_stats_uncompr_t {
     }
 };
 
-/*
-string _pos_stats_uncompr(pos_stats_uncompr_t psu) {
-    stringstream ss;
-    ss << showbase << internal << setfill('0');
-    ss << "[" << nt16_nt256[psu.nt16] << "]"
-       << "(" << psu.counters[0] << "," << psu.counters[1] << ","
-       << psu.counters[2] << "," << psu.counters[3] << ")";
-
-    return ss.str();
-}
-
-template <typename T>
-string _pos_stats_compr(T psc) {
-    stringstream ss;
-    ss << showbase << internal << setfill('0');
-    ss << psc;
-
-    return ss.str();
-}
-*/
-template <typename T>
-void _print_pos_stats(T psc) {
-    // pos_stats_uncompr_t psu;
-    // psu.decompress(psc);
-    // cerr << _pos_stats_compr(psc) << " " << _pos_stats_uncompr(psu) << endl;
-}
-
 }  // namespace ococo

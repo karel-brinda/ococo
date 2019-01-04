@@ -25,6 +25,7 @@
 
 #include <cstdlib>
 #include "consensus.h"
+#include "debugging.h"
 #include "io.h"
 #include "params.h"
 #include "stats.h"

@@ -394,7 +394,7 @@ int stats_t<T>::call_consensus_position_uncompressed(FILE *vcf_file,
     if (vcf_file != nullptr) {
         if (old_base_nt256 != new_base_nt256 || params->verbose) {
             ococo::print_vcf_substitution(vcf_file, seq_name[seqid], pos,
-                                   old_base_nt256, new_base_nt256, psu);
+                                          old_base_nt256, new_base_nt256, psu);
         }
     }
 

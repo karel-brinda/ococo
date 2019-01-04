@@ -21,8 +21,6 @@
    SOFTWARE.
 */
 
-#pragma once
-
 #include <cassert>
 
 #include <ctime>
