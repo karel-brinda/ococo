@@ -225,7 +225,12 @@ void ococo::params_t::parse_commandline(int argc, const char **argv) {
             case 'x': {
                 counters_str = optarg;
 
-                if (counters_str.compare("ococo16") == 0) {
+                if (counters_str.compare("ococo8") == 0) {
+                    counter_configuration = OCOCO8;
+                    counters_str_descr =
+                        "ococo8 (8 bits per position, 1bits per nucleotide "
+                        "counter)";
+                } else if (counters_str.compare("ococo16") == 0) {
                     counter_configuration = OCOCO16;
                     counters_str_descr =
                         "ococo16 (16 bits per position, 3bits per nucleotide "
@@ -243,7 +248,7 @@ void ococo::params_t::parse_commandline(int argc, const char **argv) {
                 } else {
                     ococo::error(
                         "Unknown counter configuration '%s'. Possible modes "
-                        "are 'ococo16', 'ococo32', and 'ococo64'.\n",
+                        "are 'ococo8', 'ococo16', 'ococo32', and 'ococo64'.\n",
                         counters_str.c_str());
                     exit(1);
                 }

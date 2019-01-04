@@ -37,6 +37,15 @@ int main(int argc, const char **argv) {
     }
 
     switch (params.counter_configuration) {
+        case OCOCO8: {
+            ococo_t<uint8_t> ococo(&params);
+            if (!ococo.correctly_initialized) {
+                return EXIT_FAILURE;
+            }
+            ococo.run();
+            return ococo.return_code;
+        }
+
         case OCOCO16: {
             ococo_t<uint16_t> ococo(&params);
             if (!ococo.correctly_initialized) {

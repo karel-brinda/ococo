@@ -54,6 +54,7 @@ const int default_C   = -1;
 enum mode_t { BATCH, REALTIME };
 
 enum counter_configuration_t {
+    OCOCO8,
     OCOCO16,
     OCOCO32,
     OCOCO64,
