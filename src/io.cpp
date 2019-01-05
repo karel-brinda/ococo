@@ -114,7 +114,7 @@ int print_pileup_line(FILE *file, const std::string &seq_name, int64_t pos,
     if (psu.sum >= max_depth) {
         ococo::error("Too high coverage at position %" PRId64
                      ". Pileup does not support coverage higher than %" PRId32
-                     ".",
+                     ".\n",
                      pos, max_depth);
         return -1;
     }
