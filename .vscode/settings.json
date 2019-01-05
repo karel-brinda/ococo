@@ -2,6 +2,35 @@
 {
 	"editor.tabSize": 4,
 	"files.associations": {
-		"ios": "cpp"
+		"ios": "cpp",
+		"*.tcc": "cpp",
+		"cctype": "cpp",
+		"clocale": "cpp",
+		"cmath": "cpp",
+		"cstdarg": "cpp",
+		"cstddef": "cpp",
+		"cstdio": "cpp",
+		"cstdlib": "cpp",
+		"cstring": "cpp",
+		"ctime": "cpp",
+		"cwchar": "cpp",
+		"cwctype": "cpp",
+		"exception": "cpp",
+		"iomanip": "cpp",
+		"iosfwd": "cpp",
+		"iostream": "cpp",
+		"istream": "cpp",
+		"limits": "cpp",
+		"memory": "cpp",
+		"ostream": "cpp",
+		"sstream": "cpp",
+		"stdexcept": "cpp",
+		"streambuf": "cpp",
+		"array": "cpp",
+		"cinttypes": "cpp",
+		"cstdint": "cpp",
+		"type_traits": "cpp",
+		"typeinfo": "cpp",
+		"string": "cpp"
 	}
 }
