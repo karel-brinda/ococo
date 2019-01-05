@@ -36,7 +36,7 @@ namespace ococo {
 
 template <typename T>
 constexpr int counter_size() {
-    return (8 * sizeof(T) - 4) / 8;
+    return (8 * sizeof(T) - 4) / 4;
 }
 
 /*! @struct
@@ -65,6 +65,7 @@ struct pos_stats_uncompr_t {
     }
 
     inline void normalize(int nbits) {
+        // std::cerr << "     " << nbits << std::endl;
         int32_t mask =
             (counters[0] | counters[1] | counters[2] | counters[3]) >> nbits;
         int32_t shifts = 0;
@@ -116,8 +117,7 @@ struct pos_stats_uncompr_t {
 
     template <typename T>
     inline void compress(T &psc) {
-        // std::cerr << "     " << __PRETTY_FUNCTION__ << " " << psc <<
-        // std::endl;
+        // std::cerr << "     " << __PRETTY_FUNCTION__ << std::endl;
 
         const int C = counter_size<T>();
         psc         = 0;
