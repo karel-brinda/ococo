@@ -26,7 +26,6 @@
 #include "counters.h"
 #include "types.h"
 
-#include <cassert>
 #include <cmath>
 
 namespace ococo {

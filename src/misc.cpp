@@ -27,8 +27,8 @@ void ococo::print_version() {
     // clang-format off
     std::cerr <<
            "\n"
-           "Program: ococo (an online consensus and variant caller)\n"
-           "         call consensus and variants from an unsorted SAM/BAM stream\n"
+           "Program: ococo (an online pileup, variant, and consensus caller)\n"
+           "         call everything from an unsorted SAM/BAM stream\n"
            "Version: " << OCOCO_VERSION  << "\n"
            "Contact: Karel Brinda <kbrinda@hsph.harvard.edu>\n";
     // clang-format on

@@ -25,7 +25,6 @@
 
 #include <iomanip>
 #include <iostream>
-#include <sstream>
 
 #include "misc.h"
 #include "types.h"
@@ -65,7 +64,7 @@ struct pos_stats_uncompr_t {
     }
 
     inline void normalize(int nbits) {
-        // std::cerr << "     " << nbits << std::endl;
+        // std::cerr << "     " << nbits << "\n";
         int32_t mask =
             (counters[0] | counters[1] | counters[2] | counters[3]) >> nbits;
         int32_t shifts = 0;
@@ -84,8 +83,7 @@ struct pos_stats_uncompr_t {
 
     template <typename T>
     inline void decompress(T psc) {
-        // std::cerr << "     " << __PRETTY_FUNCTION__ << " " << psc <<
-        // std::endl;
+        // std::cerr << "     " << __PRETTY_FUNCTION__ << " " << psc << "\n";
 
         const int C = counter_size<T>();
 
@@ -117,7 +115,7 @@ struct pos_stats_uncompr_t {
 
     template <typename T>
     inline void compress(T &psc) {
-        // std::cerr << "     " << __PRETTY_FUNCTION__ << std::endl;
+        // std::cerr << "     " << __PRETTY_FUNCTION__ << "\n";
 
         const int C = counter_size<T>();
         psc         = 0;

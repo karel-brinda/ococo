@@ -23,17 +23,20 @@
 
 #pragma once
 
+#include <cassert>
+#include <cmath>
+#include <sstream>
+#include <string>
+
+#include <zlib.h>
+
 #include <htslib/faidx.h>
 #include <htslib/khash.h>
 #include <htslib/kseq.h>
 #include <htslib/kstring.h>
 #include <htslib/sam.h>
 
-#include <zlib.h>
-#include <cassert>
-#include <cmath>
-#include <sstream>
-
+#include "consensus.h"
 #include "counters.h"
 #include "io.h"
 

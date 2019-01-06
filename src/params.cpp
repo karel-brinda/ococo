@@ -24,6 +24,7 @@
 #include "params.h"
 
 #include <getopt.h>
+#include <iostream>
 
 /****************************
  *** Consensus parameters ***

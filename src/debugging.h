@@ -27,15 +27,19 @@
 #include <iostream>
 #include <sstream>
 
+#include "counters.h"
 #include "misc.h"
 #include "types.h"
 
-using namespace std;
-
 namespace ococo {
 
-string _pos_stats_uncompr(pos_stats_uncompr_t psu) {
-    stringstream ss;
+/*
+   Auxiliary debugging functions for printing position statistics before and
+   after compression.
+*/
+
+std::string __pos_stats_uncompr(pos_stats_uncompr_t psu) {
+    std::stringstream ss;
     ss << showbase << internal << setfill('0');
     ss << "[" << nt16_nt256[psu.nt16] << "]"
        << "(" << psu.counters[0] << "," << psu.counters[1] << ","
@@ -45,9 +49,9 @@ string _pos_stats_uncompr(pos_stats_uncompr_t psu) {
 }
 
 template <typename T>
-string _pos_stats_compr(T psc) {
-    stringstream ss;
-    ss << showbase << internal << setfill('0');
+std::string __pos_stats_compr(T psc) {
+    std::stringstream ss;
+    ss << std::showbase << std::internal << std::setfill('0');
     ss << psc;
 
     return ss.str();
@@ -57,14 +61,16 @@ template <typename T>
 void _print_pos_stats(T psc) {
     pos_stats_uncompr_t psu;
     psu.decompress(psc);
-    cerr << _pos_stats_compr(psc) << " " << _pos_stats_uncompr(psu) << endl;
+    std::cerr << __pos_stats_compr(psc) << " " << __pos_stats_uncompr(psu)
+              << "\n";
 }
 
 template <typename T>
 void _print_pos_stats(const pos_stats_uncompr_t &psu) {
     T psc;
     psu.compress<T>(psc);
-    cerr << _pos_stats_compr(psc) << " " << _pos_stats_uncompr(psu) << endl;
+    std::cerr << __pos_stats_compr(psc) << " " << __pos_stats_uncompr(psu)
+              << "\n";
 }
 
 }  // namespace ococo

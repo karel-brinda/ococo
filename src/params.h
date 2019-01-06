@@ -24,8 +24,7 @@
 #pragma once
 
 #include "io.h"
-//#include "misc.h"
-//#include "types.h"
+#include "types.h"
 
 #include <cstdio>
 #include <iostream>

@@ -23,13 +23,8 @@
 
 #pragma once
 
-#include <sys/resource.h>
 #include <sys/time.h>
-#include <cstdarg>
-#include <cstdio>
-#include <cstdlib>
 #include <iostream>
-#include <string>
 
 #include "version.h"
 

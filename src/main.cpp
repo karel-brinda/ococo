@@ -23,10 +23,6 @@
 
 #include "ococo.h"
 
-#include <climits>
-#include <cstdio>
-#include <cstdlib>
-
 using namespace ococo;
 
 int main(int argc, const char **argv) {

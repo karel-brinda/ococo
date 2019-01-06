@@ -21,10 +21,9 @@
    SOFTWARE.
 */
 
-#include <cassert>
-
-#include <ctime>
 #include "io.h"
+
+#include <cmath>
 
 namespace ococo {
 
