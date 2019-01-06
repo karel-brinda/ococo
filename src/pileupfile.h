@@ -62,7 +62,7 @@ struct PileupFile {
     }
 
     ~PileupFile() {
-        if (file != nullptr && fn != "") {
+        if (file != nullptr && fn != "-") {
             int error_code = fclose(file);
             if (error_code != 0) {
                 ococo::error("Output Pileup file could not be closed.\n");
@@ -72,8 +72,16 @@ struct PileupFile {
         }
     }
 
-    int print_position(const std::string &seq_name, int64_t pos,
-                       const pos_stats_uncompr_t &psu) {
+    void print_position(const std::string &seq_name, int64_t pos,
+                        const pos_stats_uncompr_t &psu) {
+        if (file == nullptr) {
+            return;
+        }
+
+        if (psu.sum == 0) {
+            return;
+        }
+
         bool overflow = false;
 
         if (psu.sum >= PILEUP_MAX_DEPTH) {
@@ -89,13 +97,10 @@ struct PileupFile {
                 "\n",
                 pos, seq_name.c_str(), PILEUP_MAX_DEPTH, psu.counters[0],
                 psu.counters[1], psu.counters[2], psu.counters[3]);
+            overflow = true;
         }
 
         char ref_nt256 = nt16_nt256[psu.nt16];
-
-        if (psu.sum == 0) {
-            return 0;
-        }
 
         int32_t j = 0;
 
@@ -117,8 +122,6 @@ struct PileupFile {
                 seq_name.c_str(), pos + 1, ref_nt256,
                 overflow ? PILEUP_MAX_DEPTH : psu.sum, bases.data(),
                 qualities.data());
-
-        return 0;
     }
 };
 

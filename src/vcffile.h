@@ -58,7 +58,7 @@ struct VcfFile {
     }
 
     ~VcfFile() {
-        if (file != nullptr && fn != "") {
+        if (file != nullptr && fn != "-") {
             int error_code = fclose(file);
             if (error_code != 0) {
                 ococo::error("Output VCF file could not be closed.\n");
@@ -68,7 +68,10 @@ struct VcfFile {
         }
     }
 
-    int print_header() const {
+    void print_header() const {
+        if (file == nullptr) {
+            return;
+        }
         std::time_t tt = std::time(nullptr);
         tm *tm         = localtime(&tt);
 
@@ -109,13 +112,15 @@ struct VcfFile {
             "##INFO=<ID=EX,Number=1,Type=Integer,Description="
             "\"Values are exact (1=yes, 0=no), i.e., no bitshift made\">\n");
         fprintf(file, "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n");
-
-        return 0;
     }
 
-    int print_substitution(const std::string &seq_name, int64_t pos,
-                           char old_base, char new_base,
-                           const pos_stats_uncompr_t &psu) const {
+    void print_substitution(const std::string &seq_name, int64_t pos,
+                            char old_base, char new_base,
+                            const pos_stats_uncompr_t &psu) const {
+        if (file == nullptr) {
+            return;
+        }
+
         const float alt_freq =
             1.0 * psu.counters[nt256_nt4[static_cast<int16_t>(new_base)]] /
             psu.sum;
@@ -145,8 +150,6 @@ struct VcfFile {
                 round(alt_freq * 100.0) / 100,  //
                 (psu.bitshifted ? "0" : "1")    //
         );
-
-        return 0;
     }
 };
 
