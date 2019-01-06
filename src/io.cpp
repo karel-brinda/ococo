@@ -24,6 +24,7 @@
 #include "io.h"
 
 #include <cmath>
+#include <cstdarg>
 
 namespace ococo {
 
