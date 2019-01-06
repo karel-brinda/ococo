@@ -31,6 +31,8 @@
 		"cstdint": "cpp",
 		"type_traits": "cpp",
 		"typeinfo": "cpp",
-		"string": "cpp"
-	}
+		"string": "cpp",
+		"__nullptr": "cpp"
+	},
+	"C_Cpp.intelliSenseEngineFallback": "Enabled"
 }

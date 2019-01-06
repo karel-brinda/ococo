@@ -3,7 +3,9 @@
         {
             "name": "Mac",
             "includePath": [
-                "/usr/include"
+                "/usr/include",
+                "/usr/local/Cellar/gcc/8.2.0/include/c++/8.2.0",
+                "${workspaceFolder}/ext/htslib"
             ],
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
