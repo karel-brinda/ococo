@@ -46,11 +46,8 @@ void params_t::init_default_values() {
 
     in_sam_file = nullptr;
 
-    out_vcf_file    = nullptr;
-    out_pileup_file = nullptr;
-    out_fasta_file  = nullptr;
-    out_sam_file    = nullptr;
-    out_log_file    = nullptr;
+    out_fasta_file = nullptr;
+    out_sam_file   = nullptr;
 
     n_upd = 0;
 

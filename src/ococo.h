@@ -27,7 +27,9 @@
 
 #include "debugging.h"
 #include "io.h"
+#include "logfile.h"
 #include "params.h"
+#include "pileupfile.h"
 #include "stats.h"
 #include "vcffile.h"
 
@@ -199,22 +201,6 @@ ococo_t<T>::ococo_t(params_t *params_) : params(params_) {
             return;
         }
     }
-
-    /*
-     * Open log file.
-     */
-
-    if (params->out_log_fn.size() > 0) {
-        info("Opening the log file ('%s').\n", params->out_log_fn.c_str());
-        params->out_log_file = fopen(params->out_log_fn.c_str(), "w+");
-
-        if (params->out_log_file == nullptr) {
-            fatal_error("Problem with opening the log file: '%s'.\n",
-                        params->out_log_fn.c_str());
-            correctly_initialized = false;
-            return;
-        }
-    }
 }
 
 /*
@@ -253,6 +239,7 @@ void ococo_t<T>::run() {
 
     VcfFile vcf_file(params->out_vcf_fn);
     PileupFile pileup_file(params->out_pileup_fn);
+    LogFile log_file(params->out_log_fn);
 
     info("Starting the main loop.\n");
 
@@ -403,12 +390,8 @@ void ococo_t<T>::run() {
         }
 
         /* Logging the number of updates from this alignment. */
-        if (stats->params->out_log_file != nullptr) {
-            fprintf(stats->params->out_log_file,
-                    "%" PRIu64 "\t%s\t%" PRIu64 "\n", i_read, rname,
-                    stats->params->n_upd - n_upd0);
-            n_upd0 = stats->params->n_upd;
-        }
+        log_file.print(i_read, rname, stats->params->n_upd - n_upd0);
+        n_upd0 = stats->params->n_upd;  // todo: count automatically in the log
 
         i_read += 1;
     }  // while ((r = sam_read1
@@ -464,27 +447,11 @@ ococo_t<T>::~ococo_t() {
         }
     }
 
-    if (params->out_pileup_file != nullptr) {
-        int error_code = fclose(params->out_pileup_file);
-        if (error_code != 0) {
-            return_code = error_code;
-            error("Output pileup file could not be closed.\n");
-            return_code = -1;
-        }
-    }
-
     if (params->out_fasta_file != nullptr) {
         int error_code = fclose(params->out_fasta_file);
         if (error_code != 0) {
             error("Output FASTA consensus file could not be closed.\n");
             return_code = -1;
-        }
-    }
-
-    if (params->out_log_file != nullptr) {
-        int error_code = fclose(params->out_log_file);
-        if (error_code != 0) {
-            warning("Log file could not be closed.\n");
         }
     }
 

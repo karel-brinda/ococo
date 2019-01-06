@@ -99,10 +99,7 @@ struct params_t {
     /*
      * Files
      */
-    FILE *out_vcf_file;
-    FILE *out_pileup_file;
     FILE *out_fasta_file;
-    FILE *out_log_file;
     samFile *out_sam_file;
 
     samFile *in_sam_file;
