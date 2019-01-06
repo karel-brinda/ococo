@@ -26,11 +26,13 @@
 #include <getopt.h>
 #include <iostream>
 
+namespace ococo {
+
 /****************************
  *** Consensus parameters ***
  ****************************/
 
-void ococo::params_t::init_default_values() {
+void params_t::init_default_values() {
     verbose               = false;
     counters_str          = "ococo32";
     counter_configuration = OCOCO32;
@@ -56,14 +58,14 @@ void ococo::params_t::init_default_values() {
     return_code           = 0;
 }
 
-ococo::params_t::params_t() { init_default_values(); }
+params_t::params_t() { init_default_values(); }
 
-ococo::params_t::params_t(int argc, const char **argv) {
+params_t::params_t(int argc, const char **argv) {
     init_default_values();
     parse_commandline(argc, argv);
 }
 
-void ococo::params_t::print_help() {
+void params_t::print_help() {
     print_version();
 
     std::cerr
@@ -118,7 +120,7 @@ void ococo::params_t::print_help() {
         << std::endl;
 }
 
-void ococo::params_t::parse_commandline(int argc, const char **argv) {
+void params_t::parse_commandline(int argc, const char **argv) {
     /* Parse cmd parameters */
     std::stringstream cmd;
     for (int32_t i = 0; i < argc; i++) {
@@ -247,7 +249,7 @@ void ococo::params_t::parse_commandline(int argc, const char **argv) {
                         "ococo64 (64 bits per position, 15bits per nucleotide "
                         "counter)";
                 } else {
-                    ococo::error(
+                    error(
                         "Unknown counter configuration '%s'. Possible modes "
                         "are 'ococo8', 'ococo16', 'ococo32', and 'ococo64'.\n",
                         counters_str.c_str());
@@ -260,11 +262,11 @@ void ococo::params_t::parse_commandline(int argc, const char **argv) {
                 mode_str = optarg;
 
                 if (mode_str.compare("batch") == 0) {
-                    mode = ococo::mode_t::BATCH;
+                    mode = mode_t::BATCH;
                 } else if (mode_str.compare("real-time") == 0) {
-                    mode = ococo::mode_t::REALTIME;
+                    mode = mode_t::REALTIME;
                 } else {
-                    ococo::error(
+                    error(
                         "Unknown mode '%s'. Possible modes are 'batch' and "
                         "'real-time'.\n",
                         mode_str.c_str());
@@ -290,23 +292,24 @@ void ococo::params_t::parse_commandline(int argc, const char **argv) {
                 break;
             }
             case '?': {
-                ococo::error("Unknown error");
+                error("Unknown error");
                 exit(1);
                 break;
             }
         }
     }
     if (in_sam_fn.size() == 0) {
-        ococo::error("SAM/BAM file must be specified (option '-i').\n");
+        error("SAM/BAM file must be specified (option '-i').\n");
         exit(1);
     }
 
     if (out_pileup_fn.size() != 0 && out_pileup_fn.compare(out_vcf_fn) == 0) {
-        ococo::error(
+        error(
             "Pileup and VCF files cannot be the same (both currently '%s').\n",
             out_pileup_fn.c_str());
         exit(1);
     }
 
-    ococo::info("Ococo starting: %s\n", counters_str_descr.c_str());
+    info("Ococo starting: %s\n", counters_str_descr.c_str());
 }
+}  // namespace ococo

@@ -40,7 +40,7 @@ namespace ococo {
 
 std::string __pos_stats_uncompr(pos_stats_uncompr_t psu) {
     std::stringstream ss;
-    ss << showbase << internal << setfill('0');
+    ss << std::showbase << std::internal << std::setfill('0');
     ss << "[" << nt16_nt256[psu.nt16] << "]"
        << "(" << psu.counters[0] << "," << psu.counters[1] << ","
        << psu.counters[2] << "," << psu.counters[3] << ")";

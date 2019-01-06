@@ -22,8 +22,10 @@
 */
 
 #include "misc.h"
+#include "version.h"
 
-void ococo::print_version() {
+namespace ococo {
+void print_version() {
     // clang-format off
     std::cerr <<
            "\n"
@@ -35,7 +37,7 @@ void ococo::print_version() {
     std::cerr << std::endl;
 }
 
-double ococo::realtime() {
+double realtime() {
     struct timeval tp;
     // struct timezone tzp;
     // gettimeofday(&tp, &tzp);
@@ -43,7 +45,7 @@ double ococo::realtime() {
     return tp.tv_sec + tp.tv_usec * 1e-6;
 }
 
-double ococo::cputime() {
+double cputime() {
     struct rusage r;
     getrusage(RUSAGE_SELF, &r);
 
@@ -52,3 +54,4 @@ double ococo::cputime() {
     return r.ru_utime.tv_sec + r.ru_stime.tv_sec +
            1e-6 * (r.ru_utime.tv_usec + r.ru_stime.tv_usec);
 }
+}  // namespace ococo

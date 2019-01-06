@@ -29,8 +29,6 @@
 #include "misc.h"
 #include "types.h"
 
-using namespace std;
-
 namespace ococo {
 
 template <typename T>

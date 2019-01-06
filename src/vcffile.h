@@ -37,16 +37,15 @@ struct VcfFile {
 
     VcfFile(std::string fn) : fn(fn) {
         if (fn.size() > 0) {
-            ococo::info("Opening the VCF stream ('%s').\n", fn.c_str());
+            info("Opening the VCF stream ('%s').\n", fn.c_str());
 
             if (fn == std::string("-")) {
                 file = stdout;
             } else {
                 file = fopen(fn.c_str(), "w+");
                 if (file == nullptr) {
-                    ococo::fatal_error(
-                        "Problem with opening the VCF file '%s'.\n",
-                        fn.c_str());
+                    fatal_error("Problem with opening the VCF file '%s'.\n",
+                                fn.c_str());
                     // todo:
                     // correctly_initialized = false;
                     return;
@@ -61,7 +60,7 @@ struct VcfFile {
         if (file != nullptr && fn != "-") {
             int error_code = fclose(file);
             if (error_code != 0) {
-                ococo::error("Output VCF file could not be closed.\n");
+                error("Output VCF file could not be closed.\n");
                 // todo:
                 // return_code = -1;
             }

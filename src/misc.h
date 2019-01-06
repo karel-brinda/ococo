@@ -32,14 +32,6 @@ namespace ococo {
 
 void print_version();
 
-void fatal_error(const char *format, ...);
-
-void error(const char *format, ...);
-
-void warning(const char *format, ...);
-
-void info(const char *format, ...);
-
 bool file_exists(const std::string &fn);
 
 double realtime();

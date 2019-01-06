@@ -98,7 +98,7 @@ struct stats_t {
 };
 
 template <typename T>
-stats_t<T>::stats_t(ococo::params_t *params, bam_hdr_t &h)
+stats_t<T>::stats_t(params_t *params, bam_hdr_t &h)
     : n_seqs(h.n_targets),
       seq_active(new (std::nothrow) bool[n_seqs]()),
       seq_len(new (std::nothrow) int64_t[n_seqs]()),
@@ -138,7 +138,7 @@ int stats_t<T>::load_fasta(const std::string &fasta_fn) {
     seq = kseq_init(fp);
 
     if (fp == nullptr) {
-        ococo::error("File '%s' could not be opened.\n", fasta_fn.c_str());
+        error("File '%s' could not be opened.\n", fasta_fn.c_str());
         return -1;
     }
 
@@ -183,8 +183,7 @@ int stats_t<T>::save_fasta(const std::string &fasta_fn) const {
     FILE *fasta_file = nullptr;
     fasta_file       = fopen(fasta_fn.c_str(), "w+");
     if (fasta_file == nullptr) {
-        ococo::error("Problem with opening the FASTA file: '%s'.\n",
-                     fasta_fn.c_str());
+        error("Problem with opening the FASTA file: '%s'.\n", fasta_fn.c_str());
         return -1;
     }
 
@@ -214,8 +213,8 @@ int stats_t<T>::save_fasta(const std::string &fasta_fn) const {
 
     int error_code = fclose(fasta_file);
     if (error_code != 0) {
-        ococo::error("File with consensus could not be closed ('%s').\n",
-                     fasta_fn.c_str());
+        error("File with consensus could not be closed ('%s').\n",
+              fasta_fn.c_str());
         return -1;
     }
 
@@ -264,8 +263,8 @@ int stats_t<T>::import_stats(const std::string &stats_fn) {
 
     FILE *fo = fopen(stats_fn.c_str(), "r");
     if (fo == nullptr) {
-        ococo::error("File with statistics could not be opened ('%s').\n",
-                     stats_fn.c_str());
+        error("File with statistics could not be opened ('%s').\n",
+              stats_fn.c_str());
         return -1;
     }
 
@@ -316,8 +315,8 @@ int stats_t<T>::import_stats(const std::string &stats_fn) {
 
     error_code = fclose(fo);
     if (error_code != 0) {
-        ococo::error("File with statistics could not be closed ('%s').\n",
-                     stats_fn.c_str());
+        error("File with statistics could not be closed ('%s').\n",
+              stats_fn.c_str());
         return -1;
     }
 
@@ -332,8 +331,8 @@ int stats_t<T>::export_stats(const std::string &stats_fn) const {
 
     FILE *fo = fopen(stats_fn.c_str(), "w+");
     if (fo == nullptr) {
-        ococo::error("File with statistics could not be opened ('%s').\n",
-                     stats_fn.c_str());
+        error("File with statistics could not be opened ('%s').\n",
+              stats_fn.c_str());
         return -1;
     }
 
@@ -351,17 +350,16 @@ int stats_t<T>::export_stats(const std::string &stats_fn) const {
         written += fwrite(&seq_ser, sizeof(single_seq_serial_t), 1, fo);
         written += fwrite(seq_stats[seqid], sizeof(T), seq_len[seqid], fo);
         if (written != 1 + static_cast<uint64_t>(seq_len[seqid])) {
-            ococo::error(
-                "Problem with writting to the file with statistics ('%s').\n",
-                stats_fn.c_str());
+            error("Problem with writting to the file with statistics ('%s').\n",
+                  stats_fn.c_str());
             return -1;
         }
     }
 
     error_code = fclose(fo);
     if (error_code != 0) {
-        ococo::error("File with statistics could not be closed ('%s').\n",
-                     stats_fn.c_str());
+        error("File with statistics could not be closed ('%s').\n",
+              stats_fn.c_str());
         return -1;
     }
     return 0;

@@ -43,16 +43,15 @@ struct PileupFile {
 
     PileupFile(std::string fn) : fn(fn) {
         if (fn.size() > 0) {
-            ococo::info("Opening the Pileup stream ('%s').\n", fn.c_str());
+            info("Opening the Pileup stream ('%s').\n", fn.c_str());
 
             if (fn == std::string("-")) {
                 file = stdout;
             } else {
                 file = fopen(fn.c_str(), "w+");
                 if (file == nullptr) {
-                    ococo::fatal_error(
-                        "Problem with opening the Pileup file '%s'.\n",
-                        fn.c_str());
+                    fatal_error("Problem with opening the Pileup file '%s'.\n",
+                                fn.c_str());
                     // todo:
                     // correctly_initialized = false;
                     return;
@@ -65,7 +64,7 @@ struct PileupFile {
         if (file != nullptr && fn != "-") {
             int error_code = fclose(file);
             if (error_code != 0) {
-                ococo::error("Output Pileup file could not be closed.\n");
+                error("Output Pileup file could not be closed.\n");
                 // todo:
                 // return_code = -1;
             }
@@ -85,18 +84,17 @@ struct PileupFile {
         bool overflow = false;
 
         if (psu.sum >= PILEUP_MAX_DEPTH) {
-            ococo::warning(
-                "Too high coverage at position %" PRId64
-                " in '%s'. "  //
-                "Pileup does not support coverage higher than %" PRId32
-                "."            //
-                " A=%" PRId32  //
-                " A=%" PRId32  //
-                " G=%" PRId32  //
-                " T=%" PRId32  //
-                "\n",
-                pos, seq_name.c_str(), PILEUP_MAX_DEPTH, psu.counters[0],
-                psu.counters[1], psu.counters[2], psu.counters[3]);
+            warning("Too high coverage at position %" PRId64
+                    " in '%s'. "  //
+                    "Pileup does not support coverage higher than %" PRId32
+                    "."            //
+                    " A=%" PRId32  //
+                    " A=%" PRId32  //
+                    " G=%" PRId32  //
+                    " T=%" PRId32  //
+                    "\n",
+                    pos, seq_name.c_str(), PILEUP_MAX_DEPTH, psu.counters[0],
+                    psu.counters[1], psu.counters[2], psu.counters[3]);
             overflow = true;
         }
 
