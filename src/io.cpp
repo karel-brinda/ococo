@@ -28,56 +28,6 @@
 
 namespace ococo {
 
-int print_pileup_line(FILE *file, const std::string &seq_name, int64_t pos,
-                      const pos_stats_uncompr_t &psu) {
-    const int32_t max_depth = 20000;
-    bool overflow           = false;
-
-    if (psu.sum >= max_depth) {
-        ococo::warning("Too high coverage at position %" PRId64
-                       " in '%s'. "  //
-                       "Pileup does not support coverage higher than %" PRId32
-                       "."            //
-                       " A=%" PRId32  //
-                       " A=%" PRId32  //
-                       " G=%" PRId32  //
-                       " T=%" PRId32  //
-                       "\n",
-                       pos, seq_name.c_str(), max_depth, psu.counters[0],
-                       psu.counters[1], psu.counters[2], psu.counters[3]);
-    }
-
-    char bases[max_depth + 1];
-    char qualities[max_depth + 1];
-
-    char ref_nt256 = nt16_nt256[psu.nt16];
-
-    if (psu.sum == 0) {
-        return 0;
-    }
-
-    int32_t j = 0;
-
-    // todo: check that j does not exceeds buffer size
-    for (int32_t nt4 = 0; nt4 < 4; nt4++) {
-        const char filling_char =
-            nt4_nt16[nt4] == psu.nt16 ? '.' : nt4_nt256[nt4];
-        for (int32_t i = 0; i < psu.counters[nt4] && j < max_depth; i++, j++) {
-            bases[j]     = filling_char;
-            qualities[j] = '~';
-        }
-    }
-
-    bases[j]     = '\0';
-    qualities[j] = '\0';
-
-    fprintf(file, "%s\t%" PRId64 "\t%c\t%" PRId32 "\t%s\t%s\n",
-            seq_name.c_str(), pos + 1, ref_nt256,
-            overflow ? max_depth : psu.sum, bases, qualities);
-
-    return 0;
-}
-
 void fatal_error(const char *format, ...) {
     va_list args;
     va_start(args, format);

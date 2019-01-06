@@ -184,29 +184,6 @@ ococo_t<T>::ococo_t(params_t *params_) : params(params_) {
     }
 
     /*
-     * Open pileup file.
-     */
-
-    if (params->out_pileup_fn.size() > 0) {
-        ococo::info("Opening the pileup stream ('%s').\n",
-                    params->out_pileup_fn.c_str());
-
-        if (params->out_pileup_fn == std::string("-")) {
-            params->out_pileup_file = stdout;
-        } else {
-            params->out_pileup_file =
-                fopen(params->out_pileup_fn.c_str(), "w+");
-            if (params->out_pileup_file == nullptr) {
-                ococo::fatal_error(
-                    "Problem with opening the pileup file '%s'.\n",
-                    params->out_pileup_fn.c_str());
-                correctly_initialized = false;
-                return;
-            }
-        }
-    }
-
-    /*
      * Open consensus FASTA file.
      */
 
@@ -277,6 +254,7 @@ void ococo_t<T>::run() {
      */
 
     VcfFile vcf_file(params->out_vcf_fn);
+    PileupFile pileup_file(params->out_pileup_fn);
 
     ococo::info("Starting the main loop.\n");
 
@@ -376,8 +354,7 @@ void ococo_t<T>::run() {
                         /* consensus calling for the current position */
                         if (stats->params->mode == ococo::mode_t::REALTIME) {
                             stats->call_consensus_position(
-                                vcf_file, params->out_pileup_file, seqid,
-                                ref_pos, psu);
+                                vcf_file, pileup_file, seqid, ref_pos, psu);
                         }
 
                         /* compressing the counters a putting them back to the
@@ -448,19 +425,6 @@ void ococo_t<T>::run() {
     /*
      * Call final consensus and export stats.
      */
-
-    if (stats->params->mode == ococo::mode_t::BATCH) {
-        stats->call_consensus(vcf_file, params->out_pileup_file);
-
-        if (params->out_fasta_fn.size() > 0) {
-            int error_code = stats->save_fasta(params->out_fasta_fn);
-            if (error_code != 0) {
-                ococo::error("FASTA '%s' could not be saved.\n",
-                             params->out_fasta_fn.c_str());
-                return_code = EXIT_FAILURE;
-            }
-        }
-    }
 
     if (params->out_stats_fn.size() > 0) {
         ococo::info("Saving the obtained statistics ('%s').\n",

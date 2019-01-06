@@ -35,7 +35,7 @@ struct VcfFile {
     std::string fn;
     FILE *file;
 
-    VcfFile(std::string vcf_fn) : fn(vcf_fn) {
+    VcfFile(std::string fn) : fn(fn) {
         if (fn.size() > 0) {
             ococo::info("Opening the VCF stream ('%s').\n", fn.c_str());
 

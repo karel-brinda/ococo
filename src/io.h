@@ -30,9 +30,6 @@
 
 namespace ococo {
 
-int print_pileup_line(FILE *file, const std::string &seq_name, int64_t pos,
-                      const pos_stats_uncompr_t &psu);
-
 void fatal_error(const char *format, ...);
 
 void error(const char *format, ...);

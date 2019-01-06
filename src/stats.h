@@ -39,6 +39,7 @@
 #include "consensus.h"
 #include "counters.h"
 #include "io.h"
+#include "pileupfile.h"
 #include "vcffile.h"
 
 /***********************
@@ -72,10 +73,10 @@ struct stats_t {
     int export_stats(const std::string &stats_fn) const;
 
     // Call consensus probabilistically.
-    int call_consensus(const VcfFile &vcf_file, FILE *out_pileup_file);
-    int call_consensus_position(const VcfFile &vcf_file, FILE *out_pileup_file,
-                                int32_t seqid, int64_t pos,
-                                pos_stats_uncompr_t &psu);
+    int call_consensus(const VcfFile &vcf_file, PileupFile &pileup_file);
+    int call_consensus_position(const VcfFile &vcf_file,
+                                PileupFile &pileup_file, int32_t seqid,
+                                int64_t pos, pos_stats_uncompr_t &psu);
 
     // Load header and data from a FASTA file and initialize statistics.
     int load_fasta(const std::string &fasta_fn);
@@ -367,7 +368,8 @@ int stats_t<T>::export_stats(const std::string &stats_fn) const {
 }
 
 template <typename T>
-int stats_t<T>::call_consensus(const VcfFile &vcf_file, FILE *out_pileup_file) {
+int stats_t<T>::call_consensus(const VcfFile &vcf_file,
+                               PileupFile &pileup_file) {
     assert(check_allocation());
 
     pos_stats_uncompr_t psu;
@@ -375,7 +377,7 @@ int stats_t<T>::call_consensus(const VcfFile &vcf_file, FILE *out_pileup_file) {
     for (int32_t seqid = 0; seqid < n_seqs; seqid++) {
         for (int64_t pos = 0; pos < seq_len[seqid]; pos++) {
             psu.decompress(seq_stats[seqid][pos]);
-            call_consensus_position(vcf_file, out_pileup_file, seqid, pos, psu);
+            call_consensus_position(vcf_file, pileup_file, seqid, pos, psu);
             psu.compress(seq_stats[seqid][pos]);
         }
     }
@@ -385,7 +387,7 @@ int stats_t<T>::call_consensus(const VcfFile &vcf_file, FILE *out_pileup_file) {
 
 template <typename T>
 int stats_t<T>::call_consensus_position(const VcfFile &vcf_file,
-                                        FILE *out_pileup_file, int32_t seqid,
+                                        PileupFile &pileup_file, int32_t seqid,
                                         int64_t pos, pos_stats_uncompr_t &psu) {
     const char old_base_nt256 = nt16_nt256[psu.nt16];
     const char new_base_nt256 = cons_call_maj(psu, params->min_coverage_upd,
@@ -401,9 +403,7 @@ int stats_t<T>::call_consensus_position(const VcfFile &vcf_file,
                                     new_base_nt256, psu);
     }
 
-    if (out_pileup_file != nullptr) {
-        print_pileup_line(out_pileup_file, seq_name[seqid], pos, psu);
-    }
+    pileup_file.print_position(seq_name[seqid], pos, psu);
 
     return 0;
 }
