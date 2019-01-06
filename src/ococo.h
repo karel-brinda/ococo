@@ -29,6 +29,7 @@
 #include "io.h"
 #include "params.h"
 #include "stats.h"
+#include "vcffile.h"
 
 namespace ococo {
 
@@ -171,26 +172,7 @@ ococo_t<T>::ococo_t(params_t *params_) : params(params_) {
         }
     }
 
-    /*
-     * Open VCF file.
-     */
-
     if (params->out_vcf_fn.size() > 0) {
-        ococo::info("Opening the VCF stream ('%s').\n",
-                    params->out_vcf_fn.c_str());
-
-        if (params->out_vcf_fn == std::string("-")) {
-            params->out_vcf_file = stdout;
-        } else {
-            params->out_vcf_file = fopen(params->out_vcf_fn.c_str(), "w+");
-            if (params->out_vcf_file == nullptr) {
-                ococo::fatal_error("Problem with opening the VCF file '%s'.\n",
-                                   params->out_vcf_fn.c_str());
-                correctly_initialized = false;
-                return;
-            }
-        }
-
         char buf[PATH_MAX + 1];
         char *res = realpath(params->in_fasta_fn.c_str(), buf);
         std::string fasta_full_path;
@@ -199,8 +181,6 @@ ococo_t<T>::ococo_t(params_t *params_) : params(params_) {
         } else {
             fasta_full_path = params->in_fasta_fn;
         }
-
-        print_vcf_header(params->out_vcf_file);
     }
 
     /*
@@ -295,6 +275,9 @@ void ococo_t<T>::run() {
      * - if writing bam header fails - a critical error
      * - if writing bam fails - a non-critical error
      */
+
+    VcfFile vcf_file(params->out_vcf_fn);
+
     ococo::info("Starting the main loop.\n");
 
     int32_t return_value;
@@ -393,8 +376,8 @@ void ococo_t<T>::run() {
                         /* consensus calling for the current position */
                         if (stats->params->mode == ococo::mode_t::REALTIME) {
                             stats->call_consensus_position(
-                                params->out_vcf_file, params->out_pileup_file,
-                                seqid, ref_pos, psu);
+                                vcf_file, params->out_pileup_file, seqid,
+                                ref_pos, psu);
                         }
 
                         /* compressing the counters a putting them back to the
@@ -467,7 +450,7 @@ void ococo_t<T>::run() {
      */
 
     if (stats->params->mode == ococo::mode_t::BATCH) {
-        stats->call_consensus(params->out_vcf_file, params->out_pileup_file);
+        stats->call_consensus(vcf_file, params->out_pileup_file);
 
         if (params->out_fasta_fn.size() > 0) {
             int error_code = stats->save_fasta(params->out_fasta_fn);
@@ -515,14 +498,6 @@ ococo_t<T>::~ococo_t() {
         int error_code = sam_close(params->out_sam_file);
         if (error_code != 0) {
             ococo::error("Output SAM file could not be closed.\n");
-            return_code = -1;
-        }
-    }
-
-    if (params->out_vcf_file != nullptr) {
-        int error_code = fclose(params->out_vcf_file);
-        if (error_code != 0) {
-            ococo::error("Output VCF file could not be closed.\n");
             return_code = -1;
         }
     }

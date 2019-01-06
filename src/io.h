@@ -30,12 +30,6 @@
 
 namespace ococo {
 
-int print_vcf_header(FILE *file);
-
-int print_vcf_substitution(FILE *file, const std::string &seq_name, int64_t pos,
-                           char old_base, char new_base,
-                           const pos_stats_uncompr_t &psu);
-
 int print_pileup_line(FILE *file, const std::string &seq_name, int64_t pos,
                       const pos_stats_uncompr_t &psu);
 

@@ -39,6 +39,7 @@
 #include "consensus.h"
 #include "counters.h"
 #include "io.h"
+#include "vcffile.h"
 
 /***********************
  *** Main statistics ***
@@ -71,8 +72,8 @@ struct stats_t {
     int export_stats(const std::string &stats_fn) const;
 
     // Call consensus probabilistically.
-    int call_consensus(FILE *vcf_file, FILE *out_pileup_file);
-    int call_consensus_position(FILE *vcf_file, FILE *out_pileup_file,
+    int call_consensus(const VcfFile &vcf_file, FILE *out_pileup_file);
+    int call_consensus_position(const VcfFile &vcf_file, FILE *out_pileup_file,
                                 int32_t seqid, int64_t pos,
                                 pos_stats_uncompr_t &psu);
 
@@ -366,7 +367,7 @@ int stats_t<T>::export_stats(const std::string &stats_fn) const {
 }
 
 template <typename T>
-int stats_t<T>::call_consensus(FILE *vcf_file, FILE *out_pileup_file) {
+int stats_t<T>::call_consensus(const VcfFile &vcf_file, FILE *out_pileup_file) {
     assert(check_allocation());
 
     pos_stats_uncompr_t psu;
@@ -383,9 +384,9 @@ int stats_t<T>::call_consensus(FILE *vcf_file, FILE *out_pileup_file) {
 }
 
 template <typename T>
-int stats_t<T>::call_consensus_position(FILE *vcf_file, FILE *out_pileup_file,
-                                        int32_t seqid, int64_t pos,
-                                        pos_stats_uncompr_t &psu) {
+int stats_t<T>::call_consensus_position(const VcfFile &vcf_file,
+                                        FILE *out_pileup_file, int32_t seqid,
+                                        int64_t pos, pos_stats_uncompr_t &psu) {
     const char old_base_nt256 = nt16_nt256[psu.nt16];
     const char new_base_nt256 = cons_call_maj(psu, params->min_coverage_upd,
                                               params->majority_threshold);
@@ -395,11 +396,9 @@ int stats_t<T>::call_consensus_position(FILE *vcf_file, FILE *out_pileup_file,
         psu.nt16 = nt256_nt16[static_cast<int16_t>(new_base_nt256)];
     }
 
-    if (vcf_file != nullptr) {
-        if (old_base_nt256 != new_base_nt256 || params->verbose) {
-            ococo::print_vcf_substitution(vcf_file, seq_name[seqid], pos,
-                                          old_base_nt256, new_base_nt256, psu);
-        }
+    if (old_base_nt256 != new_base_nt256 || params->verbose) {
+        vcf_file.print_substitution(seq_name[seqid], pos, old_base_nt256,
+                                    new_base_nt256, psu);
     }
 
     if (out_pileup_file != nullptr) {
