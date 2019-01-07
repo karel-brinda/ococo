@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include <cmath>
+#include <cstdarg>
 #include <string>
 
 #include "counters.h"
@@ -30,14 +32,47 @@
 
 namespace ococo {
 
-void fatal_error(const char *format, ...);
+void fatal_error(const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    fprintf(stderr, "[ococo:fatal-error]: ");
+    vfprintf(stderr, format, args);
+    va_end(args);
+}
 
-void error(const char *format, ...);
+void error(const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    fprintf(stderr, "[ococo:error]: ");
+    vfprintf(stderr, format, args);
+    va_end(args);
+}
 
-void warning(const char *format, ...);
+void warning(const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    fprintf(stderr, "[ococo:warning]: ");
+    vfprintf(stderr, format, args);
+    va_end(args);
+}
 
-void info(const char *format, ...);
+void info(const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    fprintf(stderr, "[ococo]: ");
+    vfprintf(stderr, format, args);
+    va_end(args);
+}
 
-bool file_exists(const std::string &fn);
+bool file_exists(const std::string &fn) {
+    FILE *file;
+
+    file = fopen(fn.c_str(), "r");
+    if (file) {
+        fclose(file);
+        return true;
+    }
+    return false;
+}
 
 }  // namespace ococo
