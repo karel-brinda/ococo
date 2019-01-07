@@ -31,6 +31,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include <htslib/faidx.h>
 #include <htslib/khash.h>
@@ -60,6 +61,13 @@ enum counter_configuration_t {
     OCOCO64,
 };
 
+std::vector<std::string> counter_configuration_descr{
+    "ococo8 (8 bits per position, 1bits per nucleotide counter)",
+    "ococo16 (16 bits per position, 3bits per nucleotide counter)",
+    "ococo32 (32 bits per position, 7bits per nucleotide counter)",
+    "ococo64 (64 bits per position, 15bits per nucleotide counter)",
+};
+
 struct Params {
     bool correctly_initialized;
     int return_code;
@@ -71,7 +79,7 @@ struct Params {
      */
     counter_configuration_t counter_configuration;
     std::string counters_str;
-    std::string counters_str_descr;
+    std::string counters_str_descr;  // todo: set string
     int32_t stats_bits_per_position;
     int32_t stats_bits_per_nucleotide;
 
@@ -105,30 +113,41 @@ struct Params {
     /*
      * Consensus calling parameters
      */
-
     mode_t mode;
-
-    /* minimum mapping quality for update */
-    int32_t min_mapq;
-
-    /* minimum base quality for update */
-    int32_t min_baseq;
-
-    /* minimum coverage for update */
-    int32_t min_coverage_upd;
-
-    /* threshold for having majority */
-    double majority_threshold;
+    int32_t min_mapq;          /* minimum mapping quality for update */
+    int32_t min_baseq;         /* minimum base quality for update */
+    int32_t min_coverage_upd;  /* minimum coverage for update */
+    double majority_threshold; /* threshold for having majority */
 
     /* auxiliary */
     std::string mode_str;
     int64_t n_upd;
 
-    Params() { init_default_values(); }
+    Params()
+        : verbose(false),
+          counters_str("ococo32"),
+          counter_configuration(OCOCO32),
+          mode(BATCH),
+          mode_str("batch"),
+          min_mapq(default_q),
+          min_baseq(default_Q),
+          min_coverage_upd(default_c),
+          majority_threshold(default_M),
+          coverage_filter(default_C),
+
+          out_fasta_file(nullptr),
+
+          n_upd(0),
+
+          correctly_initialized(true),
+          return_code(0) {
+        counters_str_descr = counter_configuration_descr[counter_configuration];
+    }
 
     Params(int argc, const char **argv) {
-        init_default_values();
+        Params();
         parse_commandline(argc, argv);
+        counters_str_descr = counter_configuration_descr[counter_configuration];
     }
 
     void parse_commandline(int argc, const char **argv) {
@@ -241,27 +260,12 @@ struct Params {
 
                     if (counters_str.compare("ococo8") == 0) {
                         counter_configuration = OCOCO8;
-                        counters_str_descr =
-                            "ococo8 (8 bits per position, 1bits per nucleotide "
-                            "counter)";
                     } else if (counters_str.compare("ococo16") == 0) {
                         counter_configuration = OCOCO16;
-                        counters_str_descr =
-                            "ococo16 (16 bits per position, 3bits per "
-                            "nucleotide "
-                            "counter)";
                     } else if (counters_str.compare("ococo32") == 0) {
                         counter_configuration = OCOCO32;
-                        counters_str_descr =
-                            "ococo32 (32 bits per position, 7bits per "
-                            "nucleotide "
-                            "counter)";
                     } else if (counters_str.compare("ococo64") == 0) {
                         counter_configuration = OCOCO64;
-                        counters_str_descr =
-                            "ococo64 (64 bits per position, 15bits per "
-                            "nucleotide "
-                            "counter)";
                     } else {
                         error(
                             "Unknown counter configuration '%s'. Possible "
@@ -316,15 +320,6 @@ struct Params {
         }
         if (in_sam_fn.size() == 0) {
             error("SAM/BAM file must be specified (option '-i').\n");
-            exit(1);
-        }
-
-        if (out_pileup_fn.size() != 0 &&
-            out_pileup_fn.compare(out_vcf_fn) == 0) {
-            error(
-                "Pileup and VCF files cannot be the same (both currently "
-                "'%s').\n",
-                out_pileup_fn.c_str());
             exit(1);
         }
 
@@ -383,26 +378,6 @@ struct Params {
         // "---------------------------------------------------------------------------------"
             // clang-format on
             << std::endl;
-    }
-
-    void init_default_values() {
-        verbose               = false;
-        counters_str          = "ococo32";
-        counter_configuration = OCOCO32;
-        mode                  = BATCH;
-        mode_str              = "batch";
-        min_mapq              = default_q;
-        min_baseq             = default_Q;
-        min_coverage_upd      = default_c;
-        majority_threshold    = default_M;
-        coverage_filter       = default_C;
-
-        out_fasta_file = nullptr;
-
-        n_upd = 0;
-
-        correctly_initialized = true;
-        return_code           = 0;
     }
 
     void print_version() {
