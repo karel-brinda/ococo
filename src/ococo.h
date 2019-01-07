@@ -203,7 +203,7 @@ void ococo_t<T>::run() {
     BamFiles bam(params->in_sam_fn, params->out_sam_fn);
 
     stats = new (std::nothrow) stats_t<T>(params, *bam.header);
-    if (stats == nullptr || !stats->check_allocation()) {
+    if (stats == nullptr) {
         fatal_error(
             "Allocation of the table for nucleotide statistics failed.\n");
         correctly_initialized = false;

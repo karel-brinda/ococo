@@ -86,9 +86,6 @@ struct stats_t {
      * Debuging & checking *
      ***********************/
 
-    // Check if everything was initialized.
-    bool check_allocation() const;
-
     // Check if a BAM header corresponds to the stats.
     bool check_headers_bam_hdr(const bam_hdr_t &h) const;
 
@@ -178,8 +175,6 @@ int stats_t<T>::load_fasta(const std::string &fasta_fn) {
 
 template <typename T>
 int stats_t<T>::save_fasta(const std::string &fasta_fn) const {
-    assert(check_allocation());
-
     FILE *fasta_file = nullptr;
     fasta_file       = fopen(fasta_fn.c_str(), "w+");
     if (fasta_file == nullptr) {
@@ -222,27 +217,7 @@ int stats_t<T>::save_fasta(const std::string &fasta_fn) const {
 }
 
 template <typename T>
-bool stats_t<T>::check_allocation() const {
-    if (seq_active == nullptr || seq_len == nullptr || seq_stats == nullptr ||
-        seq_name == nullptr || seq_comment == nullptr) {
-        return false;
-    }
-
-    for (int i = 0; i < n_seqs; i++) {
-        if (seq_stats[i] == nullptr) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-template <typename T>
 bool stats_t<T>::check_headers_bam_hdr(const bam_hdr_t &h) const {
-    if (!check_allocation()) {
-        return false;
-    }
-
     for (int32_t seqid = 0; seqid < n_seqs; seqid++) {
         if (seq_len[seqid] != static_cast<int64_t>(h.target_len[seqid])) {
             return false;
@@ -257,8 +232,6 @@ bool stats_t<T>::check_headers_bam_hdr(const bam_hdr_t &h) const {
 
 template <typename T>
 int stats_t<T>::import_stats(const std::string &stats_fn) {
-    assert(check_allocation());
-
     int error_code = 0;
 
     FILE *fo = fopen(stats_fn.c_str(), "r");
@@ -325,8 +298,6 @@ int stats_t<T>::import_stats(const std::string &stats_fn) {
 
 template <typename T>
 int stats_t<T>::export_stats(const std::string &stats_fn) const {
-    assert(check_allocation());
-
     int error_code = 0;
 
     FILE *fo = fopen(stats_fn.c_str(), "w+");
@@ -368,8 +339,6 @@ int stats_t<T>::export_stats(const std::string &stats_fn) const {
 template <typename T>
 int stats_t<T>::call_consensus(const VcfFile &vcf_file,
                                PileupFile &pileup_file) {
-    assert(check_allocation());
-
     pos_stats_uncompr_t psu;
 
     for (int32_t seqid = 0; seqid < n_seqs; seqid++) {
