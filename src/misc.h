@@ -30,13 +30,35 @@
 
 namespace ococo {
 
-void print_version();
+void print_version() {
+    // clang-format off
+    std::cerr <<
+           "\n"
+           "Program: ococo (an online pileup, variant, and consensus caller)\n"
+           "         call everything from an unsorted SAM/BAM stream\n"
+           "Version: " << OCOCO_VERSION  << "\n"
+           "Contact: Karel Brinda <kbrinda@hsph.harvard.edu>\n";
+    // clang-format on
+    std::cerr << std::endl;
+}
 
-bool file_exists(const std::string &fn);
+double realtime() {
+    struct timeval tp;
+    // struct timezone tzp;
+    // gettimeofday(&tp, &tzp);
+    gettimeofday(&tp, nullptr);
+    return tp.tv_sec + tp.tv_usec * 1e-6;
+}
 
-double realtime();
+double cputime() {
+    struct rusage r;
+    getrusage(RUSAGE_SELF, &r);
 
-double cputime();
+    // todo: check also memory
+    // std::cerr << r.ru_maxrss << std::endl;
+    return r.ru_utime.tv_sec + r.ru_stime.tv_sec +
+           1e-6 * (r.ru_utime.tv_usec + r.ru_stime.tv_usec);
+}
 
 /*
  * Get a right full mask (right n bits set to 1)
