@@ -74,3 +74,26 @@ void _print_pos_stats(const pos_stats_uncompr_t &psu) {
 }
 
 }  // namespace ococo
+
+// template <typename T>
+// void stats_t<T>::debug_print_counters() const {
+//     for (int seqid = 0; seqid < n_seqs; seqid++) {
+//         fprintf(stderr, "%s\n", seq_name[seqid]);
+//         for (int64_t pos = 0; pos < seq_len[seqid]; pos++) {
+//             fprintf(stderr, "%8" PRId64 " %04x \n", pos,
+//             seq_stats[seqid][pos]);
+//         }
+//     }
+// }
+
+// template <typename T>
+// std::string stats_t<T>::debug_str_counters(int32_t seqid, int64_t pos) const
+// {
+//     pos_stats_uncompr_t psu;
+//     psu.decompress(seq_stats[seqid][pos]);
+//     std::stringstream ss;
+//     ss << "[" << nt16_nt256[psu.nt16] << "]"
+//        << "(" << psu.counters[0] << "," << psu.counters[1] << ","
+//        << psu.counters[2] << "," << psu.counters[3] << ")";
+//     return ss.str();
+// }
