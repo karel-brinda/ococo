@@ -52,39 +52,36 @@ template <typename T>
 struct Ococo {
     bool correctly_initialized;
     int return_code;
+    double t_real;
 
     Params params;
-
-    Stats<T> stats;
 
     VcfFile vcf_file;
     PileupFile pileup_file;
     LogFile log_file;
     BamFiles bam;
 
-    double t_real;
+    Stats<T> stats;
 
     /*! @func
         @abstract  Open all files and load headers.
     */
-    Ococo(Params params_)
-        : params(params_),
-          // todo: pass vector
-          stats(params, std::vector<int64_t>{1, 2, 3, 4}),
+    Ococo(Params params)
+        : correctly_initialized(true),
+          return_code(EXIT_SUCCESS),
+          t_real(realtime()),
+          params(params),
           vcf_file(params.out_vcf_fn),
           pileup_file(params.out_pileup_fn),
           log_file(params.out_log_fn),
           bam(params.in_sam_fn, params.out_sam_fn),
-          t_real(realtime())
-    {
+          // todo: pass vector
+          stats(params, bam.get_refseq_names(), bam.get_refseq_lens()) {
         /*
          * Read SAM headers.
          */
 
         info("Initializing the SAM/BAM reader.\n");
-
-        correctly_initialized = true;
-        return_code           = EXIT_SUCCESS;
 
         /*
          * Load FASTA and stats.

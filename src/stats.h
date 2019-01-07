@@ -63,32 +63,19 @@ struct Stats {
 
     Params params;
 
-    // stats_t();
-    Stats(Params params, const std::vector<int64_t> &seq_lens)
-        : n_seqs(seq_lens.size()),
-          //       seq_active(new (std::nothrow) bool[n_seqs]()),
-          //       seq_len(new (std::nothrow) int64_t[n_seqs]()),
-          //       seq_name(new (std::nothrow) std::string[n_seqs]()),
-          //       seq_comment(new (std::nothrow) std::string[n_seqs]()),
-          //       seq_stats(new (std::nothrow) T *[n_seqs]()),
-          params(params) {}
-    // stats_t(params_t *params, bam_hdr_t &h)
-
-    //     : n_seqs(h.n_targets),
-    //       seq_active(new (std::nothrow) bool[n_seqs]()),
-    //       seq_len(new (std::nothrow) int64_t[n_seqs]()),
-    //       seq_name(new (std::nothrow) std::string[n_seqs]()),
-    //       seq_comment(new (std::nothrow) std::string[n_seqs]()),
-    //       seq_stats(new (std::nothrow) T *[n_seqs]()),
-    //       params(params) {
-    //     for (int seqid = 0; seqid < n_seqs; seqid++) {
-    //         seq_len[seqid]    = h.target_len[seqid];
-    //         seq_active[seqid] = true;
-    //         seq_name[seqid]   = std::string(h.target_name[seqid]);
-
-    //         seq_stats[seqid] = new (std::nothrow) T[seq_len[seqid]]();
-    //     }
-    // }
+    Stats(Params params, const std::vector<std::string> &seq_name,
+          const std::vector<int64_t> &seq_len)
+        : n_seqs(seq_len.size()),
+          seq_active(std::vector<bool>(n_seqs, true)),
+          seq_len(seq_len),
+          seq_name(seq_name),
+          seq_comment(std::vector<std::string>(n_seqs)),
+          seq_stats(std::vector<std::vector<T>>(n_seqs)),
+          params(params) {
+        for (int seqid = 0; seqid < n_seqs; seqid++) {
+            seq_stats[seqid].resize(seq_len[seqid]);
+        }
+    }
 
     /*******
      * I/O *

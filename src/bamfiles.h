@@ -25,6 +25,7 @@
 
 #include <cstdio>
 #include <string>
+#include <vector>
 
 #include <htslib/faidx.h>
 #include <htslib/khash.h>
@@ -123,6 +124,24 @@ struct BamFiles {
                 // return_code = -1;
             }
         }
+    }
+
+    std::vector<int64_t> get_refseq_lens() {
+        int n_seqs = header->n_targets;
+        std::vector<int64_t> lens(n_seqs);
+        for (int i = 0; i < n_seqs; i++) {
+            lens[i] = header->target_len[i];
+        }
+        return lens;
+    }
+
+    std::vector<std::string> get_refseq_names() {
+        int n_seqs = header->n_targets;
+        std::vector<std::string> names(n_seqs);
+        for (int i = 0; i < n_seqs; i++) {
+            names[i] = std::string(header->target_name[i]);
+        }
+        return names;
     }
 
     int read_alignment() {
