@@ -404,5 +404,17 @@ struct Params {
         correctly_initialized = true;
         return_code           = 0;
     }
+
+    void print_version() {
+        // clang-format off
+    std::cerr <<
+           "\n"
+           "Program: ococo (an online pileup, variant, and consensus caller)\n"
+           "         call everything from an unsorted SAM/BAM stream\n"
+           "Version: " << OCOCO_VERSION  << "\n"
+           "Contact: Karel Brinda <kbrinda@hsph.harvard.edu>\n";
+        // clang-format on
+        std::cerr << std::endl;
+    }
 };
 }  // namespace ococo
