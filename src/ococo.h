@@ -53,6 +53,8 @@ struct Ococo {
     bool correctly_initialized;
     int return_code;
 
+    Params params;
+
     Stats<T> stats;
 
     VcfFile vcf_file;
@@ -60,7 +62,6 @@ struct Ococo {
     LogFile log_file;
     BamFiles bam;
 
-    Params params;
     double t_real;
 
     /*! @func
@@ -68,17 +69,18 @@ struct Ococo {
     */
     Ococo(Params params_)
         : params(params_),
+          // todo: pass vector
+          stats(params, std::vector<int64_t>{1, 2, 3, 4}),
           vcf_file(params.out_vcf_fn),
           pileup_file(params.out_pileup_fn),
           log_file(params.out_log_fn),
           bam(params.in_sam_fn, params.out_sam_fn),
-          // todo: pass vector
-          stats(params, std::vector<int64_t>{1, 2, 3, 4}) {
+          t_real(realtime())
+    {
         /*
          * Read SAM headers.
          */
 
-        t_real = realtime();
         info("Initializing the SAM/BAM reader.\n");
 
         correctly_initialized = true;
