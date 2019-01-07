@@ -27,6 +27,7 @@
 #include <cmath>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include <zlib.h>
 
@@ -40,6 +41,7 @@
 #include "counters.h"
 #include "io.h"
 #include "pileupfile.h"
+#include "types.h"
 #include "vcffile.h"
 
 /***********************
@@ -51,46 +53,42 @@ namespace ococo {
 KSEQ_INIT(gzFile, gzread);
 
 template <typename T>
-struct stats_t {
+struct Stats {
     int32_t n_seqs;
-    bool *seq_active;
-    int64_t *seq_len;
-    std::string *seq_name;
-    std::string *seq_comment;
-    T **seq_stats;
+    std::vector<bool> seq_active;
+    std::vector<int64_t> seq_len;
+    std::vector<std::string> seq_name;
+    std::vector<std::string> seq_comment;
+    std::vector<std::vector<T>> seq_stats;
 
-    params_t *params;
+    params_t params;
 
     // stats_t();
-    stats_t(params_t *params, bam_hdr_t &h)
-        : n_seqs(h.n_targets),
-          seq_active(new (std::nothrow) bool[n_seqs]()),
-          seq_len(new (std::nothrow) int64_t[n_seqs]()),
-          seq_name(new (std::nothrow) std::string[n_seqs]()),
-          seq_comment(new (std::nothrow) std::string[n_seqs]()),
-          seq_stats(new (std::nothrow) T *[n_seqs]()),
-          params(params) {
-        for (int seqid = 0; seqid < n_seqs; seqid++) {
-            seq_len[seqid]    = h.target_len[seqid];
-            seq_active[seqid] = true;
-            seq_name[seqid]   = std::string(h.target_name[seqid]);
+    Stats(params_t params, const std::vector<int64_t> &seq_lens)
+        : n_seqs(seq_lens.size()),
+          //       seq_active(new (std::nothrow) bool[n_seqs]()),
+          //       seq_len(new (std::nothrow) int64_t[n_seqs]()),
+          //       seq_name(new (std::nothrow) std::string[n_seqs]()),
+          //       seq_comment(new (std::nothrow) std::string[n_seqs]()),
+          //       seq_stats(new (std::nothrow) T *[n_seqs]()),
+          params(params) {}
+    // stats_t(params_t *params, bam_hdr_t &h)
 
-            seq_stats[seqid] = new (std::nothrow) T[seq_len[seqid]]();
-        }
-    }
+    //     : n_seqs(h.n_targets),
+    //       seq_active(new (std::nothrow) bool[n_seqs]()),
+    //       seq_len(new (std::nothrow) int64_t[n_seqs]()),
+    //       seq_name(new (std::nothrow) std::string[n_seqs]()),
+    //       seq_comment(new (std::nothrow) std::string[n_seqs]()),
+    //       seq_stats(new (std::nothrow) T *[n_seqs]()),
+    //       params(params) {
+    //     for (int seqid = 0; seqid < n_seqs; seqid++) {
+    //         seq_len[seqid]    = h.target_len[seqid];
+    //         seq_active[seqid] = true;
+    //         seq_name[seqid]   = std::string(h.target_name[seqid]);
 
-    ~stats_t() {
-        if (seq_stats != nullptr) {
-            for (int32_t seqid = 0; seqid < n_seqs; seqid++) {
-                delete[] seq_stats[seqid];
-            }
-        }
-        delete[] seq_active;
-        delete[] seq_len;
-        delete[] seq_name;
-        delete[] seq_comment;
-        delete[] seq_stats;
-    }
+    //         seq_stats[seqid] = new (std::nothrow) T[seq_len[seqid]]();
+    //     }
+    // }
 
     /*******
      * I/O *
@@ -148,7 +146,7 @@ struct stats_t {
                 return -1;
             }
 
-            fread(seq_stats[seqid], sizeof(T), seq_len[seqid], fo);
+            fread(&(seq_stats[seqid][0]), sizeof(T), seq_len[seqid], fo);
         }
 
         error_code = fclose(fo);
@@ -183,7 +181,8 @@ struct stats_t {
             strncpy(seq_ser.seq_name, seq_name[seqid].c_str(), 999);
             uint64_t written = 0;
             written += fwrite(&seq_ser, sizeof(single_seq_serial_t), 1, fo);
-            written += fwrite(seq_stats[seqid], sizeof(T), seq_len[seqid], fo);
+            written +=
+                fwrite(&(seq_stats[seqid][0]), sizeof(T), seq_len[seqid], fo);
             if (written != 1 + static_cast<uint64_t>(seq_len[seqid])) {
                 error(
                     "Problem with writting to the file with statistics "
@@ -221,15 +220,15 @@ struct stats_t {
                                 PileupFile &pileup_file, int32_t seqid,
                                 int64_t pos, pos_stats_uncompr_t &psu) {
         const char old_base_nt256 = nt16_nt256[psu.nt16];
-        const char new_base_nt256 = cons_call_maj(psu, params->min_coverage_upd,
-                                                  params->majority_threshold);
+        const char new_base_nt256 = cons_call_maj(psu, params.min_coverage_upd,
+                                                  params.majority_threshold);
 
         if (old_base_nt256 != new_base_nt256) {
-            params->n_upd += 1;
+            params.n_upd += 1;
             psu.nt16 = nt256_nt16[static_cast<int16_t>(new_base_nt256)];
         }
 
-        if (old_base_nt256 != new_base_nt256 || params->verbose) {
+        if (old_base_nt256 != new_base_nt256 || params.verbose) {
             vcf_file.print_substitution(seq_name[seqid], pos, old_base_nt256,
                                         new_base_nt256, psu);
         }

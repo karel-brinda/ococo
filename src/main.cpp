@@ -27,14 +27,14 @@ using namespace ococo;
 
 int main(int argc, const char **argv) {
     /* Use the default configuration */
-    params_t params = params_t(argc, argv);
+    params_t params(argc, argv);
     if (!params.correctly_initialized) {
         return EXIT_FAILURE;
     }
 
     switch (params.counter_configuration) {
         case OCOCO8: {
-            Ococo<uint8_t> ococo(&params);
+            Ococo<uint8_t> ococo(params);
             if (!ococo.correctly_initialized) {
                 return EXIT_FAILURE;
             }
@@ -43,7 +43,7 @@ int main(int argc, const char **argv) {
         }
 
         case OCOCO16: {
-            Ococo<uint16_t> ococo(&params);
+            Ococo<uint16_t> ococo(params);
             if (!ococo.correctly_initialized) {
                 return EXIT_FAILURE;
             }
@@ -52,7 +52,7 @@ int main(int argc, const char **argv) {
         }
 
         case OCOCO32: {
-            Ococo<uint32_t> ococo(&params);
+            Ococo<uint32_t> ococo(params);
             if (!ococo.correctly_initialized) {
                 return EXIT_FAILURE;
             }
@@ -61,7 +61,7 @@ int main(int argc, const char **argv) {
         }
 
         case OCOCO64: {
-            Ococo<uint64_t> ococo(&params);
+            Ococo<uint64_t> ococo(params);
             if (!ococo.correctly_initialized) {
                 return EXIT_FAILURE;
             }
