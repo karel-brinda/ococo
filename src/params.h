@@ -79,9 +79,7 @@ struct Params {
      */
     counter_configuration_t counter_configuration;
     std::string counters_str;
-    std::string counters_str_descr;  // todo: set string
-    int32_t stats_bits_per_position;
-    int32_t stats_bits_per_nucleotide;
+    std::string counters_str_descr;
 
     /*
      * Input parameters
@@ -102,9 +100,6 @@ struct Params {
     std::string out_pileup_fn;
     std::string out_log_fn;
 
-    /* Filter alignments when coverage is greater than */
-    int32_t coverage_filter;
-
     /*
      * Files
      */
@@ -114,33 +109,35 @@ struct Params {
      * Consensus calling parameters
      */
     mode_t mode;
+    std::string mode_str;
     int32_t min_mapq;          /* minimum mapping quality for update */
     int32_t min_baseq;         /* minimum base quality for update */
     int32_t min_coverage_upd;  /* minimum coverage for update */
     double majority_threshold; /* threshold for having majority */
 
+    /* Filter alignments when coverage is greater than */
+    int32_t coverage_filter;
+
     /* auxiliary */
-    std::string mode_str;
     int64_t n_upd;
 
     Params()
-        : verbose(false),
-          counters_str("ococo32"),
+        : correctly_initialized(true),
+          return_code(0),
+
           counter_configuration(OCOCO32),
+          counters_str("ococo32"),
+
           mode(BATCH),
           mode_str("batch"),
           min_mapq(default_q),
           min_baseq(default_Q),
           min_coverage_upd(default_c),
           majority_threshold(default_M),
+
           coverage_filter(default_C),
 
-          out_fasta_file(nullptr),
-
-          n_upd(0),
-
-          correctly_initialized(true),
-          return_code(0) {
+          n_upd(0) {
         counters_str_descr = counter_configuration_descr[counter_configuration];
     }
 
