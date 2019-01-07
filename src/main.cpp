@@ -27,7 +27,7 @@ using namespace ococo;
 
 int main(int argc, const char **argv) {
     /* Use the default configuration */
-    params_t params(argc, argv);
+    Params params(argc, argv);
     if (!params.correctly_initialized) {
         return EXIT_FAILURE;
     }

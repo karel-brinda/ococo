@@ -60,13 +60,13 @@ struct Ococo {
     LogFile log_file;
     BamFiles bam;
 
-    params_t params;
+    Params params;
     double t_real;
 
     /*! @func
         @abstract  Open all files and load headers.
     */
-    Ococo(params_t params_)
+    Ococo(Params params_)
         : params(params_),
           vcf_file(params.out_vcf_fn),
           pileup_file(params.out_pileup_fn),

@@ -61,10 +61,10 @@ struct Stats {
     std::vector<std::string> seq_comment;
     std::vector<std::vector<T>> seq_stats;
 
-    params_t params;
+    Params params;
 
     // stats_t();
-    Stats(params_t params, const std::vector<int64_t> &seq_lens)
+    Stats(Params params, const std::vector<int64_t> &seq_lens)
         : n_seqs(seq_lens.size()),
           //       seq_active(new (std::nothrow) bool[n_seqs]()),
           //       seq_len(new (std::nothrow) int64_t[n_seqs]()),
