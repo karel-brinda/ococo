@@ -44,10 +44,7 @@ void params_t::init_default_values() {
     majority_threshold    = default_M;
     coverage_filter       = default_C;
 
-    in_sam_file = nullptr;
-
     out_fasta_file = nullptr;
-    out_sam_file   = nullptr;
 
     n_upd = 0;
 

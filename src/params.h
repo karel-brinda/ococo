@@ -100,9 +100,6 @@ struct params_t {
      * Files
      */
     FILE *out_fasta_file;
-    samFile *out_sam_file;
-
-    samFile *in_sam_file;
 
     /*
      * Consensus calling parameters

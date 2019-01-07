@@ -25,6 +25,7 @@
 
 #include <cstdlib>
 
+#include "bamfiles.h"
 #include "debugging.h"
 #include "io.h"
 #include "logfile.h"
@@ -51,9 +52,6 @@ template <typename T>
 struct ococo_t {
     bool correctly_initialized;
     int return_code;
-
-    bam1_t *b;
-    bam_hdr_t *header;
 
     stats_t<T> *stats;
 
@@ -89,45 +87,7 @@ ococo_t<T>::ococo_t(params_t *params_) : params(params_) {
     correctly_initialized = true;
     return_code           = EXIT_SUCCESS;
 
-    b      = nullptr;
-    header = nullptr;
-    stats  = nullptr;
-
-    params->in_sam_file = sam_open(params->in_sam_fn.c_str(), "r");
-    if (params->in_sam_file == nullptr) {
-        fatal_error("Problem with opening the SAM/BAM file ('%s').\n",
-                    params->in_sam_fn.c_str());
-        correctly_initialized = false;
-        return;
-    }
-
-    if ((header = sam_hdr_read(params->in_sam_file)) == 0) {
-        fatal_error("SAM/BAM headers are missing or corrupted.\n");
-        correctly_initialized = false;
-        return;
-    }
-
-    stats = new (std::nothrow) stats_t<T>(params, *header);
-    if (stats == nullptr || !stats->check_allocation()) {
-        fatal_error(
-            "Allocation of the table for nucleotide statistics failed.\n");
-        correctly_initialized = false;
-        return;
-    }
-
-    /*
-     * Open output SAM stream
-     */
-
-    if (params->out_sam_fn.size() > 0) {
-        params->out_sam_file = sam_open(params->out_sam_fn.c_str(), "w");
-        if (params->out_sam_file == nullptr) {
-            fatal_error("Problem with opening the SAM/BAM file ('%s').\n",
-                        params->out_sam_fn.c_str());
-            correctly_initialized = false;
-            return;
-        }
-    }
+    stats = nullptr;
 
     /*
      * Load FASTA and stats.
@@ -240,38 +200,25 @@ void ococo_t<T>::run() {
     VcfFile vcf_file(params->out_vcf_fn);
     PileupFile pileup_file(params->out_pileup_fn);
     LogFile log_file(params->out_log_fn);
+    BamFiles bam(params->in_sam_fn, params->out_sam_fn);
+
+    stats = new (std::nothrow) stats_t<T>(params, *bam.header);
+    if (stats == nullptr || !stats->check_allocation()) {
+        fatal_error(
+            "Allocation of the table for nucleotide statistics failed.\n");
+        correctly_initialized = false;
+        return;
+    }
 
     info("Starting the main loop.\n");
 
     int32_t return_value;
-    b              = bam_init1();
     int64_t n_upd0 = 0;
     int64_t i_read = 0;
 
-    if (stats->params->out_sam_file != nullptr) {
-        int error_code = sam_hdr_write(stats->params->out_sam_file, header);
-        if (error_code != 0) {
-            return_code = EXIT_FAILURE;
-            error("Construction of the SAM header failed (error %d)",
-                  error_code);
-            return;
-        }
-    }
-
-    while ((return_value = sam_read1(params->in_sam_file, header, b)) >= 0) {
-        /* SAM/BAM variables */
-        const char *rname         = bam_get_qname(b);
-        const uint8_t *seq        = bam_get_seq(b);
-        const uint8_t *qual       = bam_get_qual(b);
-        const uint32_t *cigar     = bam_get_cigar(b);
-        const int32_t n_cigar     = b->core.n_cigar;
-        const int32_t seqid       = b->core.tid;
-        const int64_t mapping_pos = b->core.pos;
-        const int32_t mapq        = b->core.qual;
-        const int32_t flags       = b->core.flag;
-
+    while ((return_value = bam.read_alignment()) >= 0) {
         /* filtration on the alignment level */
-        bool read_ok = check_read(seqid, flags, mapq);
+        bool read_ok = check_read(bam.seqid, bam.flags, bam.mapq);
         if (!read_ok) {
             continue;
         }
@@ -289,11 +236,11 @@ void ococo_t<T>::run() {
         // std::cerr << __PRETTY_FUNCTION__ << *rname << std::endl;
 
         /* iteration over individual bases */
-        int32_t ref_pos = mapping_pos;
-        for (int32_t cigar_grp = 0, read_pos = 0; cigar_grp < n_cigar;
+        int32_t ref_pos = bam.mapping_pos;
+        for (int32_t cigar_grp = 0, read_pos = 0; cigar_grp < bam.n_cigar;
              cigar_grp++) {
-            const int32_t op = bam_cigar_op(cigar[cigar_grp]);
-            const int32_t ol = bam_cigar_oplen(cigar[cigar_grp]);
+            const int32_t op = bam_cigar_op(bam.cigar[cigar_grp]);
+            const int32_t ol = bam_cigar_oplen(bam.cigar[cigar_grp]);
 
             const int32_t next_read_pos = read_pos + ol;
             switch (op) {
@@ -303,9 +250,9 @@ void ococo_t<T>::run() {
 
                     for (; read_pos < next_read_pos; ++read_pos, ++ref_pos) {
                         /* filtration on the level of base */
-                        const uint8_t nt16 = bam_seqi(seq, read_pos);
+                        const uint8_t nt16 = bam_seqi(bam.seq, read_pos);
                         const uint8_t nt4  = nt16_nt4[nt16];
-                        const int32_t bq   = qual[read_pos];
+                        const int32_t bq   = bam.qual[read_pos];
 
                         if (bq != 0xff && bq < (stats->params->min_baseq)) {
                             continue;
@@ -320,7 +267,7 @@ void ococo_t<T>::run() {
 
                         // std::cerr << "\n" << read_pos << std::endl;
                         //_print_pos_stats(stats->seq_stats[seqid][ref_pos]);
-                        psu.decompress(stats->seq_stats[seqid][ref_pos]);
+                        psu.decompress(stats->seq_stats[bam.seqid][ref_pos]);
                         //_print_pos_stats<T>(psu);
                         psu.increment(nt4);
                         // std::cerr << "       incr " << nt4_nt256[nt4]
@@ -339,12 +286,12 @@ void ococo_t<T>::run() {
                         /* consensus calling for the current position */
                         if (stats->params->mode == mode_t::REALTIME) {
                             stats->call_consensus_position(
-                                vcf_file, pileup_file, seqid, ref_pos, psu);
+                                vcf_file, pileup_file, bam.seqid, ref_pos, psu);
                         }
 
                         /* compressing the counters a putting them back to the
                          * statistics */
-                        psu.compress(stats->seq_stats[seqid][ref_pos]);
+                        psu.compress(stats->seq_stats[bam.seqid][ref_pos]);
                         //_print_pos_stats(stats->seq_stats[seqid][ref_pos]);
                     }
 
@@ -375,22 +322,19 @@ void ococo_t<T>::run() {
         }  // for (int32_t cigar_grp
 
         /* Filtering the alignment based on coverage. */
-        if (stats->params->out_sam_file != nullptr) {
+        if (npos_low_cov > 0 && npos_high_cov < 0.5 * pseudo_rlen) {
             // at least 5% pos. low coverage => print read
             // if(npos_low_cov * 20 >= pseudo_rlen){
-            if (npos_low_cov > 0 && npos_high_cov < 0.5 * pseudo_rlen) {
-                int error_code =
-                    sam_write1(stats->params->out_sam_file, header, b);
-                if (error_code != 0) {
-                    return_code = EXIT_FAILURE;
-                    error("Writing SAM failed (error %d)", error_code);
-                    break;
-                }
+            int error_code = bam.print_alignment();
+            if (error_code != 0) {
+                return_code = EXIT_FAILURE;
+                error("Writing SAM failed (error %d)", error_code);
+                break;
             }
         }
 
         /* Logging the number of updates from this alignment. */
-        log_file.print(i_read, rname, stats->params->n_upd - n_upd0);
+        log_file.print(i_read, bam.rname, stats->params->n_upd - n_upd0);
         n_upd0 = stats->params->n_upd;  // todo: count automatically in the log
 
         i_read += 1;
@@ -428,25 +372,6 @@ void ococo_t<T>::run() {
 
 template <typename T>
 ococo_t<T>::~ococo_t() {
-    bam_destroy1(b);
-    bam_hdr_destroy(header);
-
-    if (params->in_sam_file != nullptr) {
-        int error_code = sam_close(params->in_sam_file);
-        if (error_code != 0) {
-            error("Input SAM file could not be closed.\n");
-            return_code = -1;
-        }
-    }
-
-    if (params->out_sam_file != nullptr) {
-        int error_code = sam_close(params->out_sam_file);
-        if (error_code != 0) {
-            error("Output SAM file could not be closed.\n");
-            return_code = -1;
-        }
-    }
-
     if (params->out_fasta_file != nullptr) {
         int error_code = fclose(params->out_fasta_file);
         if (error_code != 0) {
