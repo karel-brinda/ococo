@@ -57,9 +57,13 @@ struct BamFiles {
     int32_t flags;
 
     BamFiles(std::string fn_in, std::string fn_out)
-        : fn_in(fn_in), fn_out(fn_out), b(bam_init1()), header(nullptr) {
+        : fn_in(fn_in),
+          fn_out(fn_out),
+          file_in(nullptr),
+          file_out(nullptr),
+          b(bam_init1()),
+          header(nullptr) {
         file_in = sam_open(fn_in.c_str(), "r");
-
         if (file_in == nullptr) {
             fatal_error("Problem with opening the input SAM/BAM file ('%s').\n",
                         fn_in.c_str());
@@ -68,7 +72,8 @@ struct BamFiles {
             return;
         }
 
-        if ((header = sam_hdr_read(file_in)) == nullptr) {
+        header = sam_hdr_read(file_in);
+        if (header == nullptr) {
             fatal_error("SAM/BAM headers are missing or corrupted.\n");
             // todo:
             // correctly_initialized = false;

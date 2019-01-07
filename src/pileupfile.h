@@ -41,7 +41,7 @@ struct PileupFile {
     std::array<char, PILEUP_MAX_DEPTH + 1> bases;
     std::array<char, PILEUP_MAX_DEPTH + 1> qualities;
 
-    PileupFile(std::string fn) : fn(fn) {
+    PileupFile(std::string fn) : fn(fn), file(nullptr) {
         if (fn.size() > 0) {
             info("Opening the Pileup stream ('%s').\n", fn.c_str());
 

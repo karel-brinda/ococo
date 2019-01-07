@@ -35,7 +35,7 @@ struct VcfFile {
     std::string fn;
     FILE *file;
 
-    VcfFile(std::string fn) : fn(fn) {
+    VcfFile(std::string fn) : fn(fn), file(nullptr) {
         if (fn.size() > 0) {
             info("Opening the VCF stream ('%s').\n", fn.c_str());
 
