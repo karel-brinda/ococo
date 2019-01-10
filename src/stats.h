@@ -25,6 +25,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <cstdio>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -90,9 +91,14 @@ struct Stats {
                         stats_fn.c_str());
         }
 
+        size_t fr = 0;
+
         /* number of seqs */
         int32_t n_seqs_loaded;
-        fread(&n_seqs_loaded, sizeof(int32_t), 1, fo);
+        fr = fread(&n_seqs_loaded, sizeof(int32_t), 1, fo);
+        if (fr != 1) {
+            fatal_error("Error in reading the stats file.");
+        }
 
         if (n_seqs_loaded != n_seqs) {
             fatal_error(
@@ -105,7 +111,11 @@ struct Stats {
             /* sequence */
 
             single_seq_serial_t seq_ser;
-            fread(&seq_ser, sizeof(single_seq_serial_t), 1, fo);
+            fr = fread(&seq_ser, sizeof(single_seq_serial_t), 1, fo);
+
+            if (fr != 1) {
+                fatal_error("Error in reading the stats file.");
+            }
 
             if (seq_ser.seq_active != seq_active[seqid]) {
                 fatal_error(
@@ -128,7 +138,10 @@ struct Stats {
                     seqid, seq_ser.seq_name, seq_name[seqid].c_str());
             }
 
-            fread(&(seq_stats[seqid][0]), sizeof(T), seq_len[seqid], fo);
+            fr = fread(&(seq_stats[seqid][0]), sizeof(T), seq_len[seqid], fo);
+            if (fr != seq_len[seqid]) {
+                fatal_error("Error in reading the stats file.");
+            }
         }
 
         error_code = fclose(fo);
