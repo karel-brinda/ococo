@@ -57,11 +57,13 @@ typedef uint8_t nt256_t;
     @field seq_name     Name of the sequence.
     @field seq_comment  Comment of the sequence.
 */
-struct single_seq_serial_t {
-    bool seq_active;
-    int64_t seq_len;
-    char seq_name[1000];
-    char seq_comment[1000];
+struct SingleSeqSerial {
+    bool seq_active_;
+    int64_t seq_len_;
+    char seq_name_[1000];
+    char seq_comment_[1000];
+
+    SingleSeqSerial() {}
 };
 
 /**************************

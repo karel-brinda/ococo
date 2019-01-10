@@ -110,32 +110,32 @@ struct Stats {
         for (int seqid = 0; seqid < n_seqs_; seqid++) {
             /* sequence */
 
-            single_seq_serial_t seq_ser;
-            fr = fread(&seq_ser, sizeof(single_seq_serial_t), 1, fo);
+            SingleSeqSerial seq_ser;
+            fr = fread(&seq_ser, sizeof(SingleSeqSerial), 1, fo);
 
             if (fr != 1) {
                 fatal_error("Error in reading the stats file.");
             }
 
-            if (seq_ser.seq_active != seq_active_[seqid]) {
+            if (seq_ser.seq_active_ != seq_active_[seqid]) {
                 fatal_error(
                     "Active sequences in stats and SAM/BAM do not correspond "
                     "(seqid %" PRId32 ").\n",
                     seqid);
             }
 
-            if (seq_ser.seq_len != seq_len_[seqid]) {
+            if (seq_ser.seq_len_ != seq_len_[seqid]) {
                 fatal_error(
                     "Sequence lengths in stats and SAM/BAM do not correspond "
                     "(seqid %" PRId32 ", %" PRId64 "!=%" PRId64 ").\n",
-                    seqid, seq_ser.seq_len, seq_len_[seqid]);
+                    seqid, seq_ser.seq_len_, seq_len_[seqid]);
             }
 
-            if (seq_name_[seqid].compare(seq_ser.seq_name) != 0) {
+            if (seq_name_[seqid].compare(seq_ser.seq_name_) != 0) {
                 fatal_error(
                     "Sequence names in stats and SAM/BAM do not correspond "
                     "(seqid %" PRId32 ", '%s'!='%s').\n",
-                    seqid, seq_ser.seq_name, seq_name_[seqid].c_str());
+                    seqid, seq_ser.seq_name_, seq_name_[seqid].c_str());
             }
 
             fr = fread(&(seq_stats_[seqid][0]), sizeof(T), seq_len_[seqid], fo);
@@ -163,13 +163,13 @@ struct Stats {
 
         for (int seqid = 0; seqid < n_seqs_; seqid++) {
             /* sequence */
-            single_seq_serial_t seq_ser{};
-            seq_ser.seq_active = seq_active_[seqid];
-            seq_ser.seq_len    = seq_len_[seqid];
-            strncpy(seq_ser.seq_name, seq_name_[seqid].c_str(), 999);
-            strncpy(seq_ser.seq_name, seq_name_[seqid].c_str(), 999);
+            SingleSeqSerial seq_ser;
+            seq_ser.seq_active_ = seq_active_[seqid];
+            seq_ser.seq_len_    = seq_len_[seqid];
+            strncpy(seq_ser.seq_name_, seq_name_[seqid].c_str(), 999);
+            strncpy(seq_ser.seq_name_, seq_name_[seqid].c_str(), 999);
             int64_t written = 0;
-            written += fwrite(&seq_ser, sizeof(single_seq_serial_t), 1, fo);
+            written += fwrite(&seq_ser, sizeof(SingleSeqSerial), 1, fo);
             written +=
                 fwrite(&(seq_stats_[seqid][0]), sizeof(T), seq_len_[seqid], fo);
             if (written != 1 + seq_len_[seqid]) {
