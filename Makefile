@@ -1,7 +1,7 @@
 CXX      ?= g++
 CXXFLAGS  = -std=c++11 -Wall -Wpedantic -Wextra -g -O3 \
 
-#-Wduplicated-cond -Wduplicated-branches -Wlogical-op -Wrestrict -Wnull-dereference -Wold-style-cast -Wuseless-cast -Wjump-misses-init \
+#-Wduplicated-cond -Wduplicated-branches -Wlogical-op -Wrestrict -Wnull-dereference -Wold-style-cast -Wuseless-cast \
 #-Wdouble-promotion -Wshadow
 
 LIBS      = -lm -lz -lpthread

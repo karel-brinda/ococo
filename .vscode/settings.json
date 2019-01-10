@@ -33,7 +33,8 @@
 		"typeinfo": "cpp",
 		"string": "cpp",
 		"__nullptr": "cpp",
-		"system_error": "cpp"
+		"system_error": "cpp",
+		"chrono": "cpp"
 	},
 	"C_Cpp.intelliSenseEngineFallback": "Enabled"
 }
