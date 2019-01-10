@@ -42,8 +42,6 @@ struct LogFile {
             if (file == nullptr) {
                 fatal_error("Problem with opening the log file '%s'.\n",
                             fn.c_str());
-                // todo:
-                // correctly_initialized = false;
                 return;
             }
         }

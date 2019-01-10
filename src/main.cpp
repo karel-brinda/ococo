@@ -23,52 +23,35 @@
 
 #include "ococo.h"
 
+#include <cstdlib>
+
 using namespace ococo;
 
 int main(int argc, const char **argv) {
     /* Use the default configuration */
     Params params(argc, argv);
-    if (!params.correctly_initialized) {
-        return EXIT_FAILURE;
-    }
 
     switch (params.counter_configuration) {
         case OCOCO8: {
             Ococo<uint8_t> ococo(params);
-            if (!ococo.correctly_initialized) {
-                return EXIT_FAILURE;
-            }
             ococo.run();
-            return ococo.return_code;
         }
 
         case OCOCO16: {
             Ococo<uint16_t> ococo(params);
-            if (!ococo.correctly_initialized) {
-                return EXIT_FAILURE;
-            }
             ococo.run();
-            return ococo.return_code;
         }
 
         case OCOCO32: {
             Ococo<uint32_t> ococo(params);
-            if (!ococo.correctly_initialized) {
-                return EXIT_FAILURE;
-            }
             ococo.run();
-            return ococo.return_code;
         }
 
         case OCOCO64: {
             Ococo<uint64_t> ococo(params);
-            if (!ococo.correctly_initialized) {
-                return EXIT_FAILURE;
-            }
             ococo.run();
-            return ococo.return_code;
         }
     }
 
-    return EXIT_FAILURE;
+    return EXIT_SUCCESS;
 }

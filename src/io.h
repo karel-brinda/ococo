@@ -25,10 +25,8 @@
 
 #include <cmath>
 #include <cstdarg>
+#include <cstdlib>
 #include <string>
-
-#include "counters.h"
-#include "types.h"
 
 namespace ococo {
 
@@ -46,6 +44,7 @@ void error(const char *format, ...) {
     fprintf(stderr, "[ococo:error]: ");
     vfprintf(stderr, format, args);
     va_end(args);
+    exit(EXIT_FAILURE);
 }
 
 void warning(const char *format, ...) {

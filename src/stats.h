@@ -81,14 +81,14 @@ struct Stats {
      * I/O *
      *******/
 
-    int import_stats(const std::string &stats_fn) {
+    void import_stats(const std::string &stats_fn) {
         int error_code = 0;
 
         FILE *fo = fopen(stats_fn.c_str(), "r");
         if (fo == nullptr) {
-            error("File with statistics could not be opened ('%s').\n",
-                  stats_fn.c_str());
-            return -1;
+            fatal_error("File with statistics could not be opened ('%s').\n",
+                        stats_fn.c_str());
+            return;
         }
 
         /* number of seqs */
@@ -96,11 +96,11 @@ struct Stats {
         fread(&n_seqs_loaded, sizeof(int32_t), 1, fo);
 
         if (n_seqs_loaded != n_seqs) {
-            error(
+            fatal_error(
                 "Numbers of sequences in stats and SAM/BAM do not correspond "
                 "%" PRId32 "!=%" PRId32 ").\n",
                 n_seqs_loaded, n_seqs);
-            return -1;
+            return;
         }
 
         for (int seqid = 0; seqid < n_seqs; seqid++) {
@@ -110,27 +110,27 @@ struct Stats {
             fread(&seq_ser, sizeof(single_seq_serial_t), 1, fo);
 
             if (seq_ser.seq_active != seq_active[seqid]) {
-                error(
+                fatal_error(
                     "Active sequences in stats and SAM/BAM do not correspond "
                     "(seqid %" PRId32 ").\n",
                     seqid);
-                return -1;
+                return;
             }
 
             if (seq_ser.seq_len != seq_len[seqid]) {
-                error(
+                fatal_error(
                     "Sequence lengths in stats and SAM/BAM do not correspond "
                     "(seqid %" PRId32 ", %" PRId64 "!=%" PRId64 ").\n",
                     seqid, seq_ser.seq_len, seq_len[seqid]);
-                return -1;
+                return;
             }
 
             if (seq_name[seqid].compare(seq_ser.seq_name) != 0) {
-                error(
+                fatal_error(
                     "Sequence names in stats and SAM/BAM do not correspond "
                     "(seqid %" PRId32 ", '%s'!='%s').\n",
                     seqid, seq_ser.seq_name, seq_name[seqid].c_str());
-                return -1;
+                return;
             }
 
             fread(&(seq_stats[seqid][0]), sizeof(T), seq_len[seqid], fo);
@@ -138,22 +138,18 @@ struct Stats {
 
         error_code = fclose(fo);
         if (error_code != 0) {
-            error("File with statistics could not be closed ('%s').\n",
-                  stats_fn.c_str());
-            return -1;
+            fatal_error("File with statistics could not be closed ('%s').\n",
+                        stats_fn.c_str());
+            return;
         }
-
-        return 0;
     }
 
-    int export_stats(const std::string &stats_fn) const {
-        int error_code = 0;
-
+    void export_stats(const std::string &stats_fn) const {
         FILE *fo = fopen(stats_fn.c_str(), "w+");
         if (fo == nullptr) {
-            error("File with statistics could not be opened ('%s').\n",
-                  stats_fn.c_str());
-            return -1;
+            fatal_error("File with statistics could not be opened ('%s').\n",
+                        stats_fn.c_str());
+            return;
         }
 
         /* number of seqs */
@@ -171,25 +167,24 @@ struct Stats {
             written +=
                 fwrite(&(seq_stats[seqid][0]), sizeof(T), seq_len[seqid], fo);
             if (written != 1 + static_cast<uint64_t>(seq_len[seqid])) {
-                error(
+                fatal_error(
                     "Problem with writting to the file with statistics "
                     "('%s').\n",
                     stats_fn.c_str());
-                return -1;
+                return;
             }
         }
 
-        error_code = fclose(fo);
+        int error_code = fclose(fo);
         if (error_code != 0) {
-            error("File with statistics could not be closed ('%s').\n",
-                  stats_fn.c_str());
-            return -1;
+            fatal_error("File with statistics could not be closed ('%s').\n",
+                        stats_fn.c_str());
+            return;
         }
-        return 0;
     }
 
     // Call consensus probabilistically.
-    int call_consensus(const VcfFile &vcf_file, PileupFile &pileup_file) {
+    void call_consensus(const VcfFile &vcf_file, PileupFile &pileup_file) {
         pos_stats_uncompr_t psu;
 
         for (int32_t seqid = 0; seqid < n_seqs; seqid++) {
@@ -199,13 +194,11 @@ struct Stats {
                 psu.compress(seq_stats[seqid][pos]);
             }
         }
-
-        return 0;
     }
 
-    int call_consensus_position(const VcfFile &vcf_file,
-                                PileupFile &pileup_file, int32_t seqid,
-                                int64_t pos, pos_stats_uncompr_t &psu) {
+    void call_consensus_position(const VcfFile &vcf_file,
+                                 PileupFile &pileup_file, int32_t seqid,
+                                 int64_t pos, pos_stats_uncompr_t &psu) {
         const char old_base_nt256 = nt16_nt256[psu.nt16];
         const char new_base_nt256 = cons_call_maj(psu, params.min_coverage_upd,
                                                   params.majority_threshold);
@@ -221,12 +214,10 @@ struct Stats {
         }
 
         pileup_file.print_position(seq_name[seqid], pos, psu);
-
-        return 0;
     }
 
     // Load header and data from a FASTA file and initialize statistics.
-    int load_fasta(const std::string &fasta_fn) {
+    void load_fasta(const std::string &fasta_fn) {
         gzFile fp;
         kseq_t *seq;
         int l;
@@ -234,27 +225,27 @@ struct Stats {
         seq = kseq_init(fp);
 
         if (fp == nullptr) {
-            error("File '%s' could not be opened.\n", fasta_fn.c_str());
-            return -1;
+            fatal_error("File '%s' could not be opened.\n", fasta_fn.c_str());
+            return;
         }
 
         for (int seqid = 0; (l = kseq_read(seq)) >= 0; seqid++) {
             if (seq_name[seqid].compare(seq->name.s) != 0) {
-                error(
+                fatal_error(
                     "Sequence names in BAM/SAM and in FASTA do not correspond "
                     "('%s'!='%s').\n",
                     seq_name[seqid].c_str(), seq->name.s);
-                return -1;
+                return;
             }
 
             if (seq_len[seqid] != static_cast<int64_t>(seq->seq.l)) {
-                error(
+                fatal_error(
                     "Sequence lengths in BAM/SAM and in FASTA do not "
                     "correspond "
                     "(%" PRId64 "!=%" PRId64 ").\n",
                     static_cast<int64_t>(seq->seq.l),
                     static_cast<int64_t>(seq_len[seqid]));
-                return -1;
+                return;
             }
 
             if (seq->comment.l && seq_comment[seqid].empty()) {
@@ -271,16 +262,15 @@ struct Stats {
         }
         kseq_destroy(seq);
         gzclose(fp);
-        return 0;
     }
 
-    int save_fasta(const std::string &fasta_fn) const {
+    void save_fasta(const std::string &fasta_fn) const {
         FILE *fasta_file = nullptr;
         fasta_file       = fopen(fasta_fn.c_str(), "w+");
         if (fasta_file == nullptr) {
-            error("Problem with opening the FASTA file: '%s'.\n",
-                  fasta_fn.c_str());
-            return -1;
+            fatal_error("Problem with opening the FASTA file: '%s'.\n",
+                        fasta_fn.c_str());
+            return;
         }
 
         char fasta_buffer[fasta_line_l];
@@ -309,12 +299,10 @@ struct Stats {
 
         int error_code = fclose(fasta_file);
         if (error_code != 0) {
-            error("File with consensus could not be closed ('%s').\n",
-                  fasta_fn.c_str());
-            return -1;
+            fatal_error("File with consensus could not be closed ('%s').\n",
+                        fasta_fn.c_str());
+            return;
         }
-
-        return 0;
     }
 
     /***********************

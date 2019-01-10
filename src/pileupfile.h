@@ -52,8 +52,6 @@ struct PileupFile {
                 if (file == nullptr) {
                     fatal_error("Problem with opening the Pileup file '%s'.\n",
                                 fn.c_str());
-                    // todo:
-                    // correctly_initialized = false;
                     return;
                 }
             }
@@ -64,9 +62,7 @@ struct PileupFile {
         if (file != nullptr && fn != "-") {
             int error_code = fclose(file);
             if (error_code != 0) {
-                error("Output Pileup file could not be closed.\n");
-                // todo:
-                // return_code = -1;
+                fatal_error("Output Pileup file could not be closed.\n");
             }
         }
     }

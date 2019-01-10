@@ -38,8 +38,6 @@ namespace ococo {
 
 /*! @struct
     @abstract                      Structure for metadata for 1 sequence.
-    @field correctly_initialized   Flag for a correct initialization from the
-                                   input files.
     @field return_code             Return code of the caller. 0 if everything
                                    ok.
     @field b                       Structure for one alignment.
@@ -50,8 +48,6 @@ namespace ococo {
 */
 template <typename T>
 struct Ococo {
-    bool correctly_initialized;
-    int return_code;
     double t_real;
 
     Params params;
@@ -67,9 +63,7 @@ struct Ococo {
         @abstract  Open all files and load headers.
     */
     Ococo(Params params)
-        : correctly_initialized(true),
-          return_code(EXIT_SUCCESS),
-          t_real(realtime()),
+        : t_real(realtime()),
           params(params),
           vcf_file(params.out_vcf_fn),
           pileup_file(params.out_pileup_fn),
@@ -91,33 +85,18 @@ struct Ococo {
             fatal_error(
                 "Initial FASTA reference and input statistics "
                 "cannot be used at the same time.\n");
-            correctly_initialized = false;
             return;
         }
 
         if (!params.in_stats_fn.empty()) {
             info("Loading previously saved statistics ('%s').\n",
                  params.in_stats_fn.c_str());
-
-            int error_code = stats.import_stats(params.in_stats_fn);
-            if (error_code != 0) {
-                fatal_error("Import of the statistics failed (file '%s').\n",
-                            params.in_stats_fn.c_str());
-                correctly_initialized = false;
-                return;
-            }
+            stats.import_stats(params.in_stats_fn);
         } else {
             if (!params.in_fasta_fn.empty()) {
                 info("Loading the reference ('%s').\n",
                      params.in_fasta_fn.c_str());
-
-                int error_code = stats.load_fasta(params.in_fasta_fn);
-                if (error_code != 0) {
-                    fatal_error("Loading of the FASTA failed (file '%s').\n",
-                                params.in_fasta_fn.c_str());
-                    correctly_initialized = false;
-                    return;
-                }
+                stats.load_fasta(params.in_fasta_fn);
             }
 
             else {
@@ -151,7 +130,6 @@ struct Ococo {
                 fatal_error(
                     "Problem with opening the consensus FASTA file: '%s'.\n",
                     params.out_fasta_fn.c_str());
-                correctly_initialized = false;
                 return;
             }
         }
@@ -161,15 +139,13 @@ struct Ococo {
         if (params.out_fasta_file != nullptr) {
             int error_code = fclose(params.out_fasta_file);
             if (error_code != 0) {
-                error("Output FASTA consensus file could not be closed.\n");
-                return_code = -1;
+                fatal_error(
+                    "Output FASTA consensus file could not be closed.\n");
             }
         }
 
-        if (return_code == EXIT_SUCCESS && correctly_initialized == true) {
-            info("Ococo successfully finished. Bye.\n");
-            info("%.3f sec; CPU: %.3f sec\n", realtime() - t_real, cputime());
-        }
+        info("Ococo successfully finished. Bye.\n");
+        info("%.3f sec; CPU: %.3f sec\n", realtime() - t_real, cputime());
     }
 
     /*! @func
@@ -322,12 +298,7 @@ struct Ococo {
             if (npos_low_cov > 0 && npos_high_cov < 0.5 * pseudo_rlen) {
                 // at least 5% pos. low coverage => print read
                 // if(npos_low_cov * 20 >= pseudo_rlen){
-                int error_code = bam.print_alignment();
-                if (error_code != 0) {
-                    return_code = EXIT_FAILURE;
-                    error("Writing SAM failed (error %d)", error_code);
-                    break;
-                }
+                bam.print_alignment();
             }
 
             /* Logging the number of updates from this alignment. */
@@ -338,26 +309,19 @@ struct Ococo {
         }  // while ((r = sam_read1
 
         if (return_value < -1) {
-            error("Truncated BAM stream (error %" PRId32
-                  "). Ococo will still try to print results.\n",
-                  return_value);
-            return_code = EXIT_FAILURE;
+            fatal_error("Truncated BAM stream (error %" PRId32
+                        "). Ococo will still try to print results.\n",
+                        return_value);
+            return;
         }
 
         /*
          * Call final consensus and export stats.
          */
-
         if (params.out_stats_fn.size() > 0) {
             info("Saving the obtained statistics ('%s').\n",
                  params.out_stats_fn.c_str());
-
-            int error_code = stats.export_stats(params.out_stats_fn);
-            if (error_code != 0) {
-                error("The statistics could not be saved ('%s').\n",
-                      params.out_stats_fn.c_str());
-                return_code = EXIT_FAILURE;
-            }
+            stats.export_stats(params.out_stats_fn);
         }
     }
 };

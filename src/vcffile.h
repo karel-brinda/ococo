@@ -46,8 +46,6 @@ struct VcfFile {
                 if (file == nullptr) {
                     fatal_error("Problem with opening the VCF file '%s'.\n",
                                 fn.c_str());
-                    // todo:
-                    // correctly_initialized = false;
                     return;
                 }
             }
@@ -61,8 +59,6 @@ struct VcfFile {
             int error_code = fclose(file);
             if (error_code != 0) {
                 error("Output VCF file could not be closed.\n");
-                // todo:
-                // return_code = -1;
             }
         }
     }

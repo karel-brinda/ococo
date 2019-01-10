@@ -264,13 +264,12 @@ struct Params {
                     } else if (counters_str.compare("ococo64") == 0) {
                         counter_configuration = OCOCO64;
                     } else {
-                        error(
+                        fatal_error(
                             "Unknown counter configuration '%s'. Possible "
                             "modes "
                             "are 'ococo8', 'ococo16', 'ococo32', and "
                             "'ococo64'.\n",
                             counters_str.c_str());
-                        exit(1);
                     }
 
                     break;
@@ -283,11 +282,10 @@ struct Params {
                     } else if (mode_str.compare("real-time") == 0) {
                         mode = mode_t::REALTIME;
                     } else {
-                        error(
+                        fatal_error(
                             "Unknown mode '%s'. Possible modes are 'batch' and "
                             "'real-time'.\n",
                             mode_str.c_str());
-                        exit(1);
                     }
 
                     break;
@@ -309,15 +307,13 @@ struct Params {
                     break;
                 }
                 case '?': {
-                    error("Unknown error");
-                    exit(1);
+                    fatal_error("Unknown error");
                     break;
                 }
             }
         }
         if (in_sam_fn.size() == 0) {
-            error("SAM/BAM file must be specified (option '-i').\n");
-            exit(1);
+            fatal_error("SAM/BAM file must be specified (option '-i').\n");
         }
 
         info("Ococo starting: %s\n", counters_str_descr.c_str());

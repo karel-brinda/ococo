@@ -68,16 +68,13 @@ struct BamFiles {
         if (file_in == nullptr) {
             fatal_error("Problem with opening the input SAM/BAM file ('%s').\n",
                         fn_in.c_str());
-            // todo:
-            // correctly_initialized = false;
             return;
         }
 
         header = sam_hdr_read(file_in);
         if (header == nullptr) {
             fatal_error("SAM/BAM headers are missing or corrupted.\n");
-            // todo:
-            // correctly_initialized = false;
+            exit(EXIT_FAILURE);
             return;
         }
 
@@ -87,17 +84,14 @@ struct BamFiles {
                 fatal_error(
                     "Problem with opening the output SAM/BAM file ('%s').\n",
                     fn_out.c_str());
-                // todo
-                // correctly_initialized = false;
+                exit(EXIT_FAILURE);
                 return;
             }
 
             int error_code = sam_hdr_write(file_out, header);
             if (error_code != 0) {
-                error("Construction of the SAM header failed (error %d)",
-                      error_code);
-                // todo
-                // return_code = EXIT_FAILURE;
+                fatal_error("Construction of the SAM header failed (error %d)",
+                            error_code);
                 return;
             }
         }
@@ -110,18 +104,14 @@ struct BamFiles {
         if (file_in != nullptr) {
             int error_code = sam_close(file_in);
             if (error_code != 0) {
-                error("Input SAM file could not be closed.\n");
-                // todo:
-                // return_code = -1;
+                fatal_error("Input SAM file could not be closed.\n");
             }
         }
 
         if (file_out != nullptr) {
             int error_code = sam_close(file_out);
             if (error_code != 0) {
-                error("Output SAM file could not be closed.\n");
-                // todo:
-                // return_code = -1;
+                fatal_error("Output SAM file could not be closed.\n");
             }
         }
     }
@@ -159,11 +149,13 @@ struct BamFiles {
         return return_value;
     }
 
-    int print_alignment() {
+    void print_alignment() {
         if (file_out != nullptr) {
-            return sam_write1(file_out, header, b);
+            int error_code = sam_write1(file_out, header, b);
+            if (error_code != 0) {
+                fatal_error("Writing SAM failed (error %d)", error_code);
+            }
         }
-        return 0;
     }
 };
 
