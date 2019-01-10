@@ -68,8 +68,8 @@ void cerr(Arg &&arg, Args &&... args) {
     std::cerr << std::forward<Arg>(arg);
     using expander = int[];
     (void)expander{0,
-                   (void(std::cerr << ' ' << std::forward<Args>(args)), 0)...}
-        << '\n';
+                   (void(std::cerr << ' ' << std::forward<Args>(args)), 0)...};
+    std::cerr << '\n';
 }
 
 bool file_exists(const std::string &fn) {
