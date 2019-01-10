@@ -41,8 +41,7 @@ inline char cons_call_maj(const PosStats &ps, int32_t min_coverage_upd,
     if (ps.sum >= min_coverage_upd) {
         /* Calculate the minimal required counter value for an
          * update. */
-        int32_t required_min =
-            static_cast<int32_t>(ceil(majority_threshold * ps.sum));
+        int32_t required_min = ceil(majority_threshold * ps.sum);
 
         /* Find the maximal counter with such a value. */
         int32_t max = 0;

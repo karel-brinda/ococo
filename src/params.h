@@ -25,6 +25,7 @@
 
 #include "io.h"
 #include "types.h"
+#include "version.h"
 
 #include <getopt.h>
 #include <cstdio>
