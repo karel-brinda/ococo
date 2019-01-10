@@ -196,7 +196,7 @@ struct Stats {
 
         if (old_base_nt256 != new_base_nt256) {
             params.n_upd += 1;
-            ps.nt16 = nt256_nt16[static_cast<int16_t>(new_base_nt256)];
+            ps.nt16 = nt256_nt16[int16_t{new_base_nt256}];
         }
 
         if (old_base_nt256 != new_base_nt256 || params.verbose) {
@@ -301,7 +301,7 @@ struct Stats {
         // todo: is it used anywhere?
         assert(h != nullptr);
         for (int32_t seqid = 0; seqid < n_seqs; seqid++) {
-            if (seq_len[seqid] != static_cast<int64_t>(h->target_len[seqid])) {
+            if (seq_len[seqid] != int64_t{h->target_len[seqid]}) {
                 return false;
             }
             if (seq_name[seqid].compare(h->target_name[seqid]) != 0) {

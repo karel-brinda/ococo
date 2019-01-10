@@ -54,7 +54,6 @@ double cputime() {
  */
 template <typename T>
 constexpr T right_full_mask(int size) {
-    return (size == 0) ? 0
-                       : (((static_cast<T>(0x1) << (size - 1)) - 1) << 1) | 1;
+    return (size == 0) ? 0 : (((T{0x1} << (size - 1)) - 1) << 1) | 1;
 }
 }  // namespace ococo

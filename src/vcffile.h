@@ -117,7 +117,7 @@ struct VcfFile {
         }
 
         const float alt_freq =
-            1.0 * ps.counters[nt256_nt4[static_cast<int16_t>(new_base)]] /
+            1.0 * ps.counters[nt256_nt4[int16_t{new_base}]] /
             ps.sum;
 
         fprintf(file, "%s\t%" PRId64 "\t.\t%c\t%c\t100\tPASS\t",
