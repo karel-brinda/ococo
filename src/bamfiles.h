@@ -40,50 +40,50 @@
 namespace ococo {
 
 struct BamFiles {
-    std::string fn_in, fn_out;
-    samFile *file_in, *file_out;
+    std::string fn_in_, fn_out_;
+    samFile *file_in_, *file_out_;
 
-    bam1_t *b;
-    bam_hdr_t *header;
+    bam1_t *b_;
+    bam_hdr_t *header_;
 
     /* SAM/BAM variables */
-    char *rname;
-    uint8_t *seq;
-    uint8_t *qual;
-    uint32_t *cigar;
-    int32_t n_cigar;
-    int32_t seqid;
-    int64_t mapping_pos;
-    int32_t mapq;
-    int32_t flags;
+    char *rname_;
+    uint8_t *seq_;
+    uint8_t *qual_;
+    uint32_t *cigar_;
+    int32_t n_cigar_;
+    int32_t seqid_;
+    int64_t mapping_pos_;
+    int32_t mapq_;
+    int32_t flags_;
 
     BamFiles(std::string fn_in, std::string fn_out)
-        : fn_in(fn_in),
-          fn_out(fn_out),
-          file_in(nullptr),
-          file_out(nullptr),
-          b(bam_init1()),
-          header(nullptr) {
-        file_in = sam_open(fn_in.c_str(), "r");
-        if (file_in == nullptr) {
+        : fn_in_(fn_in),
+          fn_out_(fn_out),
+          file_in_(nullptr),
+          file_out_(nullptr),
+          b_(bam_init1()),
+          header_(nullptr) {
+        file_in_ = sam_open(fn_in.c_str(), "r");
+        if (file_in_ == nullptr) {
             fatal_error("Problem with opening the input SAM/BAM file ('%s').\n",
-                        fn_in.c_str());
+                        fn_in_.c_str());
         }
 
-        header = sam_hdr_read(file_in);
-        if (header == nullptr) {
+        header_ = sam_hdr_read(file_in_);
+        if (header_ == nullptr) {
             fatal_error("SAM/BAM headers are missing or corrupted.\n");
         }
 
-        if (!fn_out.empty()) {
-            file_out = sam_open(fn_out.c_str(), "w");
-            if (file_out == nullptr) {
+        if (!fn_out_.empty()) {
+            file_out_ = sam_open(fn_out_.c_str(), "w");
+            if (file_out_ == nullptr) {
                 fatal_error(
                     "Problem with opening the output SAM/BAM file ('%s').\n",
                     fn_out.c_str());
             }
 
-            int error_code = sam_hdr_write(file_out, header);
+            int error_code = sam_hdr_write(file_out_, header_);
             if (error_code != 0) {
                 fatal_error("Construction of the SAM header failed (error %d)",
                             error_code);
@@ -92,18 +92,18 @@ struct BamFiles {
     }
 
     ~BamFiles() {
-        bam_destroy1(b);
-        bam_hdr_destroy(header);
+        bam_destroy1(b_);
+        bam_hdr_destroy(header_);
 
-        if (file_in != nullptr) {
-            int error_code = sam_close(file_in);
+        if (file_in_ != nullptr) {
+            int error_code = sam_close(file_in_);
             if (error_code != 0) {
                 fatal_error("Input SAM file could not be closed.\n");
             }
         }
 
-        if (file_out != nullptr) {
-            int error_code = sam_close(file_out);
+        if (file_out_ != nullptr) {
+            int error_code = sam_close(file_out_);
             if (error_code != 0) {
                 fatal_error("Output SAM file could not be closed.\n");
             }
@@ -111,42 +111,42 @@ struct BamFiles {
     }
 
     std::vector<int64_t> get_refseq_lens() {
-        int n_seqs = header->n_targets;
+        int n_seqs = header_->n_targets;
         std::vector<int64_t> lens(n_seqs);
         for (int i = 0; i < n_seqs; i++) {
-            lens[i] = header->target_len[i];
+            lens[i] = header_->target_len[i];
         }
         return lens;
     }
 
     std::vector<std::string> get_refseq_names() {
-        int n_seqs = header->n_targets;
+        int n_seqs = header_->n_targets;
         std::vector<std::string> names(n_seqs);
         for (int i = 0; i < n_seqs; i++) {
-            names[i] = std::string(header->target_name[i]);
+            names[i] = std::string(header_->target_name[i]);
         }
         return names;
     }
 
     int read_alignment() {
-        int return_value = sam_read1(file_in, header, b);
+        int return_value = sam_read1(file_in_, header_, b_);
 
-        rname       = bam_get_qname(b);
-        seq         = bam_get_seq(b);
-        qual        = bam_get_qual(b);
-        cigar       = bam_get_cigar(b);
-        n_cigar     = b->core.n_cigar;
-        seqid       = b->core.tid;
-        mapping_pos = b->core.pos;
-        mapq        = b->core.qual;
-        flags       = b->core.flag;
+        rname_       = bam_get_qname(b_);
+        seq_         = bam_get_seq(b_);
+        qual_        = bam_get_qual(b_);
+        cigar_       = bam_get_cigar(b_);
+        n_cigar_     = b_->core.n_cigar;
+        seqid_       = b_->core.tid;
+        mapping_pos_ = b_->core.pos;
+        mapq_        = b_->core.qual;
+        flags_       = b_->core.flag;
 
         return return_value;
     }
 
     void print_alignment() {
-        if (file_out != nullptr) {
-            int error_code = sam_write1(file_out, header, b);
+        if (file_out_ != nullptr) {
+            int error_code = sam_write1(file_out_, header_, b_);
             if (error_code != 0) {
                 fatal_error("Writing SAM failed (error %d)", error_code);
             }

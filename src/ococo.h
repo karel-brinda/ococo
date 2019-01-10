@@ -176,7 +176,7 @@ struct Ococo {
 
         while ((return_value = bam.read_alignment()) >= 0) {
             /* filtration on the alignment level */
-            bool read_ok = check_read(bam.seqid, bam.flags, bam.mapq);
+            bool read_ok = check_read(bam.seqid_, bam.flags_, bam.mapq_);
             if (!read_ok) {
                 continue;
             }
@@ -194,11 +194,11 @@ struct Ococo {
             // std::cerr << __PRETTY_FUNCTION__ << *rname << std::endl;
 
             /* iteration over individual bases */
-            int32_t ref_pos = bam.mapping_pos;
-            for (int32_t cigar_grp = 0, read_pos = 0; cigar_grp < bam.n_cigar;
+            int32_t ref_pos = bam.mapping_pos_;
+            for (int32_t cigar_grp = 0, read_pos = 0; cigar_grp < bam.n_cigar_;
                  cigar_grp++) {
-                const int32_t op = bam_cigar_op(bam.cigar[cigar_grp]);
-                const int32_t ol = bam_cigar_oplen(bam.cigar[cigar_grp]);
+                const int32_t op = bam_cigar_op(bam.cigar_[cigar_grp]);
+                const int32_t ol = bam_cigar_oplen(bam.cigar_[cigar_grp]);
 
                 const int32_t next_read_pos = read_pos + ol;
                 switch (op) {
@@ -209,9 +209,9 @@ struct Ococo {
                         for (; read_pos < next_read_pos;
                              ++read_pos, ++ref_pos) {
                             /* filtration on the level of base */
-                            const uint8_t nt16 = bam_seqi(bam.seq, read_pos);
+                            const uint8_t nt16 = bam_seqi(bam.seq_, read_pos);
                             const uint8_t nt4  = nt16_nt4[nt16];
-                            const int32_t bq   = bam.qual[read_pos];
+                            const int32_t bq   = bam.qual_[read_pos];
 
                             if (bq != 0xff && bq < params.min_baseq) {
                                 continue;
@@ -226,7 +226,7 @@ struct Ococo {
 
                             // std::cerr << "\n" << read_pos << std::endl;
                             //_print_pos_stats(stats->seq_stats[seqid][ref_pos]);
-                            ps.pull(stats.seq_stats[bam.seqid][ref_pos]);
+                            ps.pull(stats.seq_stats[bam.seqid_][ref_pos]);
                             //_print_pos_stats<T>(ps);
                             ps.increment(nt4);
                             // std::cerr << "       incr " << nt4_nt256[nt4]
@@ -246,13 +246,13 @@ struct Ococo {
                             /* consensus calling for the current position */
                             if (params.mode == mode_t::REALTIME) {
                                 stats.call_consensus_position(
-                                    vcf_file, pileup_file, bam.seqid, ref_pos,
+                                    vcf_file, pileup_file, bam.seqid_, ref_pos,
                                     ps);
                             }
 
                             /* compressing the counters and pushing them back to
                              * the statistics */
-                            ps.push(stats.seq_stats[bam.seqid][ref_pos]);
+                            ps.push(stats.seq_stats[bam.seqid_][ref_pos]);
                             //_print_pos_stats(stats->seq_stats[seqid][ref_pos]);
                         }
 
@@ -290,7 +290,7 @@ struct Ococo {
             }
 
             /* Logging the number of updates from this alignment. */
-            log_file.print(i_read, bam.rname, params.n_upd - n_upd0);
+            log_file.print(i_read, bam.rname_, params.n_upd - n_upd0);
             n_upd0 = params.n_upd;  // todo: count automatically in the log
 
             i_read += 1;
