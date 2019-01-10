@@ -38,12 +38,12 @@ namespace ococo {
    after compression.
 */
 
-std::string __pos_stats_uncompr(PosStats psu) {
+std::string __pos_stats_uncompr(PosStats ps) {
     std::stringstream ss;
     ss << std::showbase << std::internal << std::setfill('0');
-    ss << "[" << nt16_nt256[psu.nt16] << "]"
-       << "(" << psu.counters[0] << "," << psu.counters[1] << ","
-       << psu.counters[2] << "," << psu.counters[3] << ")";
+    ss << "[" << nt16_nt256[ps.nt16] << "]"
+       << "(" << ps.counters[0] << "," << ps.counters[1] << ","
+       << ps.counters[2] << "," << ps.counters[3] << ")";
 
     return ss.str();
 }
@@ -59,17 +59,17 @@ std::string __pos_stats_compr(T psc) {
 
 template <typename T>
 void _print_pos_stats(T psc) {
-    PosStats psu;
-    psu.decompress(psc);
-    std::cerr << __pos_stats_compr(psc) << " " << __pos_stats_uncompr(psu)
+    PosStats ps;
+    ps.pull(psc);
+    std::cerr << __pos_stats_compr(psc) << " " << __pos_stats_uncompr(ps)
               << "\n";
 }
 
 template <typename T>
-void _print_pos_stats(const PosStats &psu) {
+void _print_pos_stats(const PosStats &ps) {
     T psc;
-    psu.compress<T>(psc);
-    std::cerr << __pos_stats_compr(psc) << " " << __pos_stats_uncompr(psu)
+    ps.push<T>(psc);
+    std::cerr << __pos_stats_compr(psc) << " " << __pos_stats_uncompr(ps)
               << "\n";
 }
 
@@ -89,11 +89,11 @@ void _print_pos_stats(const PosStats &psu) {
 // template <typename T>
 // std::string stats_t<T>::debug_str_counters(int32_t seqid, int64_t pos) const
 // {
-//     PosStats psu;
-//     psu.decompress(seq_stats[seqid][pos]);
+//     PosStats ps;
+//     ps.pull(seq_stats[seqid][pos]);
 //     std::stringstream ss;
-//     ss << "[" << nt16_nt256[psu.nt16] << "]"
-//        << "(" << psu.counters[0] << "," << psu.counters[1] << ","
-//        << psu.counters[2] << "," << psu.counters[3] << ")";
+//     ss << "[" << nt16_nt256[ps.nt16] << "]"
+//        << "(" << ps.counters[0] << "," << ps.counters[1] << ","
+//        << ps.counters[2] << "," << ps.counters[3] << ")";
 //     return ss.str();
 // }

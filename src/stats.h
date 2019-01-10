@@ -176,35 +176,35 @@ struct Stats {
 
     // Call consensus probabilistically.
     void call_consensus(const VcfFile &vcf_file, PileupFile &pileup_file) {
-        PosStats psu;
+        PosStats ps;
 
         for (int32_t seqid = 0; seqid < n_seqs; seqid++) {
             for (int64_t pos = 0; pos < seq_len[seqid]; pos++) {
-                psu.decompress(seq_stats[seqid][pos]);
-                call_consensus_position(vcf_file, pileup_file, seqid, pos, psu);
-                psu.compress(seq_stats[seqid][pos]);
+                ps.pull(seq_stats[seqid][pos]);
+                call_consensus_position(vcf_file, pileup_file, seqid, pos, ps);
+                ps.push(seq_stats[seqid][pos]);
             }
         }
     }
 
     void call_consensus_position(const VcfFile &vcf_file,
                                  PileupFile &pileup_file, int32_t seqid,
-                                 int64_t pos, PosStats &psu) {
-        const char old_base_nt256 = nt16_nt256[psu.nt16];
-        const char new_base_nt256 = cons_call_maj(psu, params.min_coverage_upd,
+                                 int64_t pos, PosStats &ps) {
+        const char old_base_nt256 = nt16_nt256[ps.nt16];
+        const char new_base_nt256 = cons_call_maj(ps, params.min_coverage_upd,
                                                   params.majority_threshold);
 
         if (old_base_nt256 != new_base_nt256) {
             params.n_upd += 1;
-            psu.nt16 = nt256_nt16[static_cast<int16_t>(new_base_nt256)];
+            ps.nt16 = nt256_nt16[static_cast<int16_t>(new_base_nt256)];
         }
 
         if (old_base_nt256 != new_base_nt256 || params.verbose) {
             vcf_file.print_substitution(seq_name[seqid], pos, old_base_nt256,
-                                        new_base_nt256, psu);
+                                        new_base_nt256, ps);
         }
 
-        pileup_file.print_position(seq_name[seqid], pos, psu);
+        pileup_file.print_position(seq_name[seqid], pos, ps);
     }
 
     // Load header and data from a FASTA file and initialize statistics.
@@ -244,9 +244,9 @@ struct Stats {
             for (int64_t pos = 0; pos < static_cast<int64_t>(seq->seq.l);
                  pos++) {
                 assert(seq_stats[seqid][pos] == 0);
-                PosStats psu;
-                psu.nt16 = nt256_nt16[static_cast<int32_t>(seq->seq.s[pos])];
-                psu.compress(seq_stats[seqid][pos]);
+                PosStats ps;
+                ps.nt16 = nt256_nt16[static_cast<int32_t>(seq->seq.s[pos])];
+                ps.push(seq_stats[seqid][pos]);
             }
         }
         kseq_destroy(seq);
@@ -262,7 +262,7 @@ struct Stats {
         }
 
         char fasta_buffer[fasta_line_l];
-        PosStats psu;
+        PosStats ps;
 
         for (int s = 0; s < n_seqs; s++) {
             // printf("%s\n",seq_name[s]);
@@ -274,8 +274,8 @@ struct Stats {
             }
 
             for (int64_t i = 0, j = 0; i < seq_len[s]; i++, j++) {
-                psu.decompress(seq_stats[s][i]);
-                fasta_buffer[j] = nt16_nt256[psu.nt16];
+                ps.pull(seq_stats[s][i]);
+                fasta_buffer[j] = nt16_nt256[ps.nt16];
 
                 if (j == fasta_line_l - 1 || i == seq_len[s] - 1) {
                     fwrite(fasta_buffer, 1, j + 1, fasta_file);

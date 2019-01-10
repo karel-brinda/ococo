@@ -111,14 +111,14 @@ struct VcfFile {
 
     void print_substitution(const std::string &seq_name, int64_t pos,
                             char old_base, char new_base,
-                            const PosStats &psu) const {
+                            const PosStats &ps) const {
         if (file == nullptr) {
             return;
         }
 
         const float alt_freq =
-            1.0 * psu.counters[nt256_nt4[static_cast<int16_t>(new_base)]] /
-            psu.sum;
+            1.0 * ps.counters[nt256_nt4[static_cast<int16_t>(new_base)]] /
+            ps.sum;
 
         fprintf(file, "%s\t%" PRId64 "\t.\t%c\t%c\t100\tPASS\t",
                 seq_name.c_str(),  //
@@ -137,13 +137,13 @@ struct VcfFile {
                 ";AF=%.2f"       //
                 ";EX=%s\n",
                 //
-                psu.counters[0],                //
-                psu.counters[1],                //
-                psu.counters[2],                //
-                psu.counters[3],                //
-                psu.sum,                        //
+                ps.counters[0],                 //
+                ps.counters[1],                 //
+                ps.counters[2],                 //
+                ps.counters[3],                 //
+                ps.sum,                         //
                 round(alt_freq * 100.0) / 100,  //
-                (psu.bitshifted ? "0" : "1")    //
+                (ps.bitshifted ? "0" : "1")     //
         );
     }
 };

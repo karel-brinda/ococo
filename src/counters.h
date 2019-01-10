@@ -37,8 +37,7 @@ constexpr int counter_size() {
 }
 
 /*! @struct
-    @abstract          Structure for uncompressed pileup statistics for
-                       1 position.
+    @abstract          Structure for pileup statistics for 1 position.
     @field nt16        Consensus base.
                        0x00 and 0x0f = N
                        0x01, 0x02, 0x04, 0x08 = bases
@@ -79,7 +78,7 @@ struct PosStats {
     }
 
     template <typename T>
-    inline void decompress(T psc) {
+    inline void pull(T psc) {
         // std::cerr << "     " << __PRETTY_FUNCTION__ << " " << psc << "\n";
 
         const int C = counter_size<T>();
@@ -111,7 +110,7 @@ struct PosStats {
     }
 
     template <typename T>
-    inline void compress(T &psc) {
+    inline void push(T &psc) {
         // std::cerr << "     " << __PRETTY_FUNCTION__ << "\n";
 
         const int C = counter_size<T>();

@@ -222,22 +222,22 @@ struct Ococo {
                             }
 
                             /* updating counters */
-                            PosStats psu;
+                            PosStats ps;
 
                             // std::cerr << "\n" << read_pos << std::endl;
                             //_print_pos_stats(stats->seq_stats[seqid][ref_pos]);
-                            psu.decompress(stats.seq_stats[bam.seqid][ref_pos]);
-                            //_print_pos_stats<T>(psu);
-                            psu.increment(nt4);
+                            ps.pull(stats.seq_stats[bam.seqid][ref_pos]);
+                            //_print_pos_stats<T>(ps);
+                            ps.increment(nt4);
                             // std::cerr << "       incr " << nt4_nt256[nt4]
                             //          << " at position " << ref_pos <<
                             //          std::endl;
 
                             /* updating coverage statistics */
-                            if (psu.sum - 1 < low_cov_thres) {
+                            if (ps.sum - 1 < low_cov_thres) {
                                 ++npos_low_cov;
                             } else {
-                                if (2 * (psu.sum - 1) > 3 * low_cov_thres) {
+                                if (2 * (ps.sum - 1) > 3 * low_cov_thres) {
                                     ++npos_high_cov;
                                 }
                             }
@@ -247,12 +247,12 @@ struct Ococo {
                             if (params.mode == mode_t::REALTIME) {
                                 stats.call_consensus_position(
                                     vcf_file, pileup_file, bam.seqid, ref_pos,
-                                    psu);
+                                    ps);
                             }
 
-                            /* compressing the counters a putting them back to
+                            /* compressing the counters and pushing them back to
                              * the statistics */
-                            psu.compress(stats.seq_stats[bam.seqid][ref_pos]);
+                            ps.push(stats.seq_stats[bam.seqid][ref_pos]);
                             //_print_pos_stats(stats->seq_stats[seqid][ref_pos]);
                         }
 

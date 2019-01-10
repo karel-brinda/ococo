@@ -33,23 +33,23 @@ namespace ococo {
 /*
  * Call consensus using the majority rule.
  */
-inline char cons_call_maj(const PosStats &psu, int32_t min_coverage_upd,
+inline char cons_call_maj(const PosStats &ps, int32_t min_coverage_upd,
                           double majority_threshold) {
-    char cons = nt16_nt256[psu.nt16];  // initial consensus
+    char cons = nt16_nt256[ps.nt16];  // initial consensus
 
     /* Has sufficiently many alignments been collected? */
-    if (psu.sum >= min_coverage_upd) {
+    if (ps.sum >= min_coverage_upd) {
         /* Calculate the minimal required counter value for an
          * update. */
         int32_t required_min =
-            static_cast<int32_t>(ceil(majority_threshold * psu.sum));
+            static_cast<int32_t>(ceil(majority_threshold * ps.sum));
 
         /* Find the maximal counter with such a value. */
         int32_t max = 0;
         for (int32_t i = 0; i < 4; i++) {
-            if (psu.counters[i] >= required_min) {
-                if (psu.counters[i] > max) {
-                    max  = psu.counters[i];
+            if (ps.counters[i] >= required_min) {
+                if (ps.counters[i] > max) {
+                    max  = ps.counters[i];
                     cons = nt4_nt256[i];
                 }
             }
