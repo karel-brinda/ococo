@@ -91,7 +91,7 @@ struct Stats {
                         stats_fn.c_str());
         }
 
-        size_t fr = 0;
+        int64_t fr = 0;
 
         /* number of seqs */
         int32_t n_seqs_loaded;
