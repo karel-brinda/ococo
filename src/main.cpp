@@ -35,21 +35,25 @@ int main(int argc, const char **argv) {
         case OCOCO8: {
             Ococo<uint8_t> ococo(params);
             ococo.run();
+            break;
         }
 
         case OCOCO16: {
             Ococo<uint16_t> ococo(params);
             ococo.run();
+            break;
         }
 
         case OCOCO32: {
             Ococo<uint32_t> ococo(params);
             ococo.run();
+            break;
         }
 
         case OCOCO64: {
             Ococo<uint64_t> ococo(params);
             ococo.run();
+            break;
         }
     }
 

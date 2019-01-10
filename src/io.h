@@ -63,9 +63,13 @@ void info(const char *format, ...) {
     va_end(args);
 }
 
-template <typename T>
-void cerr(T arg) {
-    std::cerr << arg << "\n";
+template <typename Arg, typename... Args>
+void cerr(Arg &&arg, Args &&... args) {
+    std::cerr << std::forward<Arg>(arg);
+    using expander = int[];
+    (void)expander{0,
+                   (void(std::cerr << ' ' << std::forward<Args>(args)), 0)...}
+        << '\n';
 }
 
 bool file_exists(const std::string &fn) {
