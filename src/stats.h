@@ -88,7 +88,6 @@ struct Stats {
         if (fo == nullptr) {
             fatal_error("File with statistics could not be opened ('%s').\n",
                         stats_fn.c_str());
-            return;
         }
 
         /* number of seqs */
@@ -100,7 +99,6 @@ struct Stats {
                 "Numbers of sequences in stats and SAM/BAM do not correspond "
                 "%" PRId32 "!=%" PRId32 ").\n",
                 n_seqs_loaded, n_seqs);
-            return;
         }
 
         for (int seqid = 0; seqid < n_seqs; seqid++) {
@@ -114,7 +112,6 @@ struct Stats {
                     "Active sequences in stats and SAM/BAM do not correspond "
                     "(seqid %" PRId32 ").\n",
                     seqid);
-                return;
             }
 
             if (seq_ser.seq_len != seq_len[seqid]) {
@@ -122,7 +119,6 @@ struct Stats {
                     "Sequence lengths in stats and SAM/BAM do not correspond "
                     "(seqid %" PRId32 ", %" PRId64 "!=%" PRId64 ").\n",
                     seqid, seq_ser.seq_len, seq_len[seqid]);
-                return;
             }
 
             if (seq_name[seqid].compare(seq_ser.seq_name) != 0) {
@@ -130,7 +126,6 @@ struct Stats {
                     "Sequence names in stats and SAM/BAM do not correspond "
                     "(seqid %" PRId32 ", '%s'!='%s').\n",
                     seqid, seq_ser.seq_name, seq_name[seqid].c_str());
-                return;
             }
 
             fread(&(seq_stats[seqid][0]), sizeof(T), seq_len[seqid], fo);
@@ -140,7 +135,6 @@ struct Stats {
         if (error_code != 0) {
             fatal_error("File with statistics could not be closed ('%s').\n",
                         stats_fn.c_str());
-            return;
         }
     }
 
@@ -149,7 +143,6 @@ struct Stats {
         if (fo == nullptr) {
             fatal_error("File with statistics could not be opened ('%s').\n",
                         stats_fn.c_str());
-            return;
         }
 
         /* number of seqs */
@@ -171,7 +164,6 @@ struct Stats {
                     "Problem with writting to the file with statistics "
                     "('%s').\n",
                     stats_fn.c_str());
-                return;
             }
         }
 
@@ -179,7 +171,6 @@ struct Stats {
         if (error_code != 0) {
             fatal_error("File with statistics could not be closed ('%s').\n",
                         stats_fn.c_str());
-            return;
         }
     }
 
@@ -225,8 +216,8 @@ struct Stats {
         seq = kseq_init(fp);
 
         if (fp == nullptr) {
-            fatal_error("File '%s' could not be opened.\n", fasta_fn.c_str());
-            return;
+            fatal_error("The FASTA file '%s' could not be opened.\n",
+                        fasta_fn.c_str());
         }
 
         for (int seqid = 0; (l = kseq_read(seq)) >= 0; seqid++) {
@@ -235,7 +226,6 @@ struct Stats {
                     "Sequence names in BAM/SAM and in FASTA do not correspond "
                     "('%s'!='%s').\n",
                     seq_name[seqid].c_str(), seq->name.s);
-                return;
             }
 
             if (seq_len[seqid] != static_cast<int64_t>(seq->seq.l)) {
@@ -245,7 +235,6 @@ struct Stats {
                     "(%" PRId64 "!=%" PRId64 ").\n",
                     static_cast<int64_t>(seq->seq.l),
                     static_cast<int64_t>(seq_len[seqid]));
-                return;
             }
 
             if (seq->comment.l && seq_comment[seqid].empty()) {
@@ -270,7 +259,6 @@ struct Stats {
         if (fasta_file == nullptr) {
             fatal_error("Problem with opening the FASTA file: '%s'.\n",
                         fasta_fn.c_str());
-            return;
         }
 
         char fasta_buffer[fasta_line_l];
@@ -301,7 +289,6 @@ struct Stats {
         if (error_code != 0) {
             fatal_error("File with consensus could not be closed ('%s').\n",
                         fasta_fn.c_str());
-            return;
         }
     }
 

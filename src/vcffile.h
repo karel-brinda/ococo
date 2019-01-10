@@ -46,7 +46,6 @@ struct VcfFile {
                 if (file == nullptr) {
                     fatal_error("Problem with opening the VCF file '%s'.\n",
                                 fn.c_str());
-                    return;
                 }
             }
 

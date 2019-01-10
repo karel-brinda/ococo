@@ -52,7 +52,6 @@ struct PileupFile {
                 if (file == nullptr) {
                     fatal_error("Problem with opening the Pileup file '%s'.\n",
                                 fn.c_str());
-                    return;
                 }
             }
         }

@@ -68,14 +68,11 @@ struct BamFiles {
         if (file_in == nullptr) {
             fatal_error("Problem with opening the input SAM/BAM file ('%s').\n",
                         fn_in.c_str());
-            return;
         }
 
         header = sam_hdr_read(file_in);
         if (header == nullptr) {
             fatal_error("SAM/BAM headers are missing or corrupted.\n");
-            exit(EXIT_FAILURE);
-            return;
         }
 
         if (fn_out.size() > 0) {
@@ -84,15 +81,12 @@ struct BamFiles {
                 fatal_error(
                     "Problem with opening the output SAM/BAM file ('%s').\n",
                     fn_out.c_str());
-                exit(EXIT_FAILURE);
-                return;
             }
 
             int error_code = sam_hdr_write(file_out, header);
             if (error_code != 0) {
                 fatal_error("Construction of the SAM header failed (error %d)",
                             error_code);
-                return;
             }
         }
     }
@@ -146,6 +140,7 @@ struct BamFiles {
         mapping_pos = b->core.pos;
         mapq        = b->core.qual;
         flags       = b->core.flag;
+
         return return_value;
     }
 

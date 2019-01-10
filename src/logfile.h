@@ -42,7 +42,6 @@ struct LogFile {
             if (file == nullptr) {
                 fatal_error("Problem with opening the log file '%s'.\n",
                             fn.c_str());
-                return;
             }
         }
     }
@@ -51,8 +50,8 @@ struct LogFile {
         if (file != nullptr) {
             int error_code = fclose(file);
             if (error_code != 0) {
-                error("Output log file '%s' could not be closed.\n",
-                      fn.c_str());
+                fatal_error("Output log file '%s' could not be closed.\n",
+                            fn.c_str());
             }
         }
     }

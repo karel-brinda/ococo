@@ -85,7 +85,6 @@ struct Ococo {
             fatal_error(
                 "Initial FASTA reference and input statistics "
                 "cannot be used at the same time.\n");
-            return;
         }
 
         if (!params.in_stats_fn.empty()) {
@@ -130,7 +129,6 @@ struct Ococo {
                 fatal_error(
                     "Problem with opening the consensus FASTA file: '%s'.\n",
                     params.out_fasta_fn.c_str());
-                return;
             }
         }
     }
@@ -312,7 +310,6 @@ struct Ococo {
             fatal_error("Truncated BAM stream (error %" PRId32
                         "). Ococo will still try to print results.\n",
                         return_value);
-            return;
         }
 
         /*
