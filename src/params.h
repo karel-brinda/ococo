@@ -46,12 +46,12 @@
 
 namespace ococo {
 
-constexpr int default_c    = 2;
-constexpr double default_M = 0.51;
-constexpr int default_w    = 0;
-constexpr int default_q    = 1;
-constexpr int default_Q    = 13;
-constexpr int default_C    = -1;
+constexpr int default_c   = 2;
+constexpr float default_M = 0.51;
+constexpr int default_w   = 0;
+constexpr int default_q   = 1;
+constexpr int default_Q   = 13;
+constexpr int default_C   = -1;
 
 enum mode_t { BATCH, REALTIME };
 
@@ -108,10 +108,10 @@ struct Params {
      */
     mode_t mode_;
     std::string mode_str_;
-    int32_t min_mapq_;          /* minimum mapping quality for update */
-    int32_t min_baseq_;         /* minimum base quality for update */
-    int32_t min_coverage_upd_;  /* minimum coverage for update */
-    double majority_threshold_; /* threshold for having majority */
+    int32_t min_mapq_;         /* minimum mapping quality for update */
+    int32_t min_baseq_;        /* minimum base quality for update */
+    int32_t min_coverage_upd_; /* minimum coverage for update */
+    float majority_threshold_; /* threshold for having majority */
 
     /* Filter alignments when coverage is greater than */
     int32_t coverage_filter_;
