@@ -234,20 +234,23 @@ struct Stats {
         }
 
         for (int seqid = 0; (l = kseq_read(seq)) >= 0; seqid++) {
-            if (seq_name_[seqid].compare(seq->name.s) != 0) {
+            const std::string seq_name(seq->name.s);
+            const int64_t seq_len = seq->seq.l;
+            const char *seq_s     = seq->seq.s;
+
+            if (seq_name_[seqid].compare(seq_name) != 0) {
                 fatal_error(
                     "Sequence names in BAM/SAM and in FASTA do not correspond "
                     "('%s'!='%s').\n",
-                    seq_name_[seqid].c_str(), seq->name.s);
+                    seq_name_[seqid].c_str(), seq_name.c_str());
             }
 
-            if (seq_len_[seqid] != static_cast<int64_t>(seq->seq.l)) {
+            if (seq_len_[seqid] != seq_len) {
                 fatal_error(
                     "Sequence lengths in BAM/SAM and in FASTA do not "
                     "correspond "
                     "(%" PRId64 "!=%" PRId64 ").\n",
-                    static_cast<int64_t>(seq->seq.l),
-                    static_cast<int64_t>(seq_len_[seqid]));
+                    seq_len_[seqid], seq_len);
             }
 
             if (seq->comment.l && seq_comment_[seqid].empty()) {
@@ -255,10 +258,11 @@ struct Stats {
             }
 
             PosStats ps;
-            for (int64_t pos = 0; pos < static_cast<int64_t>(seq->seq.l);
-                 pos++) {
+            char nt256;
+            for (int64_t pos = 0; pos < seq_len; pos++) {
                 assert(seq_stats_[seqid][pos] == 0);
-                ps.nt16_ = nt256_nt16[static_cast<int32_t>(seq->seq.s[pos])];
+                nt256    = seq_s[pos];
+                ps.nt16_ = nt256_nt16[int{nt256}];
                 ps.push(seq_stats_[seqid][pos]);
             }
         }
