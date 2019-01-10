@@ -168,11 +168,11 @@ struct Stats {
             seq_ser.seq_len             = seq_len_[seqid];
             strncpy(seq_ser.seq_name, seq_name_[seqid].c_str(), 999);
             strncpy(seq_ser.seq_name, seq_name_[seqid].c_str(), 999);
-            uint64_t written = 0;
+            int64_t written = 0;
             written += fwrite(&seq_ser, sizeof(single_seq_serial_t), 1, fo);
             written +=
                 fwrite(&(seq_stats_[seqid][0]), sizeof(T), seq_len_[seqid], fo);
-            if (written != 1 + static_cast<uint64_t>(seq_len_[seqid])) {
+            if (written != 1 + seq_len_[seqid]) {
                 fatal_error(
                     "Problem with writting to the file with statistics "
                     "('%s').\n",
