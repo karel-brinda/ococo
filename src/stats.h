@@ -163,9 +163,9 @@ struct Stats {
 
         for (int seqid = 0; seqid < n_seqs_; seqid++) {
             /* sequence */
-            single_seq_serial_t seq_ser = {};
-            seq_ser.seq_active          = seq_active_[seqid];
-            seq_ser.seq_len             = seq_len_[seqid];
+            single_seq_serial_t seq_ser{};
+            seq_ser.seq_active = seq_active_[seqid];
+            seq_ser.seq_len    = seq_len_[seqid];
             strncpy(seq_ser.seq_name, seq_name_[seqid].c_str(), 999);
             strncpy(seq_ser.seq_name, seq_name_[seqid].c_str(), 999);
             int64_t written = 0;
