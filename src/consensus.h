@@ -33,8 +33,8 @@ namespace ococo {
 /*
  * Call consensus using the majority rule.
  */
-inline char cons_call_maj(const pos_stats_uncompr_t &psu,
-                          int32_t min_coverage_upd, double majority_threshold) {
+inline char cons_call_maj(const PosStats &psu, int32_t min_coverage_upd,
+                          double majority_threshold) {
     char cons = nt16_nt256[psu.nt16];  // initial consensus
 
     /* Has sufficiently many alignments been collected? */

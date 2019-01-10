@@ -38,7 +38,7 @@ namespace ococo {
    after compression.
 */
 
-std::string __pos_stats_uncompr(pos_stats_uncompr_t psu) {
+std::string __pos_stats_uncompr(PosStats psu) {
     std::stringstream ss;
     ss << std::showbase << std::internal << std::setfill('0');
     ss << "[" << nt16_nt256[psu.nt16] << "]"
@@ -59,14 +59,14 @@ std::string __pos_stats_compr(T psc) {
 
 template <typename T>
 void _print_pos_stats(T psc) {
-    pos_stats_uncompr_t psu;
+    PosStats psu;
     psu.decompress(psc);
     std::cerr << __pos_stats_compr(psc) << " " << __pos_stats_uncompr(psu)
               << "\n";
 }
 
 template <typename T>
-void _print_pos_stats(const pos_stats_uncompr_t &psu) {
+void _print_pos_stats(const PosStats &psu) {
     T psc;
     psu.compress<T>(psc);
     std::cerr << __pos_stats_compr(psc) << " " << __pos_stats_uncompr(psu)
@@ -89,7 +89,7 @@ void _print_pos_stats(const pos_stats_uncompr_t &psu) {
 // template <typename T>
 // std::string stats_t<T>::debug_str_counters(int32_t seqid, int64_t pos) const
 // {
-//     pos_stats_uncompr_t psu;
+//     PosStats psu;
 //     psu.decompress(seq_stats[seqid][pos]);
 //     std::stringstream ss;
 //     ss << "[" << nt16_nt256[psu.nt16] << "]"

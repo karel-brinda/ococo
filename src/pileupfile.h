@@ -67,7 +67,7 @@ struct PileupFile {
     }
 
     void print_position(const std::string &seq_name, int64_t pos,
-                        const pos_stats_uncompr_t &psu) {
+                        const PosStats &psu) {
         if (file == nullptr) {
             return;
         }

@@ -111,7 +111,7 @@ struct VcfFile {
 
     void print_substitution(const std::string &seq_name, int64_t pos,
                             char old_base, char new_base,
-                            const pos_stats_uncompr_t &psu) const {
+                            const PosStats &psu) const {
         if (file == nullptr) {
             return;
         }

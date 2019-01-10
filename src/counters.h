@@ -47,14 +47,13 @@ constexpr int counter_size() {
     @field sum         Sum of the nucleotide counters.
     @field bitshifted  Already bit-shifted? (i.e., in-exact).
 */
-struct pos_stats_uncompr_t {
+struct PosStats {
     nt16_t nt16;
     int32_t counters[4];
     int32_t sum;
     bool bitshifted;
 
-    pos_stats_uncompr_t()
-        : nt16(0), counters{0, 0, 0, 0}, sum(0), bitshifted(false) {}
+    PosStats() : nt16(0), counters{0, 0, 0, 0}, sum(0), bitshifted(false) {}
 
     inline void increment(nt4_t nt4) {
         counters[nt4]++;

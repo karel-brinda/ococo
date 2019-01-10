@@ -176,7 +176,7 @@ struct Stats {
 
     // Call consensus probabilistically.
     void call_consensus(const VcfFile &vcf_file, PileupFile &pileup_file) {
-        pos_stats_uncompr_t psu;
+        PosStats psu;
 
         for (int32_t seqid = 0; seqid < n_seqs; seqid++) {
             for (int64_t pos = 0; pos < seq_len[seqid]; pos++) {
@@ -189,7 +189,7 @@ struct Stats {
 
     void call_consensus_position(const VcfFile &vcf_file,
                                  PileupFile &pileup_file, int32_t seqid,
-                                 int64_t pos, pos_stats_uncompr_t &psu) {
+                                 int64_t pos, PosStats &psu) {
         const char old_base_nt256 = nt16_nt256[psu.nt16];
         const char new_base_nt256 = cons_call_maj(psu, params.min_coverage_upd,
                                                   params.majority_threshold);
@@ -244,7 +244,7 @@ struct Stats {
             for (int64_t pos = 0; pos < static_cast<int64_t>(seq->seq.l);
                  pos++) {
                 assert(seq_stats[seqid][pos] == 0);
-                pos_stats_uncompr_t psu;
+                PosStats psu;
                 psu.nt16 = nt256_nt16[static_cast<int32_t>(seq->seq.s[pos])];
                 psu.compress(seq_stats[seqid][pos]);
             }
@@ -262,7 +262,7 @@ struct Stats {
         }
 
         char fasta_buffer[fasta_line_l];
-        pos_stats_uncompr_t psu;
+        PosStats psu;
 
         for (int s = 0; s < n_seqs; s++) {
             // printf("%s\n",seq_name[s]);

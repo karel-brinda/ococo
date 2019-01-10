@@ -222,7 +222,7 @@ struct Ococo {
                             }
 
                             /* updating counters */
-                            pos_stats_uncompr_t psu;
+                            PosStats psu;
 
                             // std::cerr << "\n" << read_pos << std::endl;
                             //_print_pos_stats(stats->seq_stats[seqid][ref_pos]);
