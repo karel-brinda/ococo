@@ -69,9 +69,6 @@ std::vector<std::string> counter_configuration_descr{
 };
 
 struct Params {
-    bool correctly_initialized;
-    int return_code;
-
     std::string command;
 
     /*
@@ -122,10 +119,7 @@ struct Params {
     int64_t n_upd;
 
     Params()
-        : correctly_initialized(true),
-          return_code(0),
-
-          counter_configuration(OCOCO32),
+        : counter_configuration(OCOCO32),
           counters_str("ococo32"),
 
           mode(BATCH),
@@ -312,7 +306,7 @@ struct Params {
                 }
             }
         }
-        if (in_sam_fn.size() == 0) {
+        if (!in_sam_fn.empty()) {
             fatal_error("SAM/BAM file must be specified (option '-i').\n");
         }
 

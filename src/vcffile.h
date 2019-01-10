@@ -36,7 +36,7 @@ struct VcfFile {
     FILE *file;
 
     VcfFile(std::string fn) : fn(fn), file(nullptr) {
-        if (fn.size() > 0) {
+        if (!fn.empty()) {
             info("Opening the VCF stream ('%s').\n", fn.c_str());
 
             if (fn == std::string("-")) {

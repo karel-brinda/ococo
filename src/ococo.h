@@ -36,16 +36,6 @@
 
 namespace ococo {
 
-/*! @struct
-    @abstract                      Structure for metadata for 1 sequence.
-    @field return_code             Return code of the caller. 0 if everything
-                                   ok.
-    @field b                       Structure for one alignment.
-    @field header                  SAM/BAM header.
-    @field stats                   Pileup statistics.
-    @field params                  Program arguments.
-    @field t_real                  Initial timestamp.
-*/
 template <typename T>
 struct Ococo {
     double t_real;
@@ -105,7 +95,7 @@ struct Ococo {
             }
         }
 
-        if (params.out_vcf_fn.size() > 0) {
+        if (!params.out_vcf_fn.empty()) {
             char buf[PATH_MAX + 1];
             char *res = realpath(params.in_fasta_fn.c_str(), buf);
             std::string fasta_full_path;
@@ -120,7 +110,7 @@ struct Ococo {
          * Open consensus FASTA file.
          */
 
-        if (params.out_fasta_fn.size() > 0) {
+        if (!params.out_fasta_fn.empty()) {
             info("Opening the consensus FASTA file ('%s').\n",
                  params.out_fasta_fn.c_str());
             params.out_fasta_file = fopen(params.out_fasta_fn.c_str(), "w+");
@@ -315,7 +305,7 @@ struct Ococo {
         /*
          * Call final consensus and export stats.
          */
-        if (params.out_stats_fn.size() > 0) {
+        if (!params.out_stats_fn.empty()) {
             info("Saving the obtained statistics ('%s').\n",
                  params.out_stats_fn.c_str());
             stats.export_stats(params.out_stats_fn);

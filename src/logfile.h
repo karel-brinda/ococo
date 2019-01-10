@@ -35,7 +35,7 @@ struct LogFile {
     FILE *file;
 
     LogFile(std::string fn) : fn(fn) {
-        if (fn.size() > 0) {
+        if (!fn.empty()) {
             info("Opening the log file ('%s').\n", fn.c_str());
 
             file = fopen(fn.c_str(), "w+");

@@ -75,7 +75,7 @@ struct BamFiles {
             fatal_error("SAM/BAM headers are missing or corrupted.\n");
         }
 
-        if (fn_out.size() > 0) {
+        if (!fn_out.empty()) {
             file_out = sam_open(fn_out.c_str(), "w");
             if (file_out == nullptr) {
                 fatal_error(
