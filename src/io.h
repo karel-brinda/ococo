@@ -23,9 +23,9 @@
 
 #pragma once
 
-#include <cmath>
 #include <cstdarg>
 #include <cstdlib>
+#include <iostream>
 #include <string>
 
 namespace ococo {
@@ -61,6 +61,11 @@ void info(const char *format, ...) {
     fprintf(stderr, "[ococo]: ");
     vfprintf(stderr, format, args);
     va_end(args);
+}
+
+template <typename T>
+void cerr(T arg) {
+    std::cerr << arg << "\n";
 }
 
 bool file_exists(const std::string &fn) {
