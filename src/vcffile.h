@@ -28,14 +28,17 @@
 
 #include "counters.h"
 #include "misc.h"
+#include "params.h"
 
 namespace ococo {
 
 struct VcfFile {
     std::string fn;
     FILE *file;
+    Params params;
 
-    VcfFile(std::string fn) : fn(fn), file(nullptr) {
+    VcfFile(std::string fn, Params params)
+        : fn(fn), file(nullptr), params(params) {
         if (!fn.empty()) {
             info("Opening the VCF stream ('%s').\n", fn.c_str());
 
@@ -75,12 +78,10 @@ struct VcfFile {
                 "##source=Ococo\n",
                 tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday);
 
-        // todo: pass as a list of pairs
-
-        /*if (!cmd.empty()) {
-            fprintf(file, "##ococo_command=%s\n", cmd.c_str());
+        if (!params.command.empty()) {
+            fprintf(file, "##ococo_command=%s\n", params.command.c_str());
         }
-        fprintf(file, "##ococo_stats_datatype_size=%zubits\n", 8 * sizeof(T));
+        /*fprintf(file, "##ococo_stats_datatype_size=%zubits\n", 8 * sizeof(T));
         fprintf(file, "##ococo_C=%dbits\n", C);
 
         if (!fasta.empty()) {

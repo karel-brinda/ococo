@@ -55,7 +55,7 @@ struct Ococo {
     Ococo(Params params)
         : t_real(realtime()),
           params(params),
-          vcf_file(params.out_vcf_fn),
+          vcf_file(params.out_vcf_fn, params),
           pileup_file(params.out_pileup_fn),
           log_file(params.out_log_fn),
           bam(params.in_sam_fn, params.out_sam_fn),

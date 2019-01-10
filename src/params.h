@@ -135,9 +135,7 @@ struct Params {
         counters_str_descr = counter_configuration_descr[counter_configuration];
     }
 
-    Params(int argc, const char **argv):
-            Params()
-    {
+    Params(int argc, const char **argv) : Params() {
         parse_commandline(argc, argv);
         counters_str_descr = counter_configuration_descr[counter_configuration];
     }
