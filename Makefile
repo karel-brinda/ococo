@@ -1,5 +1,9 @@
 CXX      ?= g++
-CXXFLAGS  = -std=c++11 -Wall -Wpedantic -Wextra -g -O3
+CXXFLAGS  = -std=c++11 -Wall -Wpedantic -Wextra -g -O3 \
+
+#-Wduplicated-cond -Wduplicated-branches -Wlogical-op -Wrestrict -Wnull-dereference -Wold-style-cast -Wuseless-cast -Wjump-misses-init \
+#-Wdouble-promotion -Wshadow
+
 LIBS      = -lm -lz -lpthread
 
 PREFIX    = $(DESTDIR)/usr/local
