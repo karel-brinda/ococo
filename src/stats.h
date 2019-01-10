@@ -150,7 +150,7 @@ struct Stats {
 
         for (int seqid = 0; seqid < n_seqs; seqid++) {
             /* sequence */
-            single_seq_serial_t seq_ser = {0};
+            single_seq_serial_t seq_ser = {};
             seq_ser.seq_active          = seq_active[seqid];
             seq_ser.seq_len             = seq_len[seqid];
             strncpy(seq_ser.seq_name, seq_name[seqid].c_str(), 999);

@@ -1,5 +1,5 @@
 CXX      ?= g++
-CXXFLAGS  = -std=c++11 -Wall -Wextra -Wno-missing-field-initializers -g -O3
+CXXFLAGS  = -std=c++11 -Wall -Wpedantic -Wextra -g -O3
 LIBS      = -lm -lz -lpthread
 
 PREFIX    = $(DESTDIR)/usr/local
