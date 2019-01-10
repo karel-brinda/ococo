@@ -136,13 +136,13 @@ struct VcfFile {
                 ";AF=%.2f"       //
                 ";EX=%s\n",
                 //
-                ps.counters_[0],                //
-                ps.counters_[1],                //
-                ps.counters_[2],                //
-                ps.counters_[3],                //
-                ps.sum_,                        //
-                round(alt_freq * 100.0) / 100,  //
-                (ps.bitshifted_ ? "0" : "1")    //
+                ps.counters_[0],                 //
+                ps.counters_[1],                 //
+                ps.counters_[2],                 //
+                ps.counters_[3],                 //
+                ps.sum_,                         //
+                round(alt_freq * 100.0f) / 100,  //
+                (ps.bitshifted_ ? "0" : "1")     //
         );
     }
 };
