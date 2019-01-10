@@ -55,26 +55,26 @@ KSEQ_INIT(gzFile, gzread);
 
 template <typename T>
 struct Stats {
-    int32_t n_seqs;
-    std::vector<bool> seq_active;
-    std::vector<int64_t> seq_len;
-    std::vector<std::string> seq_name;
-    std::vector<std::string> seq_comment;
-    std::vector<std::vector<T>> seq_stats;
+    int32_t n_seqs_;
+    std::vector<bool> seq_active_;
+    std::vector<int64_t> seq_len_;
+    std::vector<std::string> seq_name_;
+    std::vector<std::string> seq_comment_;
+    std::vector<std::vector<T>> seq_stats_;
 
-    Params params;
+    Params params_;
 
     Stats(Params params, const std::vector<std::string> &seq_name,
           const std::vector<int64_t> &seq_len)
-        : n_seqs(seq_len.size()),
-          seq_active(std::vector<bool>(n_seqs, true)),
-          seq_len(seq_len),
-          seq_name(seq_name),
-          seq_comment(std::vector<std::string>(n_seqs)),
-          seq_stats(std::vector<std::vector<T>>(n_seqs)),
-          params(params) {
-        for (int seqid = 0; seqid < n_seqs; seqid++) {
-            seq_stats[seqid].resize(seq_len[seqid]);
+        : n_seqs_(seq_len.size()),
+          seq_active_(std::vector<bool>(n_seqs_, true)),
+          seq_len_(seq_len),
+          seq_name_(seq_name),
+          seq_comment_(std::vector<std::string>(n_seqs_)),
+          seq_stats_(std::vector<std::vector<T>>(n_seqs_)),
+          params_(params) {
+        for (int seqid = 0; seqid < n_seqs_; seqid++) {
+            seq_stats_[seqid].resize(seq_len[seqid]);
         }
     }
 
@@ -100,14 +100,14 @@ struct Stats {
             fatal_error("Error in reading the stats file.");
         }
 
-        if (n_seqs_loaded != n_seqs) {
+        if (n_seqs_loaded != n_seqs_) {
             fatal_error(
                 "Numbers of sequences in stats and SAM/BAM do not correspond "
                 "%" PRId32 "!=%" PRId32 ").\n",
-                n_seqs_loaded, n_seqs);
+                n_seqs_loaded, n_seqs_);
         }
 
-        for (int seqid = 0; seqid < n_seqs; seqid++) {
+        for (int seqid = 0; seqid < n_seqs_; seqid++) {
             /* sequence */
 
             single_seq_serial_t seq_ser;
@@ -117,29 +117,29 @@ struct Stats {
                 fatal_error("Error in reading the stats file.");
             }
 
-            if (seq_ser.seq_active != seq_active[seqid]) {
+            if (seq_ser.seq_active != seq_active_[seqid]) {
                 fatal_error(
                     "Active sequences in stats and SAM/BAM do not correspond "
                     "(seqid %" PRId32 ").\n",
                     seqid);
             }
 
-            if (seq_ser.seq_len != seq_len[seqid]) {
+            if (seq_ser.seq_len != seq_len_[seqid]) {
                 fatal_error(
                     "Sequence lengths in stats and SAM/BAM do not correspond "
                     "(seqid %" PRId32 ", %" PRId64 "!=%" PRId64 ").\n",
-                    seqid, seq_ser.seq_len, seq_len[seqid]);
+                    seqid, seq_ser.seq_len, seq_len_[seqid]);
             }
 
-            if (seq_name[seqid].compare(seq_ser.seq_name) != 0) {
+            if (seq_name_[seqid].compare(seq_ser.seq_name) != 0) {
                 fatal_error(
                     "Sequence names in stats and SAM/BAM do not correspond "
                     "(seqid %" PRId32 ", '%s'!='%s').\n",
-                    seqid, seq_ser.seq_name, seq_name[seqid].c_str());
+                    seqid, seq_ser.seq_name, seq_name_[seqid].c_str());
             }
 
-            fr = fread(&(seq_stats[seqid][0]), sizeof(T), seq_len[seqid], fo);
-            if (fr != seq_len[seqid]) {
+            fr = fread(&(seq_stats_[seqid][0]), sizeof(T), seq_len_[seqid], fo);
+            if (fr != seq_len_[seqid]) {
                 fatal_error("Error in reading the stats file.");
             }
         }
@@ -159,20 +159,20 @@ struct Stats {
         }
 
         /* number of seqs */
-        fwrite(&n_seqs, sizeof(int32_t), 1, fo);
+        fwrite(&n_seqs_, sizeof(int32_t), 1, fo);
 
-        for (int seqid = 0; seqid < n_seqs; seqid++) {
+        for (int seqid = 0; seqid < n_seqs_; seqid++) {
             /* sequence */
             single_seq_serial_t seq_ser = {};
-            seq_ser.seq_active          = seq_active[seqid];
-            seq_ser.seq_len             = seq_len[seqid];
-            strncpy(seq_ser.seq_name, seq_name[seqid].c_str(), 999);
-            strncpy(seq_ser.seq_name, seq_name[seqid].c_str(), 999);
+            seq_ser.seq_active          = seq_active_[seqid];
+            seq_ser.seq_len             = seq_len_[seqid];
+            strncpy(seq_ser.seq_name, seq_name_[seqid].c_str(), 999);
+            strncpy(seq_ser.seq_name, seq_name_[seqid].c_str(), 999);
             uint64_t written = 0;
             written += fwrite(&seq_ser, sizeof(single_seq_serial_t), 1, fo);
             written +=
-                fwrite(&(seq_stats[seqid][0]), sizeof(T), seq_len[seqid], fo);
-            if (written != 1 + static_cast<uint64_t>(seq_len[seqid])) {
+                fwrite(&(seq_stats_[seqid][0]), sizeof(T), seq_len_[seqid], fo);
+            if (written != 1 + static_cast<uint64_t>(seq_len_[seqid])) {
                 fatal_error(
                     "Problem with writting to the file with statistics "
                     "('%s').\n",
@@ -191,11 +191,11 @@ struct Stats {
     void call_consensus(const VcfFile &vcf_file, PileupFile &pileup_file) {
         PosStats ps;
 
-        for (int32_t seqid = 0; seqid < n_seqs; seqid++) {
-            for (int64_t pos = 0; pos < seq_len[seqid]; pos++) {
-                ps.pull(seq_stats[seqid][pos]);
+        for (int32_t seqid = 0; seqid < n_seqs_; seqid++) {
+            for (int64_t pos = 0; pos < seq_len_[seqid]; pos++) {
+                ps.pull(seq_stats_[seqid][pos]);
                 call_consensus_position(vcf_file, pileup_file, seqid, pos, ps);
-                ps.push(seq_stats[seqid][pos]);
+                ps.push(seq_stats_[seqid][pos]);
             }
         }
     }
@@ -204,20 +204,20 @@ struct Stats {
                                  PileupFile &pileup_file, int32_t seqid,
                                  int64_t pos, PosStats &ps) {
         const char old_base_nt256 = nt16_nt256[ps.nt16_];
-        const char new_base_nt256 = cons_call_maj(ps, params.min_coverage_upd_,
-                                                  params.majority_threshold_);
+        const char new_base_nt256 = cons_call_maj(ps, params_.min_coverage_upd_,
+                                                  params_.majority_threshold_);
 
         if (old_base_nt256 != new_base_nt256) {
-            params.n_upd_ += 1;
+            params_.n_upd_ += 1;
             ps.nt16_ = nt256_nt16[int16_t{new_base_nt256}];
         }
 
-        if (old_base_nt256 != new_base_nt256 || params.verbose_) {
-            vcf_file.print_substitution(seq_name[seqid], pos, old_base_nt256,
+        if (old_base_nt256 != new_base_nt256 || params_.verbose_) {
+            vcf_file.print_substitution(seq_name_[seqid], pos, old_base_nt256,
                                         new_base_nt256, ps);
         }
 
-        pileup_file.print_position(seq_name[seqid], pos, ps);
+        pileup_file.print_position(seq_name_[seqid], pos, ps);
     }
 
     // Load header and data from a FASTA file and initialize statistics.
@@ -234,32 +234,32 @@ struct Stats {
         }
 
         for (int seqid = 0; (l = kseq_read(seq)) >= 0; seqid++) {
-            if (seq_name[seqid].compare(seq->name.s) != 0) {
+            if (seq_name_[seqid].compare(seq->name.s) != 0) {
                 fatal_error(
                     "Sequence names in BAM/SAM and in FASTA do not correspond "
                     "('%s'!='%s').\n",
-                    seq_name[seqid].c_str(), seq->name.s);
+                    seq_name_[seqid].c_str(), seq->name.s);
             }
 
-            if (seq_len[seqid] != static_cast<int64_t>(seq->seq.l)) {
+            if (seq_len_[seqid] != static_cast<int64_t>(seq->seq.l)) {
                 fatal_error(
                     "Sequence lengths in BAM/SAM and in FASTA do not "
                     "correspond "
                     "(%" PRId64 "!=%" PRId64 ").\n",
                     static_cast<int64_t>(seq->seq.l),
-                    static_cast<int64_t>(seq_len[seqid]));
+                    static_cast<int64_t>(seq_len_[seqid]));
             }
 
-            if (seq->comment.l && seq_comment[seqid].empty()) {
-                seq_comment[seqid] = std::string(seq->comment.s);
+            if (seq->comment.l && seq_comment_[seqid].empty()) {
+                seq_comment_[seqid] = std::string(seq->comment.s);
             }
 
+            PosStats ps;
             for (int64_t pos = 0; pos < static_cast<int64_t>(seq->seq.l);
                  pos++) {
-                assert(seq_stats[seqid][pos] == 0);
-                PosStats ps;
+                assert(seq_stats_[seqid][pos] == 0);
                 ps.nt16_ = nt256_nt16[static_cast<int32_t>(seq->seq.s[pos])];
-                ps.push(seq_stats[seqid][pos]);
+                ps.push(seq_stats_[seqid][pos]);
             }
         }
         kseq_destroy(seq);
@@ -277,20 +277,20 @@ struct Stats {
         char fasta_buffer[fasta_line_l];
         PosStats ps;
 
-        for (int s = 0; s < n_seqs; s++) {
+        for (int s = 0; s < n_seqs_; s++) {
             // printf("%s\n",seq_name[s]);
-            if (!seq_comment[s].empty()) {
-                fprintf(fasta_file, ">%s %s\n", seq_name[s].c_str(),
-                        seq_comment[s].c_str());
+            if (!seq_comment_[s].empty()) {
+                fprintf(fasta_file, ">%s %s\n", seq_name_[s].c_str(),
+                        seq_comment_[s].c_str());
             } else {
-                fprintf(fasta_file, ">%s\n", seq_name[s].c_str());
+                fprintf(fasta_file, ">%s\n", seq_name_[s].c_str());
             }
 
-            for (int64_t i = 0, j = 0; i < seq_len[s]; i++, j++) {
-                ps.pull(seq_stats[s][i]);
+            for (int64_t i = 0, j = 0; i < seq_len_[s]; i++, j++) {
+                ps.pull(seq_stats_[s][i]);
                 fasta_buffer[j] = nt16_nt256[ps.nt16_];
 
-                if (j == fasta_line_l - 1 || i == seq_len[s] - 1) {
+                if (j == fasta_line_l - 1 || i == seq_len_[s] - 1) {
                     fwrite(fasta_buffer, 1, j + 1, fasta_file);
                     fwrite("\n", 1, 1, fasta_file);
                     j = -1;
@@ -313,11 +313,11 @@ struct Stats {
     bool check_headers_bam_hdr(const bam_hdr_t *h) const {
         // todo: is it used anywhere?
         assert(h != nullptr);
-        for (int32_t seqid = 0; seqid < n_seqs; seqid++) {
-            if (seq_len[seqid] != int64_t{h->target_len[seqid]}) {
+        for (int32_t seqid = 0; seqid < n_seqs_; seqid++) {
+            if (seq_len_[seqid] != int64_t{h->target_len[seqid]}) {
                 return false;
             }
-            if (seq_name[seqid].compare(h->target_name[seqid]) != 0) {
+            if (seq_name_[seqid].compare(h->target_name[seqid]) != 0) {
                 return false;
             }
         }

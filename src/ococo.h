@@ -144,7 +144,7 @@ struct Ococo {
             return false;
         }
 
-        if (!stats.seq_active[seqid]) {
+        if (!stats.seq_active_[seqid]) {
             return false;
         }
 
@@ -226,7 +226,7 @@ struct Ococo {
 
                             // std::cerr << "\n" << read_pos << std::endl;
                             //_print_pos_stats(stats->seq_stats[seqid][ref_pos]);
-                            ps.pull(stats.seq_stats[bam.seqid_][ref_pos]);
+                            ps.pull(stats.seq_stats_[bam.seqid_][ref_pos]);
                             //_print_pos_stats<T>(ps);
                             ps.increment(nt4);
                             // std::cerr << "       incr " << nt4_nt256[nt4]
@@ -252,7 +252,7 @@ struct Ococo {
 
                             /* compressing the counters and pushing them back to
                              * the statistics */
-                            ps.push(stats.seq_stats[bam.seqid_][ref_pos]);
+                            ps.push(stats.seq_stats_[bam.seqid_][ref_pos]);
                             //_print_pos_stats(stats->seq_stats[seqid][ref_pos]);
                         }
 
