@@ -203,13 +203,13 @@ struct Stats {
     void call_consensus_position(const VcfFile &vcf_file,
                                  PileupFile &pileup_file, int32_t seqid,
                                  int64_t pos, PosStats &ps) {
-        const char old_base_nt256 = nt16_nt256[ps.nt16];
+        const char old_base_nt256 = nt16_nt256[ps.nt16_];
         const char new_base_nt256 = cons_call_maj(ps, params.min_coverage_upd,
                                                   params.majority_threshold);
 
         if (old_base_nt256 != new_base_nt256) {
             params.n_upd += 1;
-            ps.nt16 = nt256_nt16[int16_t{new_base_nt256}];
+            ps.nt16_ = nt256_nt16[int16_t{new_base_nt256}];
         }
 
         if (old_base_nt256 != new_base_nt256 || params.verbose) {
@@ -258,7 +258,7 @@ struct Stats {
                  pos++) {
                 assert(seq_stats[seqid][pos] == 0);
                 PosStats ps;
-                ps.nt16 = nt256_nt16[static_cast<int32_t>(seq->seq.s[pos])];
+                ps.nt16_ = nt256_nt16[static_cast<int32_t>(seq->seq.s[pos])];
                 ps.push(seq_stats[seqid][pos]);
             }
         }
@@ -288,7 +288,7 @@ struct Stats {
 
             for (int64_t i = 0, j = 0; i < seq_len[s]; i++, j++) {
                 ps.pull(seq_stats[s][i]);
-                fasta_buffer[j] = nt16_nt256[ps.nt16];
+                fasta_buffer[j] = nt16_nt256[ps.nt16_];
 
                 if (j == fasta_line_l - 1 || i == seq_len[s] - 1) {
                     fwrite(fasta_buffer, 1, j + 1, fasta_file);

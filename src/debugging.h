@@ -41,9 +41,9 @@ namespace ococo {
 std::string __pos_stats_uncompr(PosStats ps) {
     std::stringstream ss;
     ss << std::showbase << std::internal << std::setfill('0');
-    ss << "[" << nt16_nt256[ps.nt16] << "]"
-       << "(" << ps.counters[0] << "," << ps.counters[1] << ","
-       << ps.counters[2] << "," << ps.counters[3] << ")";
+    ss << "[" << nt16_nt256[ps.nt16_] << "]"
+       << "(" << ps.counters_[0] << "," << ps.counters_[1] << ","
+       << ps.counters_[2] << "," << ps.counters_[3] << ")";
 
     return ss.str();
 }

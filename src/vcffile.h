@@ -117,7 +117,7 @@ struct VcfFile {
         }
 
         const float alt_freq =
-            1.0 * ps.counters[nt256_nt4[int16_t{new_base}]] / ps.sum;
+            1.0 * ps.counters_[nt256_nt4[int16_t{new_base}]] / ps.sum_;
 
         fprintf(file, "%s\t%" PRId64 "\t.\t%c\t%c\t100\tPASS\t",
                 seq_name.c_str(),  //
@@ -136,13 +136,13 @@ struct VcfFile {
                 ";AF=%.2f"       //
                 ";EX=%s\n",
                 //
-                ps.counters[0],                 //
-                ps.counters[1],                 //
-                ps.counters[2],                 //
-                ps.counters[3],                 //
-                ps.sum,                         //
+                ps.counters_[0],                //
+                ps.counters_[1],                //
+                ps.counters_[2],                //
+                ps.counters_[3],                //
+                ps.sum_,                        //
                 round(alt_freq * 100.0) / 100,  //
-                (ps.bitshifted ? "0" : "1")     //
+                (ps.bitshifted_ ? "0" : "1")    //
         );
     }
 };

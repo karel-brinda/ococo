@@ -234,10 +234,10 @@ struct Ococo {
                             //          std::endl;
 
                             /* updating coverage statistics */
-                            if (ps.sum - 1 < low_cov_thres) {
+                            if (ps.sum_ - 1 < low_cov_thres) {
                                 ++npos_low_cov;
                             } else {
-                                if (2 * (ps.sum - 1) > 3 * low_cov_thres) {
+                                if (2 * (ps.sum_ - 1) > 3 * low_cov_thres) {
                                     ++npos_high_cov;
                                 }
                             }

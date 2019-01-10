@@ -72,13 +72,13 @@ struct PileupFile {
             return;
         }
 
-        if (ps.sum == 0) {
+        if (ps.sum_ == 0) {
             return;
         }
 
         bool overflow = false;
 
-        if (ps.sum >= PILEUP_MAX_DEPTH) {
+        if (ps.sum_ >= PILEUP_MAX_DEPTH) {
             warning("Too high coverage at position %" PRId64
                     " in '%s'. "  //
                     "Pileup does not support coverage higher than %" PRId32
@@ -88,20 +88,20 @@ struct PileupFile {
                     " G=%" PRId32  //
                     " T=%" PRId32  //
                     "\n",
-                    pos, seq_name.c_str(), PILEUP_MAX_DEPTH, ps.counters[0],
-                    ps.counters[1], ps.counters[2], ps.counters[3]);
+                    pos, seq_name.c_str(), PILEUP_MAX_DEPTH, ps.counters_[0],
+                    ps.counters_[1], ps.counters_[2], ps.counters_[3]);
             overflow = true;
         }
 
-        char ref_nt256 = nt16_nt256[ps.nt16];
+        char ref_nt256 = nt16_nt256[ps.nt16_];
 
         int32_t j = 0;
 
         // todo: check that j does not exceeds buffer size
         for (int32_t nt4 = 0; nt4 < 4; nt4++) {
             const char filling_char =
-                nt4_nt16[nt4] == ps.nt16 ? '.' : nt4_nt256[nt4];
-            for (int32_t i = 0; i < ps.counters[nt4] && j < PILEUP_MAX_DEPTH;
+                nt4_nt16[nt4] == ps.nt16_ ? '.' : nt4_nt256[nt4];
+            for (int32_t i = 0; i < ps.counters_[nt4] && j < PILEUP_MAX_DEPTH;
                  i++, j++) {
                 bases[j]     = filling_char;
                 qualities[j] = '~';
@@ -113,7 +113,7 @@ struct PileupFile {
 
         fprintf(file, "%s\t%" PRId64 "\t%c\t%" PRId32 "\t%s\t%s\n",
                 seq_name.c_str(), pos + 1, ref_nt256,
-                overflow ? PILEUP_MAX_DEPTH : ps.sum, bases.data(),
+                overflow ? PILEUP_MAX_DEPTH : ps.sum_, bases.data(),
                 qualities.data());
     }
 };

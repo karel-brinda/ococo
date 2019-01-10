@@ -48,22 +48,23 @@ constexpr int counter_size() {
     @field bitshifted  Already bit-shifted? (i.e., in-exact).
 */
 struct PosStats {
-    nt16_t nt16;
-    int32_t counters[4];
-    int32_t sum;
-    bool bitshifted;
+    nt16_t nt16_;
+    int32_t counters_[4];
+    int32_t sum_;
+    bool bitshifted_;
 
-    PosStats() : nt16(0), counters{0, 0, 0, 0}, sum(0), bitshifted(false) {}
+    PosStats() : nt16_(0), counters_{0, 0, 0, 0}, sum_(0), bitshifted_(false) {}
 
     inline void increment(nt4_t nt4) {
-        counters[nt4]++;
-        sum++;
+        counters_[nt4]++;
+        sum_++;
     }
 
     inline void normalize(int nbits) {
         // std::cerr << "     " << nbits << "\n";
         int32_t mask =
-            (counters[0] | counters[1] | counters[2] | counters[3]) >> nbits;
+            (counters_[0] | counters_[1] | counters_[2] | counters_[3]) >>
+            nbits;
         int32_t shifts = 0;
         while (mask > 0) {
             shifts++;
@@ -71,11 +72,11 @@ struct PosStats {
         }
 
         for (int i = 0; i < 4; i++) {
-            counters[i] >>= shifts;
+            counters_[i] >>= shifts;
         }
 
-        sum        = counters[0] + counters[1] + counters[2] + counters[3];
-        bitshifted = (shifts > 0) ? true : bitshifted;
+        sum_        = counters_[0] + counters_[1] + counters_[2] + counters_[3];
+        bitshifted_ = (shifts > 0) ? true : bitshifted_;
     }
 
     template <typename T>
@@ -85,27 +86,27 @@ struct PosStats {
         const int C = counter_size<T>();
 
         // 1. reference base(s) (before correction)
-        nt16 = psc & right_full_mask<T>(4);
+        nt16_ = psc & right_full_mask<T>(4);
         psc >>= 4;
 
         // 2. are the values exact?
-        int nones = bitsset_table256[nt16];
+        int nones = bitsset_table256[nt16_];
         assert(nones != 2);
         if (nones == 1) {
-            bitshifted = false;
+            bitshifted_ = false;
         } else {
             if (nones == 3) {
-                bitshifted = true;
+                bitshifted_ = true;
                 // if not exact, invert base bits
-                nt16 ^= right_full_mask<T>(4);
+                nt16_ ^= right_full_mask<T>(4);
             }
         }
 
         // 3. count of individual nucleotides and the sum
-        sum = 0;
+        sum_ = 0;
         for (int32_t i = 3; i >= 0; i--) {
-            counters[i] = psc & right_full_mask<T>(C);
-            sum += counters[i];
+            counters_[i] = psc & right_full_mask<T>(C);
+            sum_ += counters_[i];
             psc >>= C;
         }
     }
@@ -123,15 +124,15 @@ struct PosStats {
         // 2. incorporate counters
         for (int32_t i = 0; i < 4; i++) {
             psc <<= C;
-            psc |= counters[i] & right_full_mask<T>(C);
+            psc |= counters_[i] & right_full_mask<T>(C);
         }
 
         // 3. incorporate ref base
         psc <<= 4;
-        psc |= nt16 & right_full_mask<T>(4);
+        psc |= nt16_ & right_full_mask<T>(4);
 
         // 4. if not exact, invert the base bits
-        if (bitshifted) {
+        if (bitshifted_) {
             psc ^= right_full_mask<T>(4);
         }
     }
