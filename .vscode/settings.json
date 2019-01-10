@@ -32,7 +32,8 @@
 		"type_traits": "cpp",
 		"typeinfo": "cpp",
 		"string": "cpp",
-		"__nullptr": "cpp"
+		"__nullptr": "cpp",
+		"system_error": "cpp"
 	},
 	"C_Cpp.intelliSenseEngineFallback": "Enabled"
 }
