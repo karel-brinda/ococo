@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
     /* Use the default configuration */
     Params params(argc, argv);
 
-    switch (params.counter_configuration) {
+    switch (params.counter_configuration_) {
         case OCOCO8: {
             Ococo<uint8_t> ococo(params);
             ococo.run();

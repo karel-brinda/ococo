@@ -55,10 +55,10 @@ struct Ococo {
     Ococo(Params params)
         : t_real(realtime()),
           params(params),
-          vcf_file(params.out_vcf_fn, params),
-          pileup_file(params.out_pileup_fn),
-          log_file(params.out_log_fn),
-          bam(params.in_sam_fn, params.out_sam_fn),
+          vcf_file(params.out_vcf_fn_, params),
+          pileup_file(params.out_pileup_fn_),
+          log_file(params.out_log_fn_),
+          bam(params.in_sam_fn_, params.out_sam_fn_),
           // todo: pass vector
           stats(params, bam.get_refseq_names(), bam.get_refseq_lens()) {
         /*
@@ -71,21 +71,21 @@ struct Ococo {
          * Load FASTA and stats.
          */
 
-        if (!params.in_stats_fn.empty() && !params.in_fasta_fn.empty()) {
+        if (params.in_stats_fn_.size() && params.in_fasta_fn_.empty()) {
             fatal_error(
                 "Initial FASTA reference and input statistics "
                 "cannot be used at the same time.\n");
         }
 
-        if (!params.in_stats_fn.empty()) {
+        if (!params.in_stats_fn_.empty()) {
             info("Loading previously saved statistics ('%s').\n",
-                 params.in_stats_fn.c_str());
-            stats.import_stats(params.in_stats_fn);
+                 params.in_stats_fn_.c_str());
+            stats.import_stats(params.in_stats_fn_);
         } else {
-            if (!params.in_fasta_fn.empty()) {
+            if (!params.in_fasta_fn_.empty()) {
                 info("Loading the reference ('%s').\n",
-                     params.in_fasta_fn.c_str());
-                stats.load_fasta(params.in_fasta_fn);
+                     params.in_fasta_fn_.c_str());
+                stats.load_fasta(params.in_fasta_fn_);
             }
 
             else {
@@ -95,14 +95,14 @@ struct Ococo {
             }
         }
 
-        if (!params.out_vcf_fn.empty()) {
+        if (!params.out_vcf_fn_.empty()) {
             char buf[PATH_MAX + 1];
-            char *res = realpath(params.in_fasta_fn.c_str(), buf);
+            char *res = realpath(params.in_fasta_fn_.c_str(), buf);
             std::string fasta_full_path;
             if (res) {
                 fasta_full_path = std::string(buf);
             } else {
-                fasta_full_path = params.in_fasta_fn;
+                fasta_full_path = params.in_fasta_fn_;
             }
         }
 
@@ -110,22 +110,22 @@ struct Ococo {
          * Open consensus FASTA file.
          */
 
-        if (!params.out_fasta_fn.empty()) {
+        if (!params.out_fasta_fn_.empty()) {
             info("Opening the consensus FASTA file ('%s').\n",
-                 params.out_fasta_fn.c_str());
-            params.out_fasta_file = fopen(params.out_fasta_fn.c_str(), "w+");
+                 params.out_fasta_fn_.c_str());
+            params.out_fasta_file_ = fopen(params.out_fasta_fn_.c_str(), "w+");
 
-            if (params.out_fasta_file == nullptr) {
+            if (params.out_fasta_file_ == nullptr) {
                 fatal_error(
                     "Problem with opening the consensus FASTA file: '%s'.\n",
-                    params.out_fasta_fn.c_str());
+                    params.out_fasta_fn_.c_str());
             }
         }
     }
 
     ~Ococo() {
-        if (params.out_fasta_file != nullptr) {
-            int error_code = fclose(params.out_fasta_file);
+        if (params.out_fasta_file_ != nullptr) {
+            int error_code = fclose(params.out_fasta_file_);
             if (error_code != 0) {
                 fatal_error(
                     "Output FASTA consensus file could not be closed.\n");
@@ -148,7 +148,7 @@ struct Ococo {
             return false;
         }
 
-        if (mapq < params.min_mapq) {
+        if (mapq < params.min_mapq_) {
             return false;
         }
 
@@ -182,7 +182,7 @@ struct Ococo {
             }
 
             /* coverage statistics for the region of the alignment */
-            int32_t low_cov_thres = params.coverage_filter;
+            int32_t low_cov_thres = params.coverage_filter_;
             int32_t npos_low_cov  = 0;
             int32_t npos_high_cov = 0;
             int32_t pseudo_rlen   = 0;
@@ -213,7 +213,7 @@ struct Ococo {
                             const uint8_t nt4  = nt16_nt4[nt16];
                             const int32_t bq   = bam.qual_[read_pos];
 
-                            if (bq != 0xff && bq < params.min_baseq) {
+                            if (bq != 0xff && bq < params.min_baseq_) {
                                 continue;
                             }
 
@@ -244,7 +244,7 @@ struct Ococo {
                             ++pseudo_rlen;
 
                             /* consensus calling for the current position */
-                            if (params.mode == mode_t::REALTIME) {
+                            if (params.mode_ == mode_t::REALTIME) {
                                 stats.call_consensus_position(
                                     vcf_file, pileup_file, bam.seqid_, ref_pos,
                                     ps);
@@ -290,8 +290,8 @@ struct Ococo {
             }
 
             /* Logging the number of updates from this alignment. */
-            log_file.print(i_read, bam.rname_, params.n_upd - n_upd0);
-            n_upd0 = params.n_upd;  // todo: count automatically in the log
+            log_file.print(i_read, bam.rname_, params.n_upd_ - n_upd0);
+            n_upd0 = params.n_upd_;  // todo: count automatically in the log
 
             i_read += 1;
         }  // while ((r = sam_read1
@@ -305,10 +305,10 @@ struct Ococo {
         /*
          * Call final consensus and export stats.
          */
-        if (!params.out_stats_fn.empty()) {
+        if (!params.out_stats_fn_.empty()) {
             info("Saving the obtained statistics ('%s').\n",
-                 params.out_stats_fn.c_str());
-            stats.export_stats(params.out_stats_fn);
+                 params.out_stats_fn_.c_str());
+            stats.export_stats(params.out_stats_fn_);
         }
     }
 };

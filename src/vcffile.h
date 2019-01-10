@@ -78,8 +78,8 @@ struct VcfFile {
                 "##source=Ococo\n",
                 tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday);
 
-        if (!params.command.empty()) {
-            fprintf(file, "##ococo_command=%s\n", params.command.c_str());
+        if (!params.command_.empty()) {
+            fprintf(file, "##ococo_command=%s\n", params.command_.c_str());
         }
         /*fprintf(file, "##ococo_stats_datatype_size=%zubits\n", 8 * sizeof(T));
         fprintf(file, "##ococo_C=%dbits\n", C);

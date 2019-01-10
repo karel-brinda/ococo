@@ -204,15 +204,15 @@ struct Stats {
                                  PileupFile &pileup_file, int32_t seqid,
                                  int64_t pos, PosStats &ps) {
         const char old_base_nt256 = nt16_nt256[ps.nt16_];
-        const char new_base_nt256 = cons_call_maj(ps, params.min_coverage_upd,
-                                                  params.majority_threshold);
+        const char new_base_nt256 = cons_call_maj(ps, params.min_coverage_upd_,
+                                                  params.majority_threshold_);
 
         if (old_base_nt256 != new_base_nt256) {
-            params.n_upd += 1;
+            params.n_upd_ += 1;
             ps.nt16_ = nt256_nt16[int16_t{new_base_nt256}];
         }
 
-        if (old_base_nt256 != new_base_nt256 || params.verbose) {
+        if (old_base_nt256 != new_base_nt256 || params.verbose_) {
             vcf_file.print_substitution(seq_name[seqid], pos, old_base_nt256,
                                         new_base_nt256, ps);
         }

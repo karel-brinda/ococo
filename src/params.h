@@ -70,75 +70,77 @@ std::vector<std::string> counter_configuration_descr{
 };
 
 struct Params {
-    std::string command;
+    std::string command_;
 
     /*
      * Counter parameters
      */
-    counter_configuration_t counter_configuration;
-    std::string counters_str;
-    std::string counters_str_descr;
+    counter_configuration_t counter_configuration_;
+    std::string counters_str_;
+    std::string counters_str_descr_;
 
     /*
      * Input parameters
      */
-    std::string in_sam_fn;
-    std::string in_fasta_fn;
-    std::string in_stats_fn;
+    std::string in_sam_fn_;
+    std::string in_fasta_fn_;
+    std::string in_stats_fn_;
 
     /*
      * Output parameters
      */
-    bool verbose;
+    bool verbose_;
 
-    std::string out_sam_fn;
-    std::string out_vcf_fn;
-    std::string out_fasta_fn;
-    std::string out_stats_fn;
-    std::string out_pileup_fn;
-    std::string out_log_fn;
+    std::string out_sam_fn_;
+    std::string out_vcf_fn_;
+    std::string out_fasta_fn_;
+    std::string out_stats_fn_;
+    std::string out_pileup_fn_;
+    std::string out_log_fn_;
 
     /*
      * Files
      */
-    FILE *out_fasta_file;
+    FILE *out_fasta_file_;
 
     /*
      * Consensus calling parameters
      */
-    mode_t mode;
-    std::string mode_str;
-    int32_t min_mapq;          /* minimum mapping quality for update */
-    int32_t min_baseq;         /* minimum base quality for update */
-    int32_t min_coverage_upd;  /* minimum coverage for update */
-    double majority_threshold; /* threshold for having majority */
+    mode_t mode_;
+    std::string mode_str_;
+    int32_t min_mapq_;          /* minimum mapping quality for update */
+    int32_t min_baseq_;         /* minimum base quality for update */
+    int32_t min_coverage_upd_;  /* minimum coverage for update */
+    double majority_threshold_; /* threshold for having majority */
 
     /* Filter alignments when coverage is greater than */
-    int32_t coverage_filter;
+    int32_t coverage_filter_;
 
     /* auxiliary */
-    int64_t n_upd;
+    int64_t n_upd_;
 
     Params()
-        : counter_configuration(OCOCO32),
-          counters_str("ococo32"),
+        : counter_configuration_(OCOCO32),
+          counters_str_("ococo32"),
 
-          mode(BATCH),
-          mode_str("batch"),
-          min_mapq(default_q),
-          min_baseq(default_Q),
-          min_coverage_upd(default_c),
-          majority_threshold(default_M),
+          mode_(BATCH),
+          mode_str_("batch"),
+          min_mapq_(default_q),
+          min_baseq_(default_Q),
+          min_coverage_upd_(default_c),
+          majority_threshold_(default_M),
 
-          coverage_filter(default_C),
+          coverage_filter_(default_C),
 
-          n_upd(0) {
-        counters_str_descr = counter_configuration_descr[counter_configuration];
+          n_upd_(0) {
+        counters_str_descr_ =
+            counter_configuration_descr[counter_configuration_];
     }
 
     Params(int argc, char **argv) : Params() {
         parse_commandline(argc, argv);
-        counters_str_descr = counter_configuration_descr[counter_configuration];
+        counters_str_descr_ =
+            counter_configuration_descr[counter_configuration_];
     }
 
     void parse_commandline(int argc, char **argv) {
@@ -150,7 +152,7 @@ struct Params {
                 cmd << " ";
             }
         }
-        command = cmd.str();
+        command_ = cmd.str();
 
         if (argc == 1) {
             print_help();
@@ -203,101 +205,101 @@ struct Params {
                     break;
                 }
                 case 'i': {
-                    in_sam_fn = optarg;
+                    in_sam_fn_ = optarg;
                     break;
                 }
                 case 'f': {
-                    in_fasta_fn = optarg;
+                    in_fasta_fn_ = optarg;
                     break;
                 }
                 case 's': {
-                    in_stats_fn = optarg;
+                    in_stats_fn_ = optarg;
                     break;
                 }
                 case 'F': {
-                    out_fasta_fn = optarg;
+                    out_fasta_fn_ = optarg;
                     break;
                 }
                 case 'S': {
-                    out_stats_fn = optarg;
+                    out_stats_fn_ = optarg;
                     break;
                 }
                 case 'V': {
-                    out_vcf_fn = optarg;
+                    out_vcf_fn_ = optarg;
                     break;
                 }
                 case 'P': {
-                    out_pileup_fn = optarg;
+                    out_pileup_fn_ = optarg;
                     break;
                 }
                 case 'O': {
-                    out_sam_fn = optarg;
+                    out_sam_fn_ = optarg;
                     break;
                 }
                 case 'C': {
-                    coverage_filter = atoi(optarg);
+                    coverage_filter_ = atoi(optarg);
                     break;
                 }
                 case 'L': {
-                    out_log_fn = optarg;
+                    out_log_fn_ = optarg;
                     break;
                 }
                 case 'W': {
-                    verbose = true;
+                    verbose_ = true;
                     break;
                 }
                 case 'x': {
-                    counters_str = optarg;
+                    counters_str_ = optarg;
 
-                    if (counters_str.compare("ococo8") == 0) {
-                        counter_configuration = OCOCO8;
-                    } else if (counters_str.compare("ococo16") == 0) {
-                        counter_configuration = OCOCO16;
-                    } else if (counters_str.compare("ococo32") == 0) {
-                        counter_configuration = OCOCO32;
-                    } else if (counters_str.compare("ococo64") == 0) {
-                        counter_configuration = OCOCO64;
+                    if (counters_str_.compare("ococo8") == 0) {
+                        counter_configuration_ = OCOCO8;
+                    } else if (counters_str_.compare("ococo16") == 0) {
+                        counter_configuration_ = OCOCO16;
+                    } else if (counters_str_.compare("ococo32") == 0) {
+                        counter_configuration_ = OCOCO32;
+                    } else if (counters_str_.compare("ococo64") == 0) {
+                        counter_configuration_ = OCOCO64;
                     } else {
                         fatal_error(
                             "Unknown counter configuration '%s'. Possible "
                             "modes "
                             "are 'ococo8', 'ococo16', 'ococo32', and "
                             "'ococo64'.\n",
-                            counters_str.c_str());
+                            counters_str_.c_str());
                     }
 
                     break;
                 }
                 case 'm': {
-                    mode_str = optarg;
+                    mode_str_ = optarg;
 
-                    if (mode_str.compare("batch") == 0) {
-                        mode = mode_t::BATCH;
-                    } else if (mode_str.compare("real-time") == 0) {
-                        mode = mode_t::REALTIME;
+                    if (mode_str_.compare("batch") == 0) {
+                        mode_ = mode_t::BATCH;
+                    } else if (mode_str_.compare("real-time") == 0) {
+                        mode_ = mode_t::REALTIME;
                     } else {
                         fatal_error(
                             "Unknown mode '%s'. Possible modes are 'batch' and "
                             "'real-time'.\n",
-                            mode_str.c_str());
+                            mode_str_.c_str());
                     }
 
                     break;
                 }
                 case 'q': {
-                    min_mapq = atoi(optarg);
+                    min_mapq_ = atoi(optarg);
                     break;
                 }
                 case 'Q': {
-                    min_baseq = atoi(optarg);
+                    min_baseq_ = atoi(optarg);
                     break;
                 }
                 case 'c': {
-                    min_coverage_upd = atoi(optarg);
+                    min_coverage_upd_ = atoi(optarg);
                     break;
                 }
                 case 'M': {
-                    majority_threshold = atof(optarg);
+                    majority_threshold_ = atof(optarg);
                     break;
                 }
                 case '?': {
@@ -306,11 +308,11 @@ struct Params {
                 }
             }
         }
-        if (!in_sam_fn.empty()) {
+        if (in_sam_fn_.empty()) {
             fatal_error("SAM/BAM file must be specified (option '-i').\n");
         }
 
-        info("Ococo starting: %s\n", counters_str_descr.c_str());
+        info("Ococo starting: %s\n", counters_str_descr_.c_str());
     }
 
     void print_help() {
