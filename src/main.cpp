@@ -27,7 +27,7 @@
 
 using namespace ococo;
 
-int main(int argc, const char **argv) {
+int main(int argc, char **argv) {
     /* Use the default configuration */
     Params params(argc, argv);
 

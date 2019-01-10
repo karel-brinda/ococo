@@ -46,12 +46,12 @@
 
 namespace ococo {
 
-constexpr int default_c   = 2;
-constexpr float default_M = 0.51;
-constexpr int default_w   = 0;
-constexpr int default_q   = 1;
-constexpr int default_Q   = 13;
-constexpr int default_C   = -1;
+constexpr int default_c    = 2;
+constexpr double default_M = 0.51;
+constexpr int default_w    = 0;
+constexpr int default_q    = 1;
+constexpr int default_Q    = 13;
+constexpr int default_C    = -1;
 
 enum mode_t { BATCH, REALTIME };
 
@@ -136,12 +136,12 @@ struct Params {
         counters_str_descr = counter_configuration_descr[counter_configuration];
     }
 
-    Params(int argc, const char **argv) : Params() {
+    Params(int argc, char **argv) : Params() {
         parse_commandline(argc, argv);
         counters_str_descr = counter_configuration_descr[counter_configuration];
     }
 
-    void parse_commandline(int argc, const char **argv) {
+    void parse_commandline(int argc, char **argv) {
         /* Parse cmd parameters */
         std::stringstream cmd;
         for (int32_t i = 0; i < argc; i++) {
@@ -188,7 +188,7 @@ struct Params {
 
         int c;
 
-        while ((c = getopt_long(argc, (char *const *)argv,
+        while ((c = getopt_long(argc, argv,
                                 "vhi:f:s:F:S:V:P:L:W:x:m:t:q:Q:w:c:M:O:C:",
                                 lopts, nullptr)) >= 0) {
             switch (c) {
