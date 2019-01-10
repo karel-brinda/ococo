@@ -35,21 +35,21 @@ namespace ococo {
 const int PILEUP_MAX_DEPTH = 20000;
 
 struct PileupFile {
-    std::string fn;
-    FILE *file;
+    std::string fn_;
+    FILE *file_;
 
-    std::array<char, PILEUP_MAX_DEPTH + 1> bases;
-    std::array<char, PILEUP_MAX_DEPTH + 1> qualities;
+    std::array<char, PILEUP_MAX_DEPTH + 1> bases_;
+    std::array<char, PILEUP_MAX_DEPTH + 1> qualities_;
 
-    PileupFile(std::string fn) : fn(fn), file(nullptr) {
-        if (!fn.empty()) {
+    PileupFile(std::string fn) : fn_(fn), file_(nullptr) {
+        if (fn.size()) {
             info("Opening the Pileup stream ('%s').\n", fn.c_str());
 
             if (fn == std::string("-")) {
-                file = stdout;
+                file_ = stdout;
             } else {
-                file = fopen(fn.c_str(), "w+");
-                if (file == nullptr) {
+                file_ = fopen(fn.c_str(), "w+");
+                if (file_ == nullptr) {
                     fatal_error("Problem with opening the Pileup file '%s'.\n",
                                 fn.c_str());
                 }
@@ -58,8 +58,8 @@ struct PileupFile {
     }
 
     ~PileupFile() {
-        if (file != nullptr && fn != "-") {
-            int error_code = fclose(file);
+        if (file_ != nullptr && fn_ != "-") {
+            int error_code = fclose(file_);
             if (error_code != 0) {
                 fatal_error("Output Pileup file could not be closed.\n");
             }
@@ -68,7 +68,7 @@ struct PileupFile {
 
     void print_position(const std::string &seq_name, int64_t pos,
                         const PosStats &ps) {
-        if (file == nullptr) {
+        if (file_ == nullptr) {
             return;
         }
 
@@ -103,18 +103,18 @@ struct PileupFile {
                 nt4_nt16[nt4] == ps.nt16_ ? '.' : nt4_nt256[nt4];
             for (int32_t i = 0; i < ps.counters_[nt4] && j < PILEUP_MAX_DEPTH;
                  i++, j++) {
-                bases[j]     = filling_char;
-                qualities[j] = '~';
+                bases_[j]     = filling_char;
+                qualities_[j] = '~';
             }
         }
 
-        bases[j]     = '\0';
-        qualities[j] = '\0';
+        bases_[j]     = '\0';
+        qualities_[j] = '\0';
 
-        fprintf(file, "%s\t%" PRId64 "\t%c\t%" PRId32 "\t%s\t%s\n",
+        fprintf(file_, "%s\t%" PRId64 "\t%c\t%" PRId32 "\t%s\t%s\n",
                 seq_name.c_str(), pos + 1, ref_nt256,
-                overflow ? PILEUP_MAX_DEPTH : ps.sum_, bases.data(),
-                qualities.data());
+                overflow ? PILEUP_MAX_DEPTH : ps.sum_, bases_.data(),
+                qualities_.data());
     }
 };
 
