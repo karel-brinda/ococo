@@ -1,16 +1,41 @@
+/* The MIT License
+
+   Copyright (c) 2016-2019 Karel Brinda (kbrinda@hsph.harvard.edu)
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+*/
+
 #pragma once
 
-#include "misc.h"
+#include "io.h"
 #include "types.h"
+#include "version.h"
 
+#include <getopt.h>
 #include <cstdio>
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include <htslib/faidx.h>
 #include <htslib/khash.h>
-#include <htslib/kseq.h>
 #include <htslib/kseq.h>
 #include <htslib/kstring.h>
 #include <htslib/sam.h>
@@ -21,115 +46,339 @@
 
 namespace ococo {
 
-const int default_c   = 2;
-const float default_M = 0.51;
-const int default_w   = 0;
-const int default_q   = 1;
-const int default_Q   = 13;
+constexpr int default_c   = 2;
+constexpr float default_M = 0.51;
+constexpr int default_w   = 0;
+constexpr int default_q   = 1;
+constexpr int default_Q   = 13;
+constexpr int default_C   = -1;
 
 enum mode_t { BATCH, REALTIME };
 
-enum strategy_t {
-    NO_UPDATES,
-    STOCHASTIC,
-    STOCHASTIC_AMB,
-    MAJORITY,
-    MAJORITY_AMB,
-    count
-};
-
 enum counter_configuration_t {
+    OCOCO8,
     OCOCO16,
     OCOCO32,
     OCOCO64,
 };
 
-struct params_t {
-    bool correctly_initialized;
-    int return_code;
+std::vector<std::string> counter_configuration_descr{
+    "ococo8 (8 bits per position, 1bits per nucleotide counter)",
+    "ococo16 (16 bits per position, 3bits per nucleotide counter)",
+    "ococo32 (32 bits per position, 7bits per nucleotide counter)",
+    "ococo64 (64 bits per position, 15bits per nucleotide counter)",
+};
 
-    std::string command;
+struct Params {
+    std::string command_;
 
     /*
      * Counter parameters
      */
-    counter_configuration_t counter_configuration;
-    std::string counters_str;
-    std::string counters_str_descr;
-    int32_t stats_bits_per_position;
-    int32_t stats_bits_per_nucleotide;
+    counter_configuration_t counter_configuration_;
+    std::string counters_str_;
+    std::string counters_str_descr_;
 
     /*
      * Input parameters
      */
-    std::string sam_fn;
-    std::string fasta_in_fn;
-    std::string stats_in_fn;
+    std::string in_sam_fn_;
+    std::string in_fasta_fn_;
+    std::string in_stats_fn_;
 
     /*
      * Output parameters
      */
-    bool verbose;
+    bool verbose_;
 
-    std::string vcf_fn;
-    std::string fasta_out_fn;
-    std::string stats_out_fn;
-    std::string pileup_fn;
-    std::string log_fn;
+    std::string out_sam_fn_;
+    std::string out_vcf_fn_;
+    std::string out_fasta_fn_;
+    std::string out_stats_fn_;
+    std::string out_pileup_fn_;
+    std::string out_log_fn_;
 
     /*
      * Files
      */
-
-    FILE *vcf_file;
-    FILE *pileup_file;
-    FILE *fasta_out_file;
-    samFile *sam_file;
-    FILE *log_file;
+    FILE *out_fasta_file_;
 
     /*
      * Consensus calling parameters
      */
+    mode_t mode_;
+    std::string mode_str_;
+    int32_t min_mapq_;         /* minimum mapping quality for update */
+    int32_t min_baseq_;        /* minimum base quality for update */
+    int32_t min_coverage_upd_; /* minimum coverage for update */
+    float majority_threshold_; /* threshold for having majority */
 
-    mode_t mode;
-    strategy_t strategy;
-
-    /* minimum mapping quality for update */
-    int32_t min_mapq;
-
-    /* minimum base quality for update */
-    int32_t min_baseq;
-
-    /* initial values for counters corresponding to ref */
-    int32_t init_ref_weight;
-
-    /* minimum coverage for update (does not include init_ref_weight */
-    int32_t min_coverage;
-
-    /* threshold for having majority */
-    double majority_threshold;
+    /* Filter alignments when coverage is greater than */
+    int32_t coverage_filter_;
 
     /* auxiliary */
-    std::string strategy_str;
-    std::string mode_str;
-    int64_t n_upd;
+    int64_t n_upd_;
 
-    /*
-     * Array of consensus calling functions
-     */
-    char (*cons_alg[strategy_t::count])(const pos_stats_uncompr_t &psu,
-                                        const params_t &params);
+    Params()
+        : counter_configuration_(OCOCO32),
+          counters_str_("ococo32"),
 
-    params_t();
+          mode_(BATCH),
+          mode_str_("batch"),
+          min_mapq_(default_q),
+          min_baseq_(default_Q),
+          min_coverage_upd_(default_c),
+          majority_threshold_(default_M),
 
-    params_t(int argc, const char **argv);
+          coverage_filter_(default_C),
 
-    ~params_t();
+          n_upd_(0) {
+        counters_str_descr_ =
+            counter_configuration_descr[counter_configuration_];
+    }
 
-    void parse_commandline(int argc, const char **argv);
+    Params(int argc, char **argv) : Params() {
+        parse_commandline(argc, argv);
+        counters_str_descr_ =
+            counter_configuration_descr[counter_configuration_];
+    }
 
-    void print_help();
+    void parse_commandline(int argc, char **argv) {
+        /* Parse cmd parameters */
+        std::stringstream cmd;
+        for (int32_t i = 0; i < argc; i++) {
+            cmd << argv[i];
+            if (i != argc - 1) {
+                cmd << " ";
+            }
+        }
+        command_ = cmd.str();
 
-    void init_default_values();
+        if (argc == 1) {
+            print_help();
+            exit(1);
+        }
+
+        const struct option lopts[] = {
+            {"version", no_argument, nullptr, 'v'},
+            {"help", no_argument, nullptr, 'h'},
+            //
+            {"input", required_argument, nullptr, 'i'},
+            {"fasta-ref", required_argument, nullptr, 'f'},
+            {"stats-in", required_argument, nullptr, 's'},
+            //
+            {"fasta-cons", required_argument, nullptr, 'F'},
+            {"stats-out", required_argument, nullptr, 'S'},
+            {"vcf-cons", required_argument, nullptr, 'V'},
+            {"pileup", required_argument, nullptr, 'P'},
+            {"output", required_argument, nullptr, 'O'},
+            {"cov-filt", required_argument, nullptr, 'C'},
+            {"log", required_argument, nullptr, 'L'},
+            {"verbose", no_argument, nullptr, 'W'},
+            //
+            {"counters", required_argument, nullptr, 'x'},
+            {"mode", required_argument, nullptr, 'm'},
+            {"min-MQ", required_argument, nullptr, 'q'},
+            {"min-BQ", required_argument, nullptr, 'Q'},
+            {"ref-weight", required_argument, nullptr, 'w'},
+            {"min-cov", required_argument, nullptr, 'c'},
+            {"min-coverage", required_argument, nullptr, 'c'},  // deprec
+            {"maj-thres", required_argument, nullptr, 'M'},
+            {"majority-threshold", required_argument, nullptr, 'M'},  // deprec
+            //
+            {nullptr, 0, nullptr, 0}};
+
+        int c;
+
+        while ((c = getopt_long(argc, argv,
+                                "vhi:f:s:F:S:V:P:L:W:x:m:t:q:Q:w:c:M:O:C:",
+                                lopts, nullptr)) >= 0) {
+            switch (c) {
+                case 'v': {
+                    print_version();
+                    exit(0);
+                    break;
+                }
+                case 'h': {
+                    print_help();
+                    exit(0);
+                    break;
+                }
+                case 'i': {
+                    in_sam_fn_ = optarg;
+                    break;
+                }
+                case 'f': {
+                    in_fasta_fn_ = optarg;
+                    break;
+                }
+                case 's': {
+                    in_stats_fn_ = optarg;
+                    break;
+                }
+                case 'F': {
+                    out_fasta_fn_ = optarg;
+                    break;
+                }
+                case 'S': {
+                    out_stats_fn_ = optarg;
+                    break;
+                }
+                case 'V': {
+                    out_vcf_fn_ = optarg;
+                    break;
+                }
+                case 'P': {
+                    out_pileup_fn_ = optarg;
+                    break;
+                }
+                case 'O': {
+                    out_sam_fn_ = optarg;
+                    break;
+                }
+                case 'C': {
+                    coverage_filter_ = atoi(optarg);
+                    break;
+                }
+                case 'L': {
+                    out_log_fn_ = optarg;
+                    break;
+                }
+                case 'W': {
+                    verbose_ = true;
+                    break;
+                }
+                case 'x': {
+                    counters_str_ = optarg;
+
+                    if (counters_str_.compare("ococo8") == 0) {
+                        counter_configuration_ = OCOCO8;
+                    } else if (counters_str_.compare("ococo16") == 0) {
+                        counter_configuration_ = OCOCO16;
+                    } else if (counters_str_.compare("ococo32") == 0) {
+                        counter_configuration_ = OCOCO32;
+                    } else if (counters_str_.compare("ococo64") == 0) {
+                        counter_configuration_ = OCOCO64;
+                    } else {
+                        fatal_error(
+                            "Unknown counter configuration '%s'. Possible "
+                            "modes "
+                            "are 'ococo8', 'ococo16', 'ococo32', and "
+                            "'ococo64'.\n",
+                            counters_str_.c_str());
+                    }
+
+                    break;
+                }
+                case 'm': {
+                    mode_str_ = optarg;
+
+                    if (mode_str_.compare("batch") == 0) {
+                        mode_ = mode_t::BATCH;
+                    } else if (mode_str_.compare("real-time") == 0) {
+                        mode_ = mode_t::REALTIME;
+                    } else {
+                        fatal_error(
+                            "Unknown mode '%s'. Possible modes are 'batch' and "
+                            "'real-time'.\n",
+                            mode_str_.c_str());
+                    }
+
+                    break;
+                }
+                case 'q': {
+                    min_mapq_ = atoi(optarg);
+                    break;
+                }
+                case 'Q': {
+                    min_baseq_ = atoi(optarg);
+                    break;
+                }
+                case 'c': {
+                    min_coverage_upd_ = atoi(optarg);
+                    break;
+                }
+                case 'M': {
+                    majority_threshold_ = atof(optarg);
+                    break;
+                }
+                case '?': {
+                    fatal_error("Unknown error");
+                    break;
+                }
+            }
+        }
+        if (in_sam_fn_.empty()) {
+            fatal_error("SAM/BAM file must be specified (option '-i').\n");
+        }
+
+        info("Ococo starting: %s\n", counters_str_descr_.c_str());
+    }
+
+    void print_help() {
+        print_version();
+        std::cerr
+            <<
+            // clang-format off
+
+        // "---------------------------------------------------------------------------------"
+           "Usage:   ococo -i <SAM/BAM file> [other options]\n\n"
+        // "---------------------------------------------------------------------------------"
+           "Input:\n"
+           "  -i, --input FILE      input SAM/BAM file (- for standard input)\n"
+           "  -f, --fasta-ref FILE  initial FASTA reference (otherwise seq of N's is used)\n"
+           "  -s, --stats-in FILE   input statistics\n\n"
+        // "---------------------------------------------------------------------------------"
+           "Output:\n"
+           "  -O, --output FILE     output SAM/BAM file (- for standard output)\n"
+           "  -F, --fasta-cons FILE FASTA file with the consensus\n"
+           "  -S, --stats-out FILE  output statistics\n"
+           "  -V, --vcf-cons FILE   VCF file with updates of consensus (- for standard output)\n"
+           "  -P, --pileup FILE     truncated pileup (- for standard output)\n\n"
+        // "---------------------------------------------------------------------------------"
+           "Variant and consensus calling:\n"
+           "  -x, --counters STR    counter configuration: [ococo32]\n"
+           "                           - ococo16 (3b/counter, 16b/position)\n"
+           "                           - ococo32 (7b/counter, 32b/position)\n"
+           "                           - ococo64 (15b/counter, 64b/position)\n"
+           "  -m, --mode STR        mode: [batch]\n"
+           "                           - real-time (updates reported immediately)\n"
+           "                           - batch (updates reported after end of algn stream)\n"
+           "  -c, --min-cov INT     minimum coverage required for an update [" << default_c <<"]\n"
+           "  -M, --maj-thres FLOAT majority threshold [" << default_M << "]\n\n"
+       // "---------------------------------------------------------------------------------"
+           "Filtering and coverage normalization:\n"
+           "  -q, --min-MQ INT      skip alignments with mapping quality smaller than INT [" << default_q << "]\n"
+           "  -Q, --min-BQ INT      skip bases with base quality smaller than INT [" << default_Q <<"]\n"
+           "  -C, --cov-filt INT    skip alignments when coverage greater than INT [" << default_C << "]\n\n"
+       // "---------------------------------------------------------------------------------"
+           "Others:\n"
+           "  -v, --version         print version information and exit\n"
+           "  -h, --help            print this message and exit\n"
+           //"  --log FILE            auxiliary log file\n"
+           "  --verbose             verbose mode (report every update of a counter)\n\n"
+        // "---------------------------------------------------------------------------------"
+           "Examples:\n"
+           "   ococo -i test.bam -f test.fa -m real-time -V -\n"
+           "   ococo -x ococo64 -i test.bam -f test.fa -P - -V variants.vcf\n\n"
+        // "---------------------------------------------------------------------------------"
+           "Note:\n"
+           "   For more details, see the manual page 'man ./ococo.1'.\n"
+        // "---------------------------------------------------------------------------------"
+            // clang-format on
+            << std::endl;
+    }
+
+    void print_version() {
+        // clang-format off
+    std::cerr <<
+           "\n"
+           "Program: ococo (an online pileup, variant, and consensus caller)\n"
+           "         call everything from an unsorted SAM/BAM stream\n"
+           "Version: " << OCOCO_VERSION  << "\n"
+           "Contact: Karel Brinda <kbrinda@hsph.harvard.edu>\n";
+        // clang-format on
+        std::cerr << std::endl;
+    }
 };
-}
+}  // namespace ococo

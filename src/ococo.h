@@ -1,18 +1,304 @@
+/* The MIT License
+
+   Copyright (c) 2016-2019 Karel Brinda (kbrinda@hsph.harvard.edu)
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+*/
+
 #pragma once
 
-#include "caller.h"
-#include "consensus.h"
-#include "misc.h"
-#include "params.h"
-#include "stats.h"
-#include "types.h"
-#include "version.h"
-
-#include <cassert>
-#include <cmath>
-#include <cstdio>
 #include <cstdlib>
-#include <cstring>
-#include <exception>
-#include <iostream>
-#include <string>
+
+#include "bamfiles.h"
+#include "debugging.h"
+#include "io.h"
+#include "logfile.h"
+#include "params.h"
+#include "pileupfile.h"
+#include "stats.h"
+#include "vcffile.h"
+
+namespace ococo {
+
+template <typename T>
+struct Ococo {
+    double t_real_;
+
+    Params params_;
+
+    VcfFile vcf_file_;
+    PileupFile pileup_file_;
+    LogFile log_file_;
+    BamFiles bam_;
+
+    Stats<T> stats_;
+
+    /*! @func
+        @abstract  Open all files and load headers.
+    */
+    Ococo(const Params &params)
+        : t_real_(realtime()),
+          params_(params),
+          vcf_file_(params.out_vcf_fn_, params),
+          pileup_file_(params.out_pileup_fn_),
+          log_file_(params.out_log_fn_),
+          bam_(params.in_sam_fn_, params.out_sam_fn_),
+          stats_(params, bam_.get_refseq_names(), bam_.get_refseq_lens()) {
+        /*
+         * Read SAM headers.
+         */
+
+        info("Initializing the SAM/BAM reader.\n");
+
+        /*
+         * Load FASTA and stats.
+         */
+        if (params_.in_stats_fn_.size() && params.in_fasta_fn_.size()) {
+            fatal_error(
+                "Initial FASTA reference and input statistics "
+                "cannot be used at the same time.\n");
+        }
+
+        if (params_.in_stats_fn_.size()) {
+            info("Loading previously saved statistics ('%s').\n",
+                 params_.in_stats_fn_.c_str());
+            stats_.import_stats(params_.in_stats_fn_);
+        } else {
+            if (params.in_fasta_fn_.size()) {
+                info("Loading the reference ('%s').\n",
+                     params_.in_fasta_fn_.c_str());
+                stats_.load_fasta(params_.in_fasta_fn_);
+            }
+
+            else {
+                info(
+                    "Neither reference, nor statistics provided. Going to use "
+                    "a sequence of N's as the reference.\n");
+            }
+        }
+
+        /*
+         * Open consensus FASTA file.
+         */
+
+        if (params_.out_fasta_fn_.size()) {
+            info("Opening the consensus FASTA file ('%s').\n",
+                 params_.out_fasta_fn_.c_str());
+            params_.out_fasta_file_ =
+                fopen(params_.out_fasta_fn_.c_str(), "w+");
+
+            if (params_.out_fasta_file_ == nullptr) {
+                fatal_error(
+                    "Problem with opening the consensus FASTA file: '%s'.\n",
+                    params_.out_fasta_fn_.c_str());
+            }
+        }
+    }
+
+    ~Ococo() {
+        if (params_.out_fasta_file_ != nullptr) {
+            int error_code = fclose(params_.out_fasta_file_);
+            if (error_code != 0) {
+                fatal_error(
+                    "Output FASTA consensus file could not be closed.\n");
+            }
+        }
+
+        info("Ococo successfully finished. Bye.\n");
+        info("%.3f sec; CPU: %.3f sec\n", realtime() - t_real_, cputime());
+    }
+
+    /*! @func
+        @abstract  Check whether the alignment passes filters.
+    */
+    bool check_read(int32_t seqid, int32_t flags, int32_t mapq) {
+        if ((flags & BAM_FUNMAP) != 0) {
+            return false;
+        }
+
+        if (!stats_.seq_active_[seqid]) {
+            return false;
+        }
+
+        if (mapq < params_.min_mapq_) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /*! @func
+        @abstract  Run calling.
+    */
+    void run() {
+        /*
+         * Process alignments.
+         *
+         * Notes
+         * - if reading bam fails - a critical error
+         * - if writing bam header fails - a critical error
+         * - if writing bam fails - a non-critical error
+         */
+
+        info("Starting the main loop.\n");
+
+        int32_t return_value;
+        int64_t n_upd0 = 0;
+        int64_t i_read = 0;
+
+        while ((return_value = bam_.read_alignment()) >= 0) {
+            /* filtration on the alignment level */
+            bool read_ok = check_read(bam_.seqid_, bam_.flags_, bam_.mapq_);
+            if (!read_ok) {
+                continue;
+            }
+
+            /* coverage statistics for the region of the alignment */
+            int32_t low_cov_thres = params_.coverage_filter_;
+            int32_t npos_low_cov  = 0;
+            int32_t npos_high_cov = 0;
+            int32_t pseudo_rlen   = 0;
+
+            if (low_cov_thres < 0) {
+                low_cov_thres = 424242;
+            }
+
+            // std::cerr << __PRETTY_FUNCTION__ << *rname << std::endl;
+
+            /* iteration over individual bases */
+            int32_t ref_pos = bam_.mapping_pos_;
+            for (int32_t cigar_grp = 0, read_pos = 0; cigar_grp < bam_.n_cigar_;
+                 cigar_grp++) {
+                const int32_t op = bam_cigar_op(bam_.cigar_[cigar_grp]);
+                const int32_t ol = bam_cigar_oplen(bam_.cigar_[cigar_grp]);
+
+                const int32_t next_read_pos = read_pos + ol;
+                switch (op) {
+                    case BAM_CMATCH:
+                    case BAM_CDIFF:
+                    case BAM_CEQUAL:
+
+                        for (; read_pos < next_read_pos;
+                             ++read_pos, ++ref_pos) {
+                            /* filtration on the level of base */
+                            const uint8_t nt16 = bam_seqi(bam_.seq_, read_pos);
+                            const uint8_t nt4  = nt16_nt4[nt16];
+                            const int32_t bq   = bam_.qual_[read_pos];
+
+                            if (bq != 0xff && bq < params_.min_baseq_) {
+                                continue;
+                            }
+
+                            if (nt4 == 0x4) {
+                                continue;
+                            }
+
+                            /* updating counters */
+                            PosStats ps;
+
+                            // std::cerr << "\n" << read_pos << std::endl;
+                            //_print_pos_stats(stats->seq_stats[seqid][ref_pos]);
+                            ps.pull(stats_.seq_stats_[bam_.seqid_][ref_pos]);
+                            //_print_pos_stats<T>(ps);
+                            ps.increment(nt4);
+                            // std::cerr << "       incr " << nt4_nt256[nt4]
+                            //          << " at position " << ref_pos <<
+                            //          std::endl;
+
+                            /* updating coverage statistics */
+                            if (ps.sum_ - 1 < low_cov_thres) {
+                                ++npos_low_cov;
+                            } else {
+                                if (2 * (ps.sum_ - 1) > 3 * low_cov_thres) {
+                                    ++npos_high_cov;
+                                }
+                            }
+                            ++pseudo_rlen;
+
+                            /* consensus calling for the current position */
+                            if (params_.mode_ == mode_t::REALTIME) {
+                                stats_.call_consensus_position(
+                                    vcf_file_, pileup_file_, bam_.seqid_,
+                                    ref_pos, ps);
+                            }
+
+                            /* compressing the counters and pushing them back to
+                             * the statistics */
+                            ps.push(stats_.seq_stats_[bam_.seqid_][ref_pos]);
+                            //_print_pos_stats(stats->seq_stats[seqid][ref_pos]);
+                        }
+
+                        break;
+
+                    case BAM_CDEL:
+                    case BAM_CREF_SKIP:
+                        ref_pos += ol;
+                        break;
+
+                    case BAM_CSOFT_CLIP:
+                        read_pos += ol;
+                        break;
+
+                    case BAM_CBACK:
+                        ref_pos -= ol;
+                        break;
+
+                    case BAM_CINS:
+                        read_pos += ol;
+                        break;
+
+                    case BAM_CPAD:
+                    case BAM_CHARD_CLIP:
+                        break;
+                }  // switch (op)
+
+            }  // for (int32_t cigar_grp
+
+            /* Filtering the alignment based on coverage. */
+            if (npos_low_cov > 0 && npos_high_cov < 0.5 * pseudo_rlen) {
+                // at least 5% pos. low coverage => print read
+                // if(npos_low_cov * 20 >= pseudo_rlen){
+                bam_.print_alignment();
+            }
+
+            /* Logging the number of updates from this alignment. */
+            log_file_.print(i_read, bam_.rname_, params_.n_upd_ - n_upd0);
+            n_upd0 = params_.n_upd_;  // todo: count automatically in the log
+
+            i_read += 1;
+        }  // while ((r = sam_read1
+
+        if (return_value < -1) {
+            fatal_error("Truncated BAM stream (error %" PRId32
+                        "). Ococo will still try to print results.\n",
+                        return_value);
+        }
+
+        /*
+         * Call final consensus and export stats.
+         */
+        if (params_.out_stats_fn_.size()) {
+            info("Saving the obtained statistics ('%s').\n",
+                 params_.out_stats_fn_.c_str());
+            stats_.export_stats(params_.out_stats_fn_);
+        }
+    }
+};
+
+}  // namespace ococo

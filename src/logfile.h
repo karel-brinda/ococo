@@ -23,6 +23,45 @@
 
 #pragma once
 
+#include <cstdio>
+#include <string>
+
+#include "types.h"
+
 namespace ococo {
-constexpr const char *OCOCO_VERSION = "0.2.0.0";
-}
+
+struct LogFile {
+    std::string fn_;
+    FILE *file_;
+
+    LogFile(std::string fn) : fn_(fn) {
+        if (!fn.empty()) {
+            info("Opening the log file ('%s').\n", fn.c_str());
+
+            file_ = fopen(fn.c_str(), "w+");
+            if (file_ == nullptr) {
+                fatal_error("Problem with opening the log file '%s'.\n",
+                            fn.c_str());
+            }
+        }
+    }
+
+    ~LogFile() {
+        if (file_ != nullptr) {
+            int error_code = fclose(file_);
+            if (error_code != 0) {
+                fatal_error("Output log file '%s' could not be closed.\n",
+                            fn_.c_str());
+            }
+        }
+    }
+
+    void print(int64_t i_reads, const char *rname, int64_t nupd) {
+        if (file_ != nullptr) {
+            fprintf(file_, "%" PRId64 "\t%s\t%" PRId64 "\n", i_reads, rname,
+                    nupd);
+        }
+    }
+};
+
+}  // namespace ococo

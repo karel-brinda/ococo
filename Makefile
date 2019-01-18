@@ -1,5 +1,9 @@
 CXX      ?= g++
-CXXFLAGS  = -std=c++11 -Wall -Wextra -Wno-missing-field-initializers -g -O2
+CXXFLAGS  = -std=c++11 -Wall -Wpedantic -Wextra -g -O3 \
+
+#-Wduplicated-cond -Wduplicated-branches -Wlogical-op -Wrestrict -Wnull-dereference -Wold-style-cast -Wuseless-cast \
+#-Wdouble-promotion -Wshadow
+
 LIBS      = -lm -lz -lpthread
 
 PREFIX    = $(DESTDIR)/usr/local
@@ -12,12 +16,16 @@ HTSLIB    = $(HTSLIBDIR)/libhts.a
 HTSLIBINCLUDE = $(HTSLIBDIR)
 HTSLIB_VERSION = b6aa0e6
 
-ofiles    = src/main.cpp.o src/misc.cpp.o src/params.cpp.o
+ofiles    = src/main.cpp.o
 hfiles    = $(wildcard src/*.h)
 
-.PHONY: all clean install ococo readme
+.PHONY: all clean cleanall install readme format test big
 
-all: ococo
+.SUFFIXES:
+
+.SECONDARY:
+
+all: ococo $(ofiles)
 
 install: ococo
 	install  ococo $(BINDIR)/ococo
@@ -49,8 +57,19 @@ readme:
 	  > README.md
 	markdown_py README.md > README.html
 
+format:
+	clang-format -i src/*.cpp src/*.h
+
 clean:
-	$(MAKE) -C ext/htslib clean
+	$(MAKE) -C tests clean
 	rm -f src/*.o
 	rm -f ococo
 
+cleanall: clean
+	$(MAKE) -C ext/htslib clean
+
+test: ococo
+	$(MAKE) -C tests
+
+big:
+	(samtools view -H ./test.bam ; for i in $$(seq 100); do samtools view test.bam; done) | samtools view -b > big.bam

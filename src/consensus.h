@@ -1,132 +1,61 @@
+/* The MIT License
+
+   Copyright (c) 2016-2019 Karel Brinda (kbrinda@hsph.harvard.edu)
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+*/
+
 #pragma once
 
-#include "params.h"
+#include "counters.h"
 #include "types.h"
 
-#include "cassert"
-#include "cmath"
+#include <cmath>
 
 namespace ococo {
 
-inline char cons_call_no_updates(const pos_stats_uncompr_t &psu,
-                                 const params_t &params) {
-    return nt16_nt256[psu.nt16];
-}
+/*
+ * Call consensus using the majority rule.
+ */
+inline char cons_call_maj(const PosStats &ps, int32_t min_coverage_upd,
+                          float majority_threshold) {
+    char cons = nt16_nt256[ps.nt16_];  // initial consensus
 
-inline char cons_call_stoch(const pos_stats_uncompr_t &psu,
-                            const params_t &params) {
-    if (psu.sum == 0) {
-        return nt16_nt256[psu.nt16];
-    }
+    /* Has sufficiently many alignments been collected? */
+    if (ps.sum_ >= min_coverage_upd) {
+        /* Calculate the minimal required counter value for an
+         * update. */
+        int32_t required_min = ceil(majority_threshold * ps.sum_);
 
-    if (psu.nt16 != nt256_nt16[static_cast<uint32_t>('N')]) {
-        if (psu.sum < params.min_coverage + params.init_ref_weight) {
-            return nt16_nt256[psu.nt16];
-        }
-    }
-
-    const int32_t prefsum[] = {
-        psu.counters[0], psu.counters[0] + psu.counters[1],
-        psu.counters[0] + psu.counters[1] + psu.counters[2],
-        psu.counters[0] + psu.counters[1] + psu.counters[2] + psu.counters[3]};
-
-    assert(prefsum[3] == psu.sum);
-
-    const int32_t rn = rand() % psu.sum;
-    for (int32_t i = 0; i < 4; i++) {
-        if (rn < prefsum[i]) {
-            return nt4_nt256[i];
-        }
-    }
-
-    return 'n';
-}
-
-inline char cons_call_stoch_amb(const pos_stats_uncompr_t &psu,
-                                const params_t &params) {
-    if (psu.sum == 0) {
-        return nt16_nt256[psu.nt16];
-    }
-
-    if (psu.nt16 != nt256_nt16[static_cast<uint32_t>('N')]) {
-        if (psu.sum < params.min_coverage + params.init_ref_weight) {
-            return nt16_nt256[psu.nt16];
-        }
-    }
-
-    nt16_t nucl_nt16 = nt256_nt16[static_cast<uint32_t>('N')];
-
-    while (nucl_nt16 == nt256_nt16[static_cast<uint32_t>('N')]) {
-        nucl_nt16 = 0;
+        /* Find the maximal counter with such a value. */
+        int32_t max = 0;
         for (int32_t i = 0; i < 4; i++) {
-            const int32_t rn = rand() % psu.sum;
-
-            if (rn < psu.counters[i]) {
-                nucl_nt16 |= nt4_nt16[i];
+            if (ps.counters_[i] >= required_min) {
+                if (ps.counters_[i] > max) {
+                    max  = ps.counters_[i];
+                    cons = nt4_nt256[i];
+                }
             }
         }
     }
 
-    return nt16_nt256[nucl_nt16];
+    return cons;
 }
 
-inline char cons_call_maj(const pos_stats_uncompr_t &psu,
-                          const params_t &params) {
-    if (psu.sum == 0) {
-        return nt16_nt256[psu.nt16];
-    }
-
-    if (psu.nt16 != nt256_nt16[static_cast<uint32_t>('N')]) {
-        if (psu.sum < params.min_coverage + params.init_ref_weight) {
-            return nt16_nt256[psu.nt16];
-        }
-    }
-
-    char nucl_nt256 = nt16_nt256[psu.nt16];
-
-    int32_t required_min =
-        static_cast<int32_t>(ceil(params.majority_threshold * psu.sum));
-    int32_t max = 0;
-    for (int32_t i = 0; i < 4; i++) {
-        if (psu.counters[i] >= required_min) {
-            if (psu.counters[i] > max) {
-                max        = psu.counters[i];
-                nucl_nt256 = nt4_nt256[i];
-            }
-        }
-    }
-
-    return nucl_nt256;
-}
-
-inline char cons_call_maj_amb(const pos_stats_uncompr_t &psu,
-                              const params_t &params) {
-    if (psu.sum == 0) {
-        return nt16_nt256[psu.nt16];
-    }
-
-    if (psu.nt16 != nt256_nt16[static_cast<uint32_t>('N')]) {
-        if (psu.sum < params.min_coverage + params.init_ref_weight) {
-            return nt16_nt256[psu.nt16];
-        }
-    }
-
-    char nucl_nt16 = psu.nt16;
-
-    int32_t required_min =
-        static_cast<int32_t>(round(params.majority_threshold * psu.sum));
-    int32_t max = 0;
-    for (int32_t i = 0; i < 4; i++) {
-        if (psu.counters[i] >= required_min) {
-            if (psu.counters[i] > max) {
-                max       = psu.counters[i];
-                nucl_nt16 = nt4_nt16[i];
-            } else if (psu.counters[i] >= max) {
-                nucl_nt16 |= nt4_nt16[i];
-            }
-        }
-    }
-
-    return nt16_nt256[static_cast<int32_t>(nucl_nt16)];
-}
-}
+}  // namespace ococo
