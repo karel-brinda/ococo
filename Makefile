@@ -19,7 +19,7 @@ HTSLIB_VERSION = b6aa0e6
 ofiles    = src/main.cpp.o
 hfiles    = $(wildcard src/*.h)
 
-.PHONY: all clean cleanall install readme format test
+.PHONY: all clean cleanall install readme format test big
 
 .SUFFIXES:
 
@@ -71,3 +71,5 @@ cleanall: clean
 test: ococo
 	$(MAKE) -C tests
 
+big:
+	(samtools view -H ./test.bam ; for i in $$(seq 100); do samtools view test.bam; done) | samtools view -b > big.bam
